@@ -1,0 +1,77 @@
+spring:
+  application:
+    name: ai-msp-intelligence
+
+  datasource:
+    url: ${DB_URL:jdbc:h2:file:./data/aimspdb;AUTO_SERVER=TRUE}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    defer-datasource-initialization: true
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:data.sql
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: Asia/Seoul
+
+server:
+  port: 8080
+
+app:
+  gemini:
+    api-key: ${GEMINI_API_KEY:}
+    api-url: https://generativelanguage.googleapis.com/v1beta/models
+    model: gemini-2.5-flash
+    max-tokens: 4096
+  crawl:
+    interval-hours: ${CRAWL_INTERVAL_HOURS:24}
+    request-delay-ms: 2000
+  insight:
+    cron: ${INSIGHT_CRON:0 0 7 * * ?}
+
+logging:
+  level:
+    com.aimsp: INFO
+    org.springframework.web: WARN
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  h2:
+    console:
+      enabled: false
