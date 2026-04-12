@@ -32,8 +32,10 @@ public class ArticleService {
             int page, int size) {
 
         Pageable pageable = PageRequest.of(page, size);
+        // LOWER() 대신 서비스 레이어에서 소문자 변환 (bytea 타입 오류 방지)
+        String normalizedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.toLowerCase() : null;
         return articleRepository.findWithFilters(
-                competitor, category, sourceType, keyword, dateFrom, dateTo, pageable
+                competitor, category, sourceType, normalizedKeyword, dateFrom, dateTo, pageable
         ).map(ArticleDto.Response::from);
     }
 
