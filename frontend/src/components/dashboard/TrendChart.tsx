@@ -13,6 +13,7 @@ export default function TrendChart({ data }: Props) {
   // 날짜별, 카테고리별로 피벗
   const dateMap = new Map<string, Record<string, number>>()
   data.forEach(({ date, category, count }) => {
+    if (!date || !category) return  // null 데이터 스킵
     if (!dateMap.has(date)) dateMap.set(date, {})
     dateMap.get(date)![category] = count
   })
@@ -21,9 +22,11 @@ export default function TrendChart({ data }: Props) {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, cats]) => ({ date: date.slice(5), ...cats })) // MM-DD 형식
 
-  const categories = [...new Set(data.map((d) => d.category))] as Category[]
+  const categories = [...new Set(
+    data.map((d) => d.category).filter((c): c is Category => !!c)
+  )]
 
-  if (chartData.length === 0) {
+  if (chartData.length === 0 || categories.length === 0) {
     return (
       <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
         데이터가 없습니다
