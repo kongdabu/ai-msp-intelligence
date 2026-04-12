@@ -19,13 +19,15 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
     boolean existsByUrl(String url);
 
     // 필터 조건 검색
+    // keyword, keywordForSummary 를 별도 파라미터로 분리
+    // → Hibernate가 컬럼 타입별로 독립적으로 바인딩 타입을 결정하도록 함
     @Query("""
         SELECT a FROM Article a WHERE
         (:competitor IS NULL OR a.competitor = :competitor) AND
         (:category IS NULL OR a.category = :category) AND
         (:sourceType IS NULL OR a.sourceType = :sourceType) AND
         (:keyword IS NULL OR a.title LIKE CONCAT('%', :keyword, '%')
-            OR a.summary LIKE CONCAT('%', :keyword, '%')) AND
+            OR a.summary LIKE CONCAT('%', :keywordForSummary, '%')) AND
         (:dateFrom IS NULL OR a.publishedAt >= :dateFrom) AND
         (:dateTo IS NULL OR a.publishedAt <= :dateTo)
         ORDER BY a.collectedAt DESC
@@ -35,6 +37,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             @Param("category") String category,
             @Param("sourceType") String sourceType,
             @Param("keyword") String keyword,
+            @Param("keywordForSummary") String keywordForSummary,
             @Param("dateFrom") LocalDateTime dateFrom,
             @Param("dateTo") LocalDateTime dateTo,
             Pageable pageable
