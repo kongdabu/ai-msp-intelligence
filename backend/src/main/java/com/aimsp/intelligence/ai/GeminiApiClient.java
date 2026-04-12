@@ -24,17 +24,19 @@ public class GeminiApiClient {
     private static final int MAX_RETRIES = 3;
     private static final long DEFAULT_RETRY_DELAY_MS = 30000; // 30초
 
+    // OkHttpClient 싱글톤 - 커넥션 풀 재사용
+    private final OkHttpClient client = new OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build();
+
     /**
      * Gemini API 호출 - 단일 텍스트 프롬프트
      * responseMimeType: application/json 으로 JSON 응답 강제
      * 429 Rate Limit 시 retryDelay 만큼 대기 후 최대 MAX_RETRIES 재시도
      */
     public String call(String prompt) {
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(120, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
-                .build();
 
         String requestBody = buildRequestBody(prompt);
         if (requestBody == null) return null;

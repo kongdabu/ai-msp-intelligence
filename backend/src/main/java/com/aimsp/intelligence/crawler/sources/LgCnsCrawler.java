@@ -29,7 +29,6 @@ public class LgCnsCrawler {
     public List<Article> crawl() {
         List<Article> articles = new ArrayList<>();
         try {
-            Thread.sleep(2000);
             SyndFeedInput input = new SyndFeedInput();
             SyndFeed feed = input.build(new XmlReader(new URL(NEWS_RSS)));
 

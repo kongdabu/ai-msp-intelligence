@@ -49,6 +49,12 @@ public class ArticleService {
         return ArticleDto.Response.from(article);
     }
 
+    // URL 중복 여부 확인 (Gemini 호출 전 선제 체크용)
+    @Transactional(readOnly = true)
+    public boolean existsByUrl(String url) {
+        return articleRepository.existsByUrl(url);
+    }
+
     // 기사 저장 (중복 URL 스킵)
     @Transactional
     public Article saveIfNotExists(Article article) {
