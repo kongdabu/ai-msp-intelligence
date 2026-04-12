@@ -1,6 +1,10 @@
 package com.aimsp.intelligence.domain.article;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,7 +27,6 @@ public class Article {
     @Column(length = 500)
     private String title;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String originalContent; // 원문 최대 5,000자
 

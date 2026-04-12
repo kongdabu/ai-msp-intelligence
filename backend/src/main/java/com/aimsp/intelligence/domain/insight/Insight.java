@@ -1,7 +1,16 @@
 package com.aimsp.intelligence.domain.insight;
 
 import com.aimsp.intelligence.domain.article.Article;
-import jakarta.persistence.*;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,7 +32,6 @@ public class Insight {
     @Column(length = 200)
     private String title;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String content;
 
