@@ -28,6 +28,9 @@ spring:
       mode: always
       data-locations: classpath:data.sql
 
+  flyway:
+    enabled: false  # H2 개발 환경에서는 Flyway 비활성화
+
   jackson:
     serialization:
       write-dates-as-timestamps: false
@@ -76,6 +79,12 @@ spring:
     init:
       mode: always
       data-locations: classpath:data-prod.sql
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true   # 기존 DB에 flyway_schema_history 없어도 진행
+    baseline-version: 1          # V1은 기존 스키마(baseline), V2부터 실행
+    locations: classpath:db/migration
 
   h2:
     console:

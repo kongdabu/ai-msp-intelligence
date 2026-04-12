@@ -4,13 +4,43 @@ interface Props {
   insights: Insight[]
 }
 
+// 카테고리 코드 → 표시 이름 매핑
+const CATEGORY_LABELS: Record<string, string> = {
+  AI_AGENT: 'AI Agent',
+  VERTICAL_AI: 'Vertical AI',
+  ITO: 'ITO',
+  MSP: 'MSP',
+  CLOUD: 'Cloud',
+  GEN_AI: 'Gen AI',
+  GENERAL: '일반',
+}
+
+// 경쟁사 코드 → 표시 이름 매핑
+const COMPETITOR_LABELS: Record<string, string> = {
+  LG_CNS: 'LG CNS',
+  SK_AX: 'SK AX',
+  BESPIN: '베스핀',
+  PWC: 'PwC',
+}
+
+function normalizeToken(token: string): string {
+  // 카테고리 코드면 변환
+  if (CATEGORY_LABELS[token]) return CATEGORY_LABELS[token]
+  // 경쟁사 코드면 변환
+  if (COMPETITOR_LABELS[token]) return COMPETITOR_LABELS[token]
+  return token
+}
+
 export default function KeywordCloud({ insights }: Props) {
-  // 인사이트 제목에서 키워드 추출 (간단 구현)
   const wordCount = new Map<string, number>()
   const stopWords = new Set(['및', '을', '를', '이', '가', '의', '에', '로', '으로', '한', '하는', '대한'])
 
   insights.forEach((insight) => {
-    const words = insight.title.split(/[\s,·]+/).filter((w) => w.length > 1 && !stopWords.has(w))
+    // | 와 공백/구두점 모두로 분리
+    const words = insight.title
+      .split(/[\s,·|]+/)
+      .map((w) => normalizeToken(w.trim()))
+      .filter((w) => w.length > 1 && !stopWords.has(w))
     words.forEach((word) => wordCount.set(word, (wordCount.get(word) ?? 0) + 1))
   })
 
