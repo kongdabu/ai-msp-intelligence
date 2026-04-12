@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://aimsp-backend.onrender.com/api/:path*"
+    }
+  ]
+}
