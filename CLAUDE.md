@@ -28,5 +28,36 @@ DB_URL=jdbc:h2:mem:aimspdb
 
 ## Hosting Github Hosting 활용
 프로잭트를 인터넷에 올리는 경우는 Github pages를 활용한다
-주요 정보 노출 방지 위해 .env에 저장
-https://github.com/kongdabu/ai-msp-intelligence
+1) 주요 정보 노출 방지 위해 .env에 저장
+2) https://github.com/kongdabu/ai-msp-intelligence
+
+render host : dpg-d7dhpnho3t8c73d1tru0-a
+3) Backend Service URL : https://aimsp-backend.onrender.com
+4) Frontend Service URL : 
+
+Vercel 배포 절차                                                                                                                                                      
+  1. 프로젝트 생성                                                                              
+  1. vercel.com 접속 → GitHub 로그인                                                       
+  2. Add New Project → kongdabu/ai-msp-intelligence 선택                                   
+  3. Root Directory → frontend 로 변경 (중요!)                                             
+                                                                                           
+  2. 빌드 설정 확인                                                                        
+                                                                                           
+  ┌──────────────────┬───────────────┐                                                     
+  │       항목       │      값       │                                                     
+  ├──────────────────┼───────────────┤                                                     
+  │ Framework        │ Vite          │                                                     
+  ├──────────────────┼───────────────┤
+  │ Root Directory   │ frontend      │
+  ├──────────────────┼───────────────┤
+  │ Build Command    │ npm run build │
+  ├──────────────────┼───────────────┤                                                     
+  │ Output Directory │ dist          │
+  └──────────────────┴───────────────┘                                                     
+                                                                 
+  3. Deploy 클릭
+
+  - 별도 환경변수 설정 불필요                                                              
+  - /api/* 요청은 자동으로 https://aimsp-backend.onrender.com/api/*로 프록시됨
+                                                                                           
+  배포 완료 후 URL을 공유해 주시면 정상 동작 여부를 확인해 드리겠습니다. 

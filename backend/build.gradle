@@ -36,8 +36,6 @@ dependencies {
     runtimeOnly 'com.h2database:h2'
     runtimeOnly 'org.postgresql:postgresql'
 
-    // Flyway (PostgreSQL 스키마 마이그레이션)
-    implementation 'org.flywaydb:flyway-core'
 
     // Crawling
     implementation 'org.jsoup:jsoup:1.17.2'
