@@ -67,7 +67,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create  # 최초 1회 테이블 재생성 후 update로 변경할 것
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
