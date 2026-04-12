@@ -111,8 +111,8 @@ export default function Dashboard() {
                   rel="noopener noreferrer"
                   className="block hover:bg-gray-50 -mx-2 px-2 py-2 rounded-md"
                 >
-                  <p className="text-sm text-gray-800 font-medium line-clamp-2">{article.title}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{article.sourceName}</p>
+                  <p className="text-sm text-gray-800 font-medium line-clamp-2">{article.title ?? '(제목 없음)'}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{article.sourceName ?? ''}</p>
                 </a>
               ))
             )}
