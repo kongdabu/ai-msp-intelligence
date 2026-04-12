@@ -36,6 +36,7 @@ export default function KeywordCloud({ insights }: Props) {
   const stopWords = new Set(['및', '을', '를', '이', '가', '의', '에', '로', '으로', '한', '하는', '대한'])
 
   insights.forEach((insight) => {
+    if (!insight.title) return
     // | 와 공백/구두점 모두로 분리
     const words = insight.title
       .split(/[\s,·|]+/)
