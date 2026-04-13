@@ -56,6 +56,18 @@ logging:
 spring:
   config:
     activate:
+      on-profile: prod-debug
+
+logging:
+  level:
+    com.zaxxer.hikari: DEBUG
+    org.hibernate.engine.jdbc.env: DEBUG
+    org.springframework.boot.autoconfigure.jdbc: DEBUG
+
+---
+spring:
+  config:
+    activate:
       on-profile: prod
 
   datasource:
