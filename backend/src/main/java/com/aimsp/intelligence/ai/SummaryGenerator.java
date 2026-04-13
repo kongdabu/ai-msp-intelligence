@@ -1,5 +1,6 @@
 package com.aimsp.intelligence.ai;
 
+import com.aimsp.intelligence.exception.GeminiApiUnavailableException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -81,6 +82,8 @@ public class SummaryGenerator {
                     node.path("detectedCompetitor").asText("GENERAL"),
                     node.path("detectedCategory").asText("GEN_AI")
             );
+        } catch (GeminiApiUnavailableException e) {
+            throw e;  // 상위로 전파하여 작업 중단
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return null;

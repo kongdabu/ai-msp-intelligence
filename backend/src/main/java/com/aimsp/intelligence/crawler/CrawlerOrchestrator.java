@@ -123,6 +123,8 @@ public class CrawlerOrchestrator {
 
                 Article savedArticle = articleService.saveIfNotExists(article);
                 if (savedArticle != null) saved++;
+            } catch (GeminiApiUnavailableException e) {
+                throw e;  // Gemini 서버 오류 시 즉시 작업 중단
             } catch (Exception e) {
                 log.error("기사 저장 실패 [{}]: {}", article.getTitle(), e.getMessage());
             }

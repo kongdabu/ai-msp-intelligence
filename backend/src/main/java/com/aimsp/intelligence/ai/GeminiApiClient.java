@@ -1,6 +1,7 @@
 package com.aimsp.intelligence.ai;
 
 import com.aimsp.intelligence.config.AppConfig;
+import com.aimsp.intelligence.exception.GeminiApiUnavailableException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -82,7 +83,12 @@ public class GeminiApiClient {
                             Thread.sleep(retryDelayMs);
                             continue;
                         }
-                        return null;
+                        throw new GeminiApiUnavailableException();
+                    }
+                    if (response.code() >= 500) {
+                        // 서버 오류(5xx): 즉시 중단 - 계속 호출해도 불필요한 비용만 발생
+                        log.error("Gemini API 서버 오류 (HTTP {}): 작업 중단", response.code());
+                        throw new GeminiApiUnavailableException();
                     }
                     if (!response.isSuccessful()) {
                         String errBody = response.body() != null ? response.body().string() : "(no body)";
