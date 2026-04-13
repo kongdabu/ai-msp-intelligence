@@ -60,6 +60,9 @@ spring:
 
   datasource:
     driver-class-name: org.postgresql.Driver
+    hikari:
+      data-source-properties:
+        sslmode: require
 
   jpa:
     properties:
