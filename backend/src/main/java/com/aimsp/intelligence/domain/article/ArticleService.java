@@ -2,15 +2,19 @@ package com.aimsp.intelligence.domain.article;
 
 import com.aimsp.intelligence.ai.SummaryGenerator;
 import com.aimsp.intelligence.dto.ArticleDto;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,20 +29,34 @@ public class ArticleService {
     private final SummaryGenerator summaryGenerator;
 
     // 기사 목록 조회 (필터 적용)
+    // Specification 사용 - null 조건은 쿼리에서 제외하여 PostgreSQL 타입 추론 오류 방지
     @Transactional(readOnly = true)
     public Page<ArticleDto.Response> getArticles(
             String competitor, String category, String sourceType,
             String keyword, LocalDateTime dateFrom, LocalDateTime dateTo,
             int page, int size) {
 
-        Pageable pageable = PageRequest.of(page, size);
-        // 파라미터를 title/summary 별도 분리하여 Hibernate 타입 추론 충돌 방지
         String normalizedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.toLowerCase() : null;
-        return articleRepository.findWithFilters(
-                competitor, category, sourceType,
-                normalizedKeyword, normalizedKeyword,
-                dateFrom, dateTo, pageable
-        ).map(ArticleDto.Response::from);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "collectedAt"));
+
+        Specification<Article> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (competitor != null)       predicates.add(cb.equal(root.get("competitor"), competitor));
+            if (category != null)         predicates.add(cb.equal(root.get("category"), category));
+            if (sourceType != null)       predicates.add(cb.equal(root.get("sourceType"), sourceType));
+            if (normalizedKeyword != null) {
+                String pattern = "%" + normalizedKeyword + "%";
+                predicates.add(cb.or(
+                    cb.like(cb.lower(root.get("title")), pattern),
+                    cb.like(cb.lower(root.get("summary")), pattern)
+                ));
+            }
+            if (dateFrom != null) predicates.add(cb.greaterThanOrEqualTo(root.get("publishedAt"), dateFrom));
+            if (dateTo != null)   predicates.add(cb.lessThanOrEqualTo(root.get("publishedAt"), dateTo));
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return articleRepository.findAll(spec, pageable).map(ArticleDto.Response::from);
     }
 
     // 기사 상세 조회
