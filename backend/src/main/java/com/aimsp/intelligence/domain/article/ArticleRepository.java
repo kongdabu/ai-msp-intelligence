@@ -26,8 +26,8 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
         (:competitor IS NULL OR a.competitor = :competitor) AND
         (:category IS NULL OR a.category = :category) AND
         (:sourceType IS NULL OR a.sourceType = :sourceType) AND
-        (:keyword IS NULL OR a.title LIKE CONCAT('%', :keyword, '%')
-            OR a.summary LIKE CONCAT('%', :keywordForSummary, '%')) AND
+        (:keyword IS NULL OR a.title LIKE CONCAT('%', CAST(:keyword AS String), '%')
+            OR a.summary LIKE CONCAT('%', CAST(:keywordForSummary AS String), '%')) AND
         (:dateFrom IS NULL OR a.publishedAt >= :dateFrom) AND
         (:dateTo IS NULL OR a.publishedAt <= :dateTo)
         ORDER BY a.collectedAt DESC
