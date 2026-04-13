@@ -85,8 +85,17 @@ public class GeminiApiClient {
                         }
                         throw new GeminiApiUnavailableException();
                     }
+                    if (response.code() == 503) {
+                        // 일시적 과부하: 재시도 (최대 MAX_RETRIES)
+                        log.warn("Gemini API 일시적 과부하(503) - 10초 후 재시도 ({}/{})", attempt, MAX_RETRIES);
+                        if (attempt < MAX_RETRIES) {
+                            Thread.sleep(10000);
+                            continue;
+                        }
+                        throw new GeminiApiUnavailableException();
+                    }
                     if (response.code() >= 500) {
-                        // 서버 오류(5xx): 즉시 중단 - 계속 호출해도 불필요한 비용만 발생
+                        // 기타 5xx: 즉시 중단
                         log.error("Gemini API 서버 오류 (HTTP {}): 작업 중단", response.code());
                         throw new GeminiApiUnavailableException();
                     }
