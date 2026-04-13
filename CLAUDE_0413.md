@@ -1,4 +1,4 @@
-# AI MSP Intelligence Platform
+# AI MSP Intelligence Platform — 스냅샷 (2026-04-13)
 
 ## 목적
 AI MSP 사업 전략팀용 경쟁사 동향 모니터링 플랫폼.
@@ -17,7 +17,7 @@ LG CNS, SK AX, 베스핀글로벌, PwC의 AI/AI Agent/ITO 관련 뉴스를
 ### Backend
 - Java 21, Spring Boot 3.2, Gradle
 - JPA/Hibernate, Lombok
-- OkHttp3 (Gemini API 호출), Jsoup + Rome (크롤링)
+- OkHttp3 (Claude API 호출), Jsoup + Rome (크롤링)
 - DB: 로컬 H2 (기본) / Supabase PostgreSQL (prod)
 - AI: Anthropic Claude API (`claude-haiku-4-5-20251001`)
 
@@ -48,8 +48,8 @@ ai-msp-intelligence/
 │   │   │       ├── PwcCrawler.java
 │   │   │       └── ZdnetKoreaCrawler.java
 │   │   ├── domain/
-│   │   │   ├── article/   # Article 엔티티, Controller, Service, Repository
-│   │   │   ├── insight/   # Insight 엔티티, Controller, Service, Repository
+│   │   │   ├── article/   # Article 엔티티, Controller, Service(Specification), Repository
+│   │   │   ├── insight/   # Insight 엔티티, Controller, Service(Specification), Repository
 │   │   │   └── source/    # Source 엔티티, Controller, Service, Repository
 │   │   ├── config/
 │   │   │   ├── AppConfig.java       # Claude 설정값 바인딩 (app.claude.*)
@@ -59,7 +59,7 @@ ai-msp-intelligence/
 │   │   └── exception/     # GlobalExceptionHandler, AiApiUnavailableException
 │   ├── src/main/resources/
 │   │   ├── application.yml           # 환경 설정 (default: H2, prod: Supabase)
-│   │   ├── data.sql                  # 로컬 초기 데이터
+│   │   ├── data.sql                  # 로컬 초기 데이터 (H2 MERGE INTO)
 │   │   ├── data-prod.sql             # prod 초기 소스 데이터 (ON CONFLICT DO NOTHING)
 │   │   └── db/migration/
 │   │       └── V2__fix_bytea_columns.sql  # bytea → text/varchar 수동 마이그레이션
@@ -175,3 +175,16 @@ curl -X POST https://aimsp-backend.onrender.com/api/insights/generate
 # 헬스체크
 curl https://aimsp-backend.onrender.com/actuator/health
 ```
+
+---
+
+## 오늘(2026-04-13) 주요 변경 이력
+
+| 커밋 | 내용 |
+|---|---|
+| `48bf3b3` | Gemini 모델 → `gemini-2.5-flash-lite` |
+| `9bf4e33` | ArticleRepository: JPQL IS NULL → JpaSpecificationExecutor (PostgreSQL 타입 추론 오류 수정) |
+| `c16db57` | InsightRepository: 동일 패턴 수정 |
+| `e1fbd10` | AI 클라이언트 전체 교체: Gemini → Claude Haiku (`claude-haiku-4-5-20251001`) |
+| `5593dd1` | CLAUDE.md 전면 재작성 (현재 상태 반영) |
+| `c841131` | Supabase PostgreSQL prod 설정 완성 (`ddl-auto: validate`, Rate Limiting 통합) |
