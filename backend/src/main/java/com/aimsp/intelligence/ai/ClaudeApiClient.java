@@ -119,7 +119,8 @@ public class ClaudeApiClient {
 
                     // 응답 파싱: content[0].text
                     JsonNode root = objectMapper.readTree(responseBody);
-                    return root.path("content").get(0).path("text").asText();
+                    String text = root.path("content").get(0).path("text").asText();
+                    return stripMarkdownCodeBlock(text);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -163,6 +164,25 @@ public class ClaudeApiClient {
             log.error("Claude 요청 바디 생성 실패: {}", e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * Claude가 간헐적으로 붙이는 마크다운 코드블록 제거
+     * ```json ... ``` 또는 ``` ... ``` 형태를 순수 JSON으로 변환
+     */
+    private String stripMarkdownCodeBlock(String text) {
+        if (text == null) return null;
+        String trimmed = text.trim();
+        if (trimmed.startsWith("```")) {
+            int firstNewline = trimmed.indexOf('\n');
+            if (firstNewline != -1) {
+                trimmed = trimmed.substring(firstNewline + 1);
+            }
+            if (trimmed.endsWith("```")) {
+                trimmed = trimmed.substring(0, trimmed.lastIndexOf("```")).trim();
+            }
+        }
+        return trimmed;
     }
 
     /**

@@ -70,7 +70,6 @@ public class InsightGenerator {
                 return result;
             }
 
-            // Gemini는 responseMimeType=application/json 으로 순수 JSON 반환
             JsonNode root = objectMapper.readTree(response);
             JsonNode insightsNode = root.path("insights");
 
