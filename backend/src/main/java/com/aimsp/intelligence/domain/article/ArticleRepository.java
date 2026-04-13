@@ -67,6 +67,6 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
     // 특정 경쟁사 최근 기사
     Page<Article> findByCompetitorOrderByPublishedAtDesc(String competitor, Pageable pageable);
 
-    // 최신 기사 N건
-    List<Article> findTop5ByOrderByCollectedAtDesc();
+    // 최신 기사 N건 (발행일 기준)
+    List<Article> findTop5ByOrderByPublishedAtDesc();
 }

@@ -110,10 +110,10 @@ public class ArticleService {
         });
     }
 
-    // 최신 기사 5건
+    // 최신 기사 5건 (발행일 기준)
     @Transactional(readOnly = true)
     public List<ArticleDto.Response> getLatestArticles() {
-        return articleRepository.findTop5ByOrderByCollectedAtDesc()
+        return articleRepository.findTop5ByOrderByPublishedAtDesc()
                 .stream()
                 .map(ArticleDto.Response::from)
                 .collect(Collectors.toList());
