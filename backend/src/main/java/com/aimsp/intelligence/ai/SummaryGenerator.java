@@ -7,8 +7,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -16,10 +14,6 @@ public class SummaryGenerator {
 
     private final GeminiApiClient geminiApiClient;
     private final ObjectMapper objectMapper;
-
-    // 15 RPM 제한: 최소 호출 간격 4초
-    private static final long MIN_INTERVAL_MS = 4000;
-    private final AtomicLong lastCallTime = new AtomicLong(0);
 
     private static final String SUMMARY_PROMPT_TEMPLATE = """
             너는 AI MSP(Managed Service Provider) 사업 전략 분석가다.
@@ -67,7 +61,6 @@ public class SummaryGenerator {
         String prompt = String.format(SUMMARY_PROMPT_TEMPLATE, title, truncatedContent);
 
         try {
-            applyRateLimit();
             String response = geminiApiClient.call(prompt);
             if (response == null) {
                 log.warn("Gemini 요약 생성 실패 (API 응답 없음): {}", title);
@@ -84,27 +77,10 @@ public class SummaryGenerator {
             );
         } catch (GeminiApiUnavailableException e) {
             throw e;  // 상위로 전파하여 작업 중단
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return null;
         } catch (Exception e) {
             log.error("AI 요약 파싱 실패: {} - {}", title, e.getMessage());
             return null;
         }
     }
 
-    /**
-     * 스마트 Rate Limiter: 마지막 호출 후 경과 시간이 MIN_INTERVAL_MS 미만일 때만 대기
-     * Gemini 응답이 4초 이상 걸리면 추가 대기 없이 즉시 다음 호출 가능
-     */
-    private synchronized void applyRateLimit() throws InterruptedException {
-        long now = System.currentTimeMillis();
-        long elapsed = now - lastCallTime.get();
-        if (lastCallTime.get() > 0 && elapsed < MIN_INTERVAL_MS) {
-            long waitMs = MIN_INTERVAL_MS - elapsed;
-            log.debug("Rate limit 대기: {}ms", waitMs);
-            Thread.sleep(waitMs);
-        }
-        lastCallTime.set(System.currentTimeMillis());
-    }
 }

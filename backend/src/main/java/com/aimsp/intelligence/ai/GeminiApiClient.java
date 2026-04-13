@@ -24,6 +24,9 @@ public class GeminiApiClient {
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     private static final int MAX_RETRIES = 3;
     private static final long DEFAULT_RETRY_DELAY_MS = 30000; // 30초
+    // 15 RPM 제한: 최소 호출 간격 4초 (SummaryGenerator/InsightGenerator 공유)
+    private static final long MIN_INTERVAL_MS = 4000;
+    private final java.util.concurrent.atomic.AtomicLong lastCallTime = new java.util.concurrent.atomic.AtomicLong(0);
 
     // OkHttpClient 싱글톤 - 커넥션 풀 재사용
     private final OkHttpClient client = new OkHttpClient.Builder()
@@ -65,6 +68,13 @@ public class GeminiApiClient {
 
         String apiUrl = appConfig.getGeminiApiUrl() + "/" + appConfig.getGeminiModel()
                 + ":generateContent?key=" + appConfig.getGeminiApiKey();
+
+        try {
+            applyRateLimit();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        }
 
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
@@ -144,6 +154,21 @@ public class GeminiApiClient {
             log.error("Gemini 요청 바디 생성 실패: {}", e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * 전역 Rate Limiter: SummaryGenerator/InsightGenerator 등 모든 호출자 공유
+     * 마지막 호출 후 MIN_INTERVAL_MS 미만이면 그 차이만큼만 대기
+     */
+    private synchronized void applyRateLimit() throws InterruptedException {
+        long now = System.currentTimeMillis();
+        long elapsed = now - lastCallTime.get();
+        if (lastCallTime.get() > 0 && elapsed < MIN_INTERVAL_MS) {
+            long waitMs = MIN_INTERVAL_MS - elapsed;
+            log.debug("Rate limit 대기: {}ms", waitMs);
+            Thread.sleep(waitMs);
+        }
+        lastCallTime.set(System.currentTimeMillis());
     }
 
     /**

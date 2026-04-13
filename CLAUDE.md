@@ -41,8 +41,7 @@ Vercel 배포 절차
   2. Add New Project → kongdabu/ai-msp-intelligence 선택                                   
   3. Root Directory → frontend 로 변경 (중요!)                                             
                                                                                            
-  2. 빌드 설정 확인                                                                        
-                                                                                           
+  2. 빌드 설정 확인                                                                
   ┌──────────────────┬───────────────┐                                                     
   │       항목       │      값       │                                                     
   ├──────────────────┼───────────────┤                                                     
@@ -53,11 +52,10 @@ Vercel 배포 절차
   │ Build Command    │ npm run build │
   ├──────────────────┼───────────────┤                                                     
   │ Output Directory │ dist          │
-  └──────────────────┴───────────────┘                                                     
-                                                                 
+  └──────────────────┴───────────────┘                                                                                      
   3. Deploy 클릭
 
   - 별도 환경변수 설정 불필요                                                              
-  - /api/* 요청은 자동으로 https://aimsp-backend.onrender.com/api/*로 프록시됨
-                                                                                           
-  배포 완료 후 URL을 공유해 주시면 정상 동작 여부를 확인해 드리겠습니다. 
+  - /api/* 요청은 자동으로 https://aimsp-backend.onrender.com/api/*로 프록시됨                    
+
+    curl -X POST https://aimsp-backend.onrender.com/api/articles/crawl
