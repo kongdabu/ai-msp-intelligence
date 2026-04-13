@@ -32,6 +32,27 @@ public class GeminiApiClient {
             .build();
 
     /**
+     * Gemini API 헬스체크 - GET /models/{model} (토큰 소비 없음)
+     * 200 OK → true, 그 외 → false
+     */
+    public boolean isAvailable() {
+        String healthUrl = appConfig.getGeminiApiUrl() + "/" + appConfig.getGeminiModel()
+                + "?key=" + appConfig.getGeminiApiKey();
+        Request request = new Request.Builder()
+                .url(healthUrl)
+                .get()
+                .build();
+        try (Response response = client.newCall(request).execute()) {
+            boolean ok = response.isSuccessful();
+            log.info("Gemini API 헬스체크: {} (HTTP {})", ok ? "정상" : "비정상", response.code());
+            return ok;
+        } catch (Exception e) {
+            log.error("Gemini API 헬스체크 실패: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Gemini API 호출 - 단일 텍스트 프롬프트
      * responseMimeType: application/json 으로 JSON 응답 강제
      * 429 Rate Limit 시 retryDelay 만큼 대기 후 최대 MAX_RETRIES 재시도

@@ -1,5 +1,6 @@
 package com.aimsp.intelligence.crawler;
 
+import com.aimsp.intelligence.ai.GeminiApiClient;
 import com.aimsp.intelligence.ai.SummaryGenerator;
 import com.aimsp.intelligence.crawler.sources.BespinCrawler;
 import com.aimsp.intelligence.crawler.sources.LgCnsCrawler;
@@ -10,6 +11,7 @@ import com.aimsp.intelligence.domain.article.Article;
 import com.aimsp.intelligence.domain.article.ArticleService;
 import com.aimsp.intelligence.domain.source.Source;
 import com.aimsp.intelligence.domain.source.SourceService;
+import com.aimsp.intelligence.exception.GeminiApiUnavailableException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,6 +30,7 @@ public class CrawlerOrchestrator {
     private final ArticleService articleService;
     private final SourceService sourceService;
     private final SummaryGenerator summaryGenerator;
+    private final GeminiApiClient geminiApiClient;
     private final RssCrawler rssCrawler;
     private final LgCnsCrawler lgCnsCrawler;
     private final SkAxCrawler skAxCrawler;
@@ -40,8 +43,13 @@ public class CrawlerOrchestrator {
 
     /**
      * 전체 소스 크롤링 - 5개 전용 크롤러 병렬 실행 후 RSS 소스 수집
+     * 시작 전 Gemini API 헬스체크 수행 - 비정상 시 GeminiApiUnavailableException 발생
      */
     public int crawlAll() {
+        if (!geminiApiClient.isAvailable()) {
+            throw new GeminiApiUnavailableException();
+        }
+
         int totalSaved = 0;
 
         // 1. 경쟁사별 Google News RSS 크롤러 병렬 실행

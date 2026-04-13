@@ -1,8 +1,10 @@
 package com.aimsp.intelligence.domain.insight;
 
+import com.aimsp.intelligence.ai.GeminiApiClient;
 import com.aimsp.intelligence.ai.InsightGenerator;
 import com.aimsp.intelligence.domain.article.Article;
 import com.aimsp.intelligence.domain.article.ArticleService;
+import com.aimsp.intelligence.exception.GeminiApiUnavailableException;
 import com.aimsp.intelligence.dto.InsightDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ public class InsightService {
     private final InsightRepository insightRepository;
     private final ArticleService articleService;
     private final InsightGenerator insightGenerator;
+    private final GeminiApiClient geminiApiClient;
 
     // 인사이트 목록 조회
     @Transactional(readOnly = true)
@@ -52,6 +55,9 @@ public class InsightService {
     // 수동 인사이트 생성 트리거
     @Transactional
     public List<InsightDto.Response> generateInsights() {
+        if (!geminiApiClient.isAvailable()) {
+            throw new GeminiApiUnavailableException();
+        }
         log.info("수동 인사이트 생성 시작");
         return generateFromRecentArticles();
     }
