@@ -6,14 +6,18 @@ import com.aimsp.intelligence.domain.article.Article;
 import com.aimsp.intelligence.domain.article.ArticleService;
 import com.aimsp.intelligence.exception.GeminiApiUnavailableException;
 import com.aimsp.intelligence.dto.InsightDto;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,9 +32,16 @@ public class InsightService {
     private final GeminiApiClient geminiApiClient;
 
     // 인사이트 목록 조회
+    // Specification 사용 - null 조건은 쿼리에서 제외하여 PostgreSQL 타입 추론 오류 방지
     @Transactional(readOnly = true)
     public Page<InsightDto.Response> getInsights(String insightType, String competitor, int page, int size) {
-        return insightRepository.findWithFilters(insightType, competitor, PageRequest.of(page, size))
+        Specification<Insight> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (insightType != null) predicates.add(cb.equal(root.get("insightType"), insightType));
+            if (competitor != null)  predicates.add(cb.equal(root.get("competitor"), competitor));
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        return insightRepository.findAll(spec, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "generatedAt")))
                 .map(InsightDto.Response::from);
     }
 
