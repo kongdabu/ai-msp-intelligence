@@ -10,5 +10,7 @@ public interface SourceRepository extends JpaRepository<Source, Long> {
 
     List<Source> findByActiveTrue();
 
+    long countByActiveTrue();
+
     boolean existsByUrl(String url);
 }

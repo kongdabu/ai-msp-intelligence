@@ -16,11 +16,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -40,6 +42,19 @@ public class CrawlerOrchestrator {
 
     // 크롤러 병렬 실행 스레드풀 (Google News 동시 요청 수 제한)
     private static final ExecutorService CRAWLER_POOL = Executors.newFixedThreadPool(3);
+
+    @PreDestroy
+    public void shutdown() {
+        CRAWLER_POOL.shutdown();
+        try {
+            if (!CRAWLER_POOL.awaitTermination(10, TimeUnit.SECONDS)) {
+                CRAWLER_POOL.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            CRAWLER_POOL.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
 
     /**
      * 전체 소스 크롤링 - 5개 전용 크롤러 병렬 실행 후 RSS 소스 수집

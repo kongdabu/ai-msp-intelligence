@@ -30,10 +30,10 @@ public class SourceService {
         return sourceRepository.findByActiveTrue();
     }
 
-    // 활성 소스 수
+    // 활성 소스 수 (COUNT 쿼리 - 전체 로딩 없이)
     @Transactional(readOnly = true)
     public long getActiveSourceCount() {
-        return sourceRepository.findByActiveTrue().size();
+        return sourceRepository.countByActiveTrue();
     }
 
     // 소스 활성/비활성 토글
