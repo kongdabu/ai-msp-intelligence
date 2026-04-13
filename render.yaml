@@ -9,11 +9,11 @@ services:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
       - key: DB_URL
-        value: jdbc:h2:file:/tmp/aimspdb
+        sync: false   # jdbc:postgresql://db.xxxx.supabase.co:5432/postgres
       - key: DB_USERNAME
-        value: sa
+        sync: false   # postgres
       - key: DB_PASSWORD
-        value: ""
+        sync: false   # Supabase DB 비밀번호
       - key: GEMINI_API_KEY
         sync: false   # Render 대시보드에서 직접 입력
     healthCheckPath: /actuator/health
