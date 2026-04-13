@@ -17,7 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InsightGenerator {
 
-    private final GeminiApiClient geminiApiClient;
+    private final ClaudeApiClient claudeApiClient;
     private final ObjectMapper objectMapper;
 
     // 출력 인사이트 최대 4건, content 200자 이내로 제한 → 응답 토큰 절약
@@ -64,7 +64,7 @@ public class InsightGenerator {
         String prompt = String.format(INSIGHT_PROMPT_TEMPLATE, articlesJson);
 
         try {
-            String response = geminiApiClient.call(prompt);
+            String response = claudeApiClient.call(prompt);
             if (response == null) {
                 log.warn("인사이트 생성 실패 (API 응답 없음)");
                 return result;

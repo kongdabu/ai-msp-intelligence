@@ -1,6 +1,6 @@
 package com.aimsp.intelligence.ai;
 
-import com.aimsp.intelligence.exception.GeminiApiUnavailableException;
+import com.aimsp.intelligence.exception.AiApiUnavailableException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SummaryGenerator {
 
-    private final GeminiApiClient geminiApiClient;
+    private final ClaudeApiClient claudeApiClient;
     private final ObjectMapper objectMapper;
 
     private static final String SUMMARY_PROMPT_TEMPLATE = """
@@ -61,7 +61,7 @@ public class SummaryGenerator {
         String prompt = String.format(SUMMARY_PROMPT_TEMPLATE, title, truncatedContent);
 
         try {
-            String response = geminiApiClient.call(prompt);
+            String response = claudeApiClient.call(prompt);
             if (response == null) {
                 log.warn("Gemini 요약 생성 실패 (API 응답 없음): {}", title);
                 return null;
@@ -75,7 +75,7 @@ public class SummaryGenerator {
                     node.path("detectedCompetitor").asText("GENERAL"),
                     node.path("detectedCategory").asText("GEN_AI")
             );
-        } catch (GeminiApiUnavailableException e) {
+        } catch (AiApiUnavailableException e) {
             throw e;  // 상위로 전파하여 작업 중단
         } catch (Exception e) {
             log.error("AI 요약 파싱 실패: {} - {}", title, e.getMessage());

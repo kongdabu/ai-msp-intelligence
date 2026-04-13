@@ -19,7 +19,7 @@ LG CNS, SK AX, 베스핀글로벌, PwC의 AI/AI Agent/ITO 관련 뉴스를
 - JPA/Hibernate, Lombok
 - OkHttp3 (Gemini API 호출), Jsoup + Rome (크롤링)
 - DB: 로컬 H2 (기본) / Supabase PostgreSQL (prod)
-- AI: Google Gemini API (`gemini-2.5-flash-lite`)
+- AI: Anthropic Claude API (`claude-haiku-4-5-20251001`)
 
 ### Frontend
 - React 18, TypeScript strict mode, Vite
@@ -35,7 +35,7 @@ ai-msp-intelligence/
 ├── backend/                          # Spring Boot API 서버
 │   ├── src/main/java/com/aimsp/intelligence/
 │   │   ├── ai/
-│   │   │   ├── GeminiApiClient.java  # Gemini API 호출 (Rate Limiting 포함, 4초 간격)
+│   │   │   ├── ClaudeApiClient.java  # Claude API 호출 (Rate Limiting 포함, 1초 간격)
 │   │   │   ├── SummaryGenerator.java # 기사 요약 생성 (JSON 파싱)
 │   │   │   └── InsightGenerator.java # 전략 인사이트 생성
 │   │   ├── crawler/
@@ -106,7 +106,7 @@ ai-msp-intelligence/
 
 | 변수 | 설명 | 기본값 |
 |---|---|---|
-| `GEMINI_API_KEY` | Google Gemini API 키 | 필수 |
+| `CLAUDE_API_KEY` | Anthropic Claude API 키 | 필수 |
 | `DB_URL` | Supabase JDBC URL (`prod` 프로파일) | 필수 (prod) |
 | `DB_USERNAME` | DB 사용자명 | 필수 (prod) |
 | `DB_PASSWORD` | DB 비밀번호 | 필수 (prod) |

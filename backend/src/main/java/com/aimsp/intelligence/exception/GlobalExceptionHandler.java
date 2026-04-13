@@ -15,9 +15,9 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(GeminiApiUnavailableException.class)
-    public ResponseEntity<Map<String, Object>> handleGeminiUnavailable(GeminiApiUnavailableException e) {
-        log.warn("Gemini API 비정상: {}", e.getMessage());
+    @ExceptionHandler(AiApiUnavailableException.class)
+    public ResponseEntity<Map<String, Object>> handleAiUnavailable(AiApiUnavailableException e) {
+        log.warn("AI API 비정상: {}", e.getMessage());
         return buildErrorResponse(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
     }
 

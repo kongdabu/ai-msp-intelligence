@@ -1,6 +1,6 @@
 package com.aimsp.intelligence.crawler;
 
-import com.aimsp.intelligence.ai.GeminiApiClient;
+import com.aimsp.intelligence.ai.ClaudeApiClient;
 import com.aimsp.intelligence.ai.SummaryGenerator;
 import com.aimsp.intelligence.crawler.sources.BespinCrawler;
 import com.aimsp.intelligence.crawler.sources.LgCnsCrawler;
@@ -11,7 +11,7 @@ import com.aimsp.intelligence.domain.article.Article;
 import com.aimsp.intelligence.domain.article.ArticleService;
 import com.aimsp.intelligence.domain.source.Source;
 import com.aimsp.intelligence.domain.source.SourceService;
-import com.aimsp.intelligence.exception.GeminiApiUnavailableException;
+import com.aimsp.intelligence.exception.AiApiUnavailableException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -32,7 +32,7 @@ public class CrawlerOrchestrator {
     private final ArticleService articleService;
     private final SourceService sourceService;
     private final SummaryGenerator summaryGenerator;
-    private final GeminiApiClient geminiApiClient;
+    private final ClaudeApiClient claudeApiClient;
     private final RssCrawler rssCrawler;
     private final LgCnsCrawler lgCnsCrawler;
     private final SkAxCrawler skAxCrawler;
@@ -61,8 +61,8 @@ public class CrawlerOrchestrator {
      * 시작 전 Gemini API 헬스체크 수행 - 비정상 시 GeminiApiUnavailableException 발생
      */
     public int crawlAll() {
-        if (!geminiApiClient.isAvailable()) {
-            throw new GeminiApiUnavailableException();
+        if (!claudeApiClient.isAvailable()) {
+            throw new AiApiUnavailableException();
         }
 
         int totalSaved = 0;
@@ -138,8 +138,8 @@ public class CrawlerOrchestrator {
 
                 Article savedArticle = articleService.saveIfNotExists(article);
                 if (savedArticle != null) saved++;
-            } catch (GeminiApiUnavailableException e) {
-                throw e;  // Gemini 서버 오류 시 즉시 작업 중단
+            } catch (AiApiUnavailableException e) {
+                throw e;  // AI API 서버 오류 시 즉시 작업 중단
             } catch (Exception e) {
                 log.error("기사 저장 실패 [{}]: {}", article.getTitle(), e.getMessage());
             }
