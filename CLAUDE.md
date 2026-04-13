@@ -19,7 +19,7 @@ LG CNS, SK AX, 베스핀글로벌, PwC의 AI/AI Agent/ITO 관련 뉴스를
 - JPA/Hibernate, Lombok
 - OkHttp3 (Gemini API 호출), Jsoup + Rome (크롤링)
 - DB: 로컬 H2 (기본) / Supabase PostgreSQL (prod)
-- AI: Google Gemini API (`gemini-3-flash`)
+- AI: Google Gemini API (`gemini-2.5-flash-lite`)
 
 ### Frontend
 - React 18, TypeScript strict mode, Vite

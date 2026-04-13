@@ -39,7 +39,7 @@ app:
   gemini:
     api-key: ${GEMINI_API_KEY:}
     api-url: https://generativelanguage.googleapis.com/v1beta/models
-    model: gemini-3-flash
+    model: gemini-2.5-flash-lite
     max-tokens: 4096
   crawl:
     interval-hours: ${CRAWL_INTERVAL_HOURS:24}
