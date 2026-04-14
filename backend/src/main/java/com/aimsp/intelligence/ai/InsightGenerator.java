@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
@@ -43,10 +42,11 @@ public class InsightGenerator {
             - actionItems는 2개 이내로 작성
 
             [출력 형식 - 반드시 JSON만 출력, 다른 텍스트 없이]
-            {"insights":[{"title":"제목30자이내","content":"분석200자이내","type":"OPPORTUNITY","competitor":"LG_CNS","impactScore":4,"actionItems":["액션1","액션2"]}]}
+            {"insights":[{"title":"제목30자이내","content":"분석200자이내","type":"OPPORTUNITY","competitor":"LG_CNS","impactScore":4,"actionItems":["액션1","액션2"],"sourceArticleIds":[1,3,5]}]}
 
             type은 OPPORTUNITY|THREAT|TREND|STRATEGY 중 하나.
             competitor는 LG_CNS|SK_AX|BESPIN|PWC|GENERAL 중 하나.
+            sourceArticleIds는 인사이트 도출에 실제로 참조한 기사의 id 값(최대 5개)만 포함.
 
             [수집 뉴스]
             %s
@@ -61,6 +61,10 @@ public class InsightGenerator {
 
         // 최대 15건만 전달해 입력 토큰 제한
         List<Article> limited = articles.size() > 15 ? articles.subList(0, 15) : articles;
+        // id → Article 맵 (Gemini가 반환한 sourceArticleIds로 역조회)
+        java.util.Map<Long, Article> articleById = limited.stream()
+                .collect(java.util.stream.Collectors.toMap(Article::getId, a -> a));
+
         String articlesJson = buildArticlesJson(limited);
         String prompt = String.format(INSIGHT_PROMPT_TEMPLATE, articlesJson);
 
@@ -88,13 +92,21 @@ public class InsightGenerator {
                     actionItems.add(item.asText());
                 }
                 insight.setActionItems(actionItems);
-                // relevanceScore 상위 5개 기사만 근거로 저장
-                List<Article> top5 = articles.stream()
-                        .filter(a -> a.getRelevanceScore() != null)
-                        .sorted(Comparator.comparingInt(Article::getRelevanceScore).reversed())
-                        .limit(5)
-                        .collect(java.util.stream.Collectors.toList());
-                insight.setSourceArticles(top5);
+
+                // Gemini가 실제 참조했다고 반환한 기사 ID로 소스 기사 설정
+                List<Article> sourceArticles = new ArrayList<>();
+                JsonNode sourceIds = node.path("sourceArticleIds");
+                if (!sourceIds.isMissingNode() && sourceIds.isArray()) {
+                    for (JsonNode idNode : sourceIds) {
+                        Article a = articleById.get(idNode.longValue());
+                        if (a != null) sourceArticles.add(a);
+                    }
+                }
+                // Gemini가 sourceArticleIds를 반환하지 않은 경우 → limited 전체를 폴백으로 사용
+                if (sourceArticles.isEmpty()) {
+                    sourceArticles.addAll(limited);
+                }
+                insight.setSourceArticles(sourceArticles);
 
                 result.add(insight);
             }
@@ -118,6 +130,7 @@ public class InsightGenerator {
                 if (summary.length() > 150) summary = summary.substring(0, 150);
                 final String finalSummary = summary;
                 articleList.add(new java.util.HashMap<>() {{
+                    put("id", a.getId());
                     put("title", a.getTitle());
                     put("summary", finalSummary);
                     put("competitor", a.getCompetitor());
