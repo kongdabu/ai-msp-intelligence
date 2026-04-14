@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.nio.channels.ClosedChannelException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,6 +31,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNoResourceFound(NoResourceFoundException e) {
         return buildErrorResponse(HttpStatus.NOT_FOUND, e.getMessage());
+    }
+
+    // 클라이언트가 응답 전에 연결을 끊은 경우 (배포 중 컨테이너 교체 등) — 정상적인 네트워크 이벤트
+    @ExceptionHandler(ClosedChannelException.class)
+    public void handleClosedChannel(ClosedChannelException e) {
+        log.debug("클라이언트 연결 종료 (무시): {}", e.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
