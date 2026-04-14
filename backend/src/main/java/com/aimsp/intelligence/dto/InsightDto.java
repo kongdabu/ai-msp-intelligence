@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,7 +33,7 @@ public class InsightDto {
                     .insightType(insight.getInsightType())
                     .competitor(insight.getCompetitor())
                     .impactScore(insight.getImpactScore())
-                    .actionItems(insight.getActionItems())
+                    .actionItems(new ArrayList<>(insight.getActionItems()))
                     .sourceArticleCount(insight.getSourceArticles() != null ? insight.getSourceArticles().size() : 0)
                     .generatedAt(insight.getGeneratedAt())
                     .build();
@@ -64,7 +65,7 @@ public class InsightDto {
                     .insightType(insight.getInsightType())
                     .competitor(insight.getCompetitor())
                     .impactScore(insight.getImpactScore())
-                    .actionItems(insight.getActionItems())
+                    .actionItems(new ArrayList<>(insight.getActionItems()))
                     .sourceArticles(articles)
                     .generatedAt(insight.getGeneratedAt())
                     .build();
