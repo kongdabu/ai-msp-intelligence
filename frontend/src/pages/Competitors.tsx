@@ -15,10 +15,13 @@ export default function Competitors() {
 
   const since30 = new Date()
   since30.setDate(since30.getDate() - 30)
+  // toISOString()은 "Z" 타임존 접미사를 포함 → Spring LocalDateTime 파싱 실패
+  // slice(0, 19)로 "2026-03-15T00:18:49" 형태로 잘라냄
+  const dateFromStr = since30.toISOString().slice(0, 19)
 
   const { data } = useArticles({
     competitor: activeComp,
-    dateFrom: since30.toISOString(),
+    dateFrom: dateFromStr,
     size: 50,
   })
 
