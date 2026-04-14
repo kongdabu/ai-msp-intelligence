@@ -28,6 +28,27 @@ public class ArticleService {
     private final ArticleRepository articleRepository;
     private final SummaryGenerator summaryGenerator;
 
+    // 기사 목록 조회 - 페이지네이션 없이 List 반환 (COUNT 쿼리 생략, 경쟁사 분석 페이지용)
+    @Transactional(readOnly = true)
+    public List<ArticleDto.Response> getArticlesList(
+            String competitor, String category, LocalDateTime dateFrom, LocalDateTime dateTo, int limit) {
+
+        Specification<Article> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (competitor != null) predicates.add(cb.equal(root.get("competitor"), competitor));
+            if (category != null)   predicates.add(cb.equal(root.get("category"), category));
+            if (dateFrom != null)   predicates.add(cb.greaterThanOrEqualTo(root.get("publishedAt"), dateFrom));
+            if (dateTo != null)     predicates.add(cb.lessThanOrEqualTo(root.get("publishedAt"), dateTo));
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Sort sort = Sort.by(Sort.Direction.DESC, "publishedAt");
+        return articleRepository.findAll(spec, sort).stream()
+                .limit(limit)
+                .map(ArticleDto.Response::from)
+                .collect(Collectors.toList());
+    }
+
     // 기사 목록 조회 (필터 적용)
     // Specification 사용 - null 조건은 쿼리에서 제외하여 PostgreSQL 타입 추론 오류 방지
     @Transactional(readOnly = true)

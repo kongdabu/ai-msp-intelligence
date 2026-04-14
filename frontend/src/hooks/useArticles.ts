@@ -33,6 +33,32 @@ export function useArticles(params: ArticleParams = {}) {
   })
 }
 
+interface ArticleListParams {
+  competitor?: string
+  category?: string
+  dateFrom?: string
+  dateTo?: string
+  limit?: number
+}
+
+export function useArticlesList(params: ArticleListParams = {}) {
+  return useQuery<Article[]>({
+    queryKey: ['articles-list', params],
+    queryFn: async () => {
+      const { data } = await axios.get('/api/articles/list', {
+        params: {
+          competitor: params.competitor || undefined,
+          category: params.category || undefined,
+          dateFrom: params.dateFrom || undefined,
+          dateTo: params.dateTo || undefined,
+          limit: params.limit,
+        },
+      })
+      return data
+    },
+  })
+}
+
 export function useArticle(id: number | null) {
   return useQuery<Article>({
     queryKey: ['article', id],

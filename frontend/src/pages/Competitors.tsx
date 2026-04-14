@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useArticles } from '../hooks/useArticles'
+import { useArticlesList } from '../hooks/useArticles'
 import { Competitor, COMPETITOR_LABELS, CATEGORY_LABELS, Category } from '../types'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
@@ -10,6 +10,26 @@ import { ExternalLink } from 'lucide-react'
 
 const COMPETITORS: Competitor[] = ['LG_CNS', 'SK_AX', 'BESPIN', 'PWC']
 
+function ArticleSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      {[1, 2, 3].map((g) => (
+        <div key={g}>
+          <div className="h-3 w-24 bg-gray-200 rounded mb-2" />
+          <div className="space-y-2 ml-3 border-l-2 border-gray-100 pl-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="space-y-1">
+                <div className="h-3 bg-gray-200 rounded w-full" />
+                <div className="h-2 bg-gray-100 rounded w-3/4" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function Competitors() {
   const [activeComp, setActiveComp] = useState<Competitor>('LG_CNS')
 
@@ -19,13 +39,11 @@ export default function Competitors() {
   // slice(0, 19)로 "2026-03-15T00:18:49" 형태로 잘라냄
   const dateFromStr = since30.toISOString().slice(0, 19)
 
-  const { data } = useArticles({
+  const { data: articles = [], isLoading } = useArticlesList({
     competitor: activeComp,
     dateFrom: dateFromStr,
-    size: 50,
+    limit: 50,
   })
-
-  const articles = data?.content ?? []
 
   // 날짜별 그룹핑
   const byDate = articles.reduce<Record<string, typeof articles>>((acc, a) => {
@@ -71,7 +89,9 @@ export default function Competitors() {
             최근 30일 기사 타임라인 ({articles.length}건)
           </h3>
           <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-            {Object.entries(byDate)
+            {isLoading ? (
+              <ArticleSkeleton />
+            ) : Object.entries(byDate)
               .sort(([a], [b]) => b.localeCompare(a))
               .map(([date, dateArticles]) => (
                 <div key={date}>
@@ -103,7 +123,7 @@ export default function Competitors() {
                   </div>
                 </div>
               ))}
-            {articles.length === 0 && (
+            {!isLoading && articles.length === 0 && (
               <p className="text-sm text-gray-400 text-center py-8">기사가 없습니다</p>
             )}
           </div>

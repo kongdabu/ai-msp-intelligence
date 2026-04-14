@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -21,6 +22,20 @@ public class ArticleController {
 
     private final ArticleService articleService;
     private final CrawlerOrchestrator crawlerOrchestrator;
+
+    // 기사 목록 조회 - List (COUNT 쿼리 없음, 경쟁사 분석 페이지용)
+    @GetMapping("/list")
+    public ResponseEntity<List<ArticleDto.Response>> getArticlesList(
+            @RequestParam(required = false) String competitor,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dateTo,
+            @RequestParam(defaultValue = "50") int limit) {
+
+        return ResponseEntity.ok(
+                articleService.getArticlesList(competitor, category, dateFrom, dateTo, limit)
+        );
+    }
 
     // 기사 목록 조회
     @GetMapping
