@@ -36,9 +36,10 @@ server:
   port: 8080
 
 app:
-  claude:
-    api-key: ${CLAUDE_API_KEY:}
-    model: claude-haiku-4-5-20251001
+  gemini:
+    api-key: ${GEMINI_API_KEY:}
+    api-url: https://generativelanguage.googleapis.com/v1beta/models
+    model: gemini-2.5-flash-lite
     max-tokens: 4096
   crawl:
     interval-hours: ${CRAWL_INTERVAL_HOURS:24}

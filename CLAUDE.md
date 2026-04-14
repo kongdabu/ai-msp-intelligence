@@ -19,7 +19,7 @@ LG CNS, SK AX, 베스핀글로벌, PwC의 AI/AI Agent/ITO 관련 뉴스를
 - JPA/Hibernate, Lombok
 - OkHttp3 (Gemini API 호출), Jsoup + Rome (크롤링)
 - DB: 로컬 H2 (기본) / Supabase PostgreSQL (prod)
-- AI: Anthropic Claude API (`claude-haiku-4-5-20251001`)
+- AI: Google Gemini API (`gemini-2.5-flash-lite`)
 
 ### Frontend
 - React 18, TypeScript strict mode, Vite
@@ -35,7 +35,7 @@ ai-msp-intelligence/
 ├── backend/                          # Spring Boot API 서버
 │   ├── src/main/java/com/aimsp/intelligence/
 │   │   ├── ai/
-│   │   │   ├── ClaudeApiClient.java  # Claude API 호출 (Rate Limiting 포함, 1초 간격)
+│   │   │   ├── GeminiApiClient.java  # Gemini API 호출 (Rate Limiting 포함, 4초 간격)
 │   │   │   ├── SummaryGenerator.java # 기사 요약 생성 (JSON 파싱)
 │   │   │   └── InsightGenerator.java # 전략 인사이트 생성
 │   │   ├── crawler/
@@ -89,16 +89,16 @@ ai-msp-intelligence/
 ## 주요 동작 흐름
 
 ### 크롤링 (`POST /api/articles/crawl`)
-1. Claude API 헬스체크 (`GET /v1/models`, 토큰 소비 없음)
+1. Gemini API 헬스체크 (토큰 소비 없음)
 2. 5개 경쟁사 크롤러 병렬 실행 (스레드풀 3개)
-3. 수집된 기사 순차 저장 — 중복 URL은 Claude 호출 없이 스킵
-4. 신규 기사만 `SummaryGenerator`로 Claude 요약 생성 (1초 간격 Rate Limit)
+3. 수집된 기사 순차 저장 — 중복 URL은 Gemini 호출 없이 스킵
+4. 신규 기사만 `SummaryGenerator`로 Gemini 요약 생성 (4초 간격 Rate Limit)
 5. DB 저장
 
 ### 인사이트 생성 (`POST /api/insights/generate`)
 - 미처리 기사 최대 15건을 `InsightGenerator`로 전달
 - Claude가 4건 이하 전략 인사이트 JSON 반환
-- Rate Limiting은 `ClaudeApiClient` 레벨에서 전역 적용 (SummaryGenerator/InsightGenerator 공유)
+- Rate Limiting은 `GeminiApiClient` 레벨에서 전역 적용 (SummaryGenerator/InsightGenerator 공유)
 
 ---
 
@@ -106,7 +106,7 @@ ai-msp-intelligence/
 
 | 변수 | 설명 | 기본값 |
 |---|---|---|
-| `CLAUDE_API_KEY` | Anthropic Claude API 키 | 필수 |
+| `GEMINI_API_KEY` | Google Gemini API 키 | 필수 |
 | `DB_URL` | Supabase JDBC URL (`prod` 프로파일) | 필수 (prod) |
 | `DB_USERNAME` | DB 사용자명 | 필수 (prod) |
 | `DB_PASSWORD` | DB 비밀번호 | 필수 (prod) |
@@ -152,7 +152,7 @@ ai-msp-intelligence/
 
 ### Render 배포
 - `render.yaml` 기반 자동 배포 (GitHub main 푸시 시 트리거)
-- Render 대시보드에서 환경변수 직접 입력 필요: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `CLAUDE_API_KEY`
+- Render 대시보드에서 환경변수 직접 입력 필요: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `GEMINI_API_KEY`
 - Render host ID: `dpg-d7dhpnho3t8c73d1tru0-a`
 
 ### Vercel 배포 (Frontend)

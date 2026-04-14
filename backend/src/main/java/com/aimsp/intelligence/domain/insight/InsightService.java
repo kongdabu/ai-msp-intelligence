@@ -1,6 +1,6 @@
 package com.aimsp.intelligence.domain.insight;
 
-import com.aimsp.intelligence.ai.ClaudeApiClient;
+import com.aimsp.intelligence.ai.GeminiApiClient;
 import com.aimsp.intelligence.ai.InsightGenerator;
 import com.aimsp.intelligence.domain.article.Article;
 import com.aimsp.intelligence.domain.article.ArticleService;
@@ -29,7 +29,7 @@ public class InsightService {
     private final InsightRepository insightRepository;
     private final ArticleService articleService;
     private final InsightGenerator insightGenerator;
-    private final ClaudeApiClient claudeApiClient;
+    private final GeminiApiClient geminiApiClient;
 
     // 인사이트 목록 조회
     // Specification 사용 - null 조건은 쿼리에서 제외하여 PostgreSQL 타입 추론 오류 방지
@@ -66,7 +66,7 @@ public class InsightService {
     // 수동 인사이트 생성 트리거
     @Transactional
     public List<InsightDto.Response> generateInsights() {
-        if (!claudeApiClient.isAvailable()) {
+        if (!geminiApiClient.isAvailable()) {
             throw new AiApiUnavailableException();
         }
         log.info("수동 인사이트 생성 시작");

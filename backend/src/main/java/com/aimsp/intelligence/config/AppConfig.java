@@ -6,24 +6,20 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AppConfig {
 
-    @Value("${app.claude.api-key}")
-    private String claudeApiKey;
+    @Value("${app.gemini.api-key}")
+    private String geminiApiKey;
 
-    @Value("${app.claude.model}")
-    private String claudeModel;
+    @Value("${app.gemini.api-url}")
+    private String geminiApiUrl;
 
-    @Value("${app.claude.max-tokens}")
+    @Value("${app.gemini.model}")
+    private String geminiModel;
+
+    @Value("${app.gemini.max-tokens}")
     private int maxTokens;
 
-    public String getClaudeApiKey() {
-        return claudeApiKey;
-    }
-
-    public String getClaudeModel() {
-        return claudeModel;
-    }
-
-    public int getMaxTokens() {
-        return maxTokens;
-    }
+    public String getGeminiApiKey() { return geminiApiKey; }
+    public String getGeminiApiUrl() { return geminiApiUrl; }
+    public String getGeminiModel()  { return geminiModel; }
+    public int getMaxTokens()       { return maxTokens; }
 }

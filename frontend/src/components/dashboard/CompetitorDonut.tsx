@@ -1,4 +1,4 @@
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { Competitor, COMPETITOR_LABELS, COMPETITOR_COLORS } from '../../types'
 
 interface Props {
@@ -23,24 +23,33 @@ export default function CompetitorDonut({ data }: Props) {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={220}>
-      <PieChart>
-        <Pie
-          data={chartData}
-          cx="50%"
-          cy="50%"
-          innerRadius={55}
-          outerRadius={85}
-          paddingAngle={3}
-          dataKey="value"
-        >
-          {chartData.map((entry, index) => (
-            <Cell key={index} fill={entry.color} />
-          ))}
-        </Pie>
-        <Tooltip formatter={(value) => [`${value}건`, '']} />
-        <Legend iconType="circle" iconSize={8} />
-      </PieChart>
-    </ResponsiveContainer>
+    <div>
+      <ResponsiveContainer width="100%" height={200}>
+        <PieChart>
+          <Pie
+            data={chartData}
+            cx="50%"
+            cy="50%"
+            innerRadius={55}
+            outerRadius={85}
+            paddingAngle={3}
+            dataKey="value"
+          >
+            {chartData.map((entry, index) => (
+              <Cell key={index} fill={entry.color} />
+            ))}
+          </Pie>
+          <Tooltip formatter={(value) => [`${value}건`, '']} />
+        </PieChart>
+      </ResponsiveContainer>
+      <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2">
+        {chartData.map((entry) => (
+          <div key={entry.name} className="flex items-center gap-1 text-xs text-gray-600">
+            <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+            {entry.name}
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }

@@ -1,6 +1,6 @@
 package com.aimsp.intelligence.crawler;
 
-import com.aimsp.intelligence.ai.ClaudeApiClient;
+import com.aimsp.intelligence.ai.GeminiApiClient;
 import com.aimsp.intelligence.ai.SummaryGenerator;
 import com.aimsp.intelligence.crawler.sources.BespinCrawler;
 import com.aimsp.intelligence.crawler.sources.LgCnsCrawler;
@@ -32,7 +32,7 @@ public class CrawlerOrchestrator {
     private final ArticleService articleService;
     private final SourceService sourceService;
     private final SummaryGenerator summaryGenerator;
-    private final ClaudeApiClient claudeApiClient;
+    private final GeminiApiClient geminiApiClient;
     private final RssCrawler rssCrawler;
     private final LgCnsCrawler lgCnsCrawler;
     private final SkAxCrawler skAxCrawler;
@@ -61,7 +61,7 @@ public class CrawlerOrchestrator {
      * 시작 전 Gemini API 헬스체크 수행 - 비정상 시 GeminiApiUnavailableException 발생
      */
     public int crawlAll() {
-        if (!claudeApiClient.isAvailable()) {
+        if (!geminiApiClient.isAvailable()) {
             throw new AiApiUnavailableException();
         }
 

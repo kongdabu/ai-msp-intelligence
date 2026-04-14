@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
@@ -17,7 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InsightGenerator {
 
-    private final ClaudeApiClient claudeApiClient;
+    private final GeminiApiClient geminiApiClient;
     private final ObjectMapper objectMapper;
 
     // 출력 인사이트 최대 4건, content 200자 이내로 제한 → 응답 토큰 절약
@@ -64,7 +65,7 @@ public class InsightGenerator {
         String prompt = String.format(INSIGHT_PROMPT_TEMPLATE, articlesJson);
 
         try {
-            String response = claudeApiClient.call(prompt);
+            String response = geminiApiClient.call(prompt);
             if (response == null) {
                 log.warn("인사이트 생성 실패 (API 응답 없음)");
                 return result;
@@ -87,7 +88,13 @@ public class InsightGenerator {
                     actionItems.add(item.asText());
                 }
                 insight.setActionItems(actionItems);
-                insight.setSourceArticles(articles);
+                // relevanceScore 상위 5개 기사만 근거로 저장
+                List<Article> top5 = articles.stream()
+                        .filter(a -> a.getRelevanceScore() != null)
+                        .sorted(Comparator.comparingInt(Article::getRelevanceScore).reversed())
+                        .limit(5)
+                        .collect(java.util.stream.Collectors.toList());
+                insight.setSourceArticles(top5);
 
                 result.add(insight);
             }

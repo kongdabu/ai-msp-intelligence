@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SummaryGenerator {
 
-    private final ClaudeApiClient claudeApiClient;
+    private final GeminiApiClient geminiApiClient;
     private final ObjectMapper objectMapper;
 
     private static final String SUMMARY_PROMPT_TEMPLATE = """
@@ -61,7 +61,7 @@ public class SummaryGenerator {
         String prompt = String.format(SUMMARY_PROMPT_TEMPLATE, title, truncatedContent);
 
         try {
-            String response = claudeApiClient.call(prompt);
+            String response = geminiApiClient.call(prompt);
             if (response == null) {
                 log.warn("Gemini 요약 생성 실패 (API 응답 없음): {}", title);
                 return null;
