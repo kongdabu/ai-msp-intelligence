@@ -58,7 +58,7 @@ public class ArticleService {
             int page, int size) {
 
         String normalizedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.toLowerCase() : null;
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "collectedAt"));
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "publishedAt"));
 
         Specification<Article> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
