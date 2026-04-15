@@ -1,16 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { Source, COMPETITOR_LABELS, Competitor, SourceType } from '../types'
 import { useTriggerCrawl } from '../hooks/useArticles'
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { Plus, RefreshCw, CheckCircle, XCircle } from 'lucide-react'
+import { Plus, RefreshCw, CheckCircle, XCircle, CheckCheck } from 'lucide-react'
 
 export default function Sources() {
   const queryClient = useQueryClient()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ name: '', url: '', type: 'NEWS', competitor: 'GENERAL' })
+  const [crawlResult, setCrawlResult] = useState<{ crawledCount: number } | null>(null)
 
   const { data: sources = [], isLoading } = useQuery<Source[]>({
     queryKey: ['sources'],
@@ -34,7 +35,17 @@ export default function Sources() {
     },
   })
 
-  const { mutate: triggerCrawl, isPending: isCrawling } = useTriggerCrawl()
+  const { mutate: triggerCrawl, isPending: isCrawling } = useTriggerCrawl({
+    onSuccess: (data) => {
+      setCrawlResult({ crawledCount: data.crawledCount })
+    },
+  })
+
+  useEffect(() => {
+    if (!crawlResult) return
+    const timer = setTimeout(() => setCrawlResult(null), 6000)
+    return () => clearTimeout(timer)
+  }, [crawlResult])
 
   const SOURCE_TYPE_COLORS: Record<string, string> = {
     NEWS: 'bg-blue-100 text-blue-800',
@@ -45,6 +56,17 @@ export default function Sources() {
 
   return (
     <div className="p-6 space-y-4">
+      {/* 크롤링 완료 배너 */}
+      {crawlResult && (
+        <div className="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
+          <CheckCheck size={16} className="shrink-0" />
+          <span>
+            수집 완료 — 신규 기사 <strong>{crawlResult.crawledCount}건</strong> 저장되었습니다. 기사 목록이 갱신되었습니다.
+          </span>
+          <button onClick={() => setCrawlResult(null)} className="ml-auto text-green-600 hover:text-green-800">✕</button>
+        </div>
+      )}
+
       {/* 액션 버튼 */}
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-500">

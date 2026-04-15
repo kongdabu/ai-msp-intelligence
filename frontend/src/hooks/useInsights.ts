@@ -36,16 +36,21 @@ export function useInsight(id: number | null) {
   })
 }
 
-export function useGenerateInsights() {
+interface GenerateInsightsOptions {
+  onSuccess?: (insights: import('../types').Insight[]) => void
+}
+
+export function useGenerateInsights(options?: GenerateInsightsOptions) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async () => {
       const { data } = await axios.post('/api/insights/generate')
-      return data
+      return data as import('../types').Insight[]
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['insights'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      options?.onSuccess?.(data)
     },
   })
 }

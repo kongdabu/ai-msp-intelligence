@@ -70,16 +70,23 @@ export function useArticle(id: number | null) {
   })
 }
 
-export function useTriggerCrawl() {
+interface TriggerCrawlOptions {
+  onSuccess?: (data: { crawledCount: number; triggeredAt: string }) => void
+}
+
+export function useTriggerCrawl(options?: TriggerCrawlOptions) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async () => {
       const { data } = await axios.post('/api/articles/crawl')
-      return data
+      return data as { crawledCount: number; triggeredAt: string }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['articles'] })
+      queryClient.invalidateQueries({ queryKey: ['articles-list'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['sources'] })
+      options?.onSuccess?.(data)
     },
   })
 }

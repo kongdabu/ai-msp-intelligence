@@ -5,16 +5,29 @@ import TrendChart from '../components/dashboard/TrendChart'
 import KeywordCloud from '../components/dashboard/KeywordCloud'
 import InsightCard from '../components/insight/InsightCard'
 import { Insight } from '../types'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import InsightPanel from '../components/insight/InsightPanel'
 import { useInsight } from '../hooks/useInsights'
-import { Newspaper, Lightbulb, Zap, Database, Sparkles } from 'lucide-react'
+import { Newspaper, Lightbulb, Zap, Database, Sparkles, CheckCheck } from 'lucide-react'
+import { Insight } from '../types'
 
 export default function Dashboard() {
   const { data, isLoading } = useDashboard()
-  const { mutate: generate, isPending } = useGenerateInsights()
   const [selectedInsightId, setSelectedInsightId] = useState<number | null>(null)
   const { data: insightDetail } = useInsight(selectedInsightId)
+  const [generateResult, setGenerateResult] = useState<{ count: number } | null>(null)
+
+  const { mutate: generate, isPending } = useGenerateInsights({
+    onSuccess: (insights: Insight[]) => {
+      setGenerateResult({ count: insights.length })
+    },
+  })
+
+  useEffect(() => {
+    if (!generateResult) return
+    const timer = setTimeout(() => setGenerateResult(null), 6000)
+    return () => clearTimeout(timer)
+  }, [generateResult])
 
   if (isLoading) {
     return (
@@ -81,6 +94,17 @@ export default function Dashboard() {
               {isPending ? '생성 중...' : '인사이트 생성'}
             </button>
           </div>
+          {generateResult && (
+            <div className="flex items-center gap-2 px-3 py-2 mb-3 bg-green-50 border border-green-200 rounded-lg text-xs text-green-800">
+              <CheckCheck size={14} className="shrink-0" />
+              <span>
+                {generateResult.count > 0
+                  ? <>인사이트 <strong>{generateResult.count}건</strong> 생성 완료. 목록이 갱신되었습니다.</>
+                  : '처리할 신규 기사가 없거나 인사이트를 생성하지 못했습니다.'}
+              </span>
+              <button onClick={() => setGenerateResult(null)} className="ml-auto text-green-600 hover:text-green-800">✕</button>
+            </div>
+          )}
           {data.latestInsights?.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-8">인사이트가 없습니다. 위 버튼을 눌러 생성해보세요.</p>
           ) : (
