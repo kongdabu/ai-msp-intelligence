@@ -37,8 +37,9 @@ public class RssCrawler {
 
     /**
      * RSS 피드 크롤링 후 Article 목록 반환.
-     * 1차: Rome (strict XML) 파싱 시도
-     * 2차: XML 파싱 실패 시 Jsoup HTML 파서로 폴백 (비표준 HTML 혼재 피드 대응)
+     * 1차: Rome + 원본 XML (Google News 등 정상 피드 — 불필요한 정규식 처리 없음)
+     * 2차: Rome + sanitizeXml (BI Korea 등 HTML이 혼재된 반정형 피드)
+     * 3차: Jsoup 직접 파싱 (완전 비정형 피드 대응)
      */
     public List<Article> crawl(Source source) {
         String rawBody;
@@ -49,19 +50,30 @@ public class RssCrawler {
             return List.of();
         }
 
-        // 1차: Rome strict XML 파싱
+        // 1차: Rome + 원본 XML (정상 피드에 불필요한 정규식 적용 방지)
+        try {
+            SyndFeedInput input = new SyndFeedInput();
+            SyndFeed feed = input.build(new StringReader(rawBody));
+            List<Article> articles = toArticles(feed.getEntries(), source);
+            log.info("RSS 크롤링 완료 (XML): {} → {}건", source.getName(), articles.size());
+            return articles;
+        } catch (Exception ignored) {
+            // 1차 실패 시 로그 없이 2차로 진행
+        }
+
+        // 2차: Rome + sanitizeXml (HTML void 요소·DOCTYPE 등 비표준 패턴 정제 후 재시도)
         try {
             String sanitized = sanitizeXml(rawBody);
             SyndFeedInput input = new SyndFeedInput();
             SyndFeed feed = input.build(new StringReader(sanitized));
             List<Article> articles = toArticles(feed.getEntries(), source);
-            log.info("RSS 크롤링 완료 (XML): {} → {}건", source.getName(), articles.size());
+            log.info("RSS 크롤링 완료 (sanitized XML): {} → {}건", source.getName(), articles.size());
             return articles;
-        } catch (Exception xmlEx) {
-            log.warn("RSS XML 파싱 실패 [{}], Jsoup 폴백 시도: {}", source.getName(), xmlEx.getMessage());
+        } catch (Exception sanitizeEx) {
+            log.warn("RSS sanitized XML 파싱 실패 [{}], Jsoup 폴백 시도: {}", source.getName(), sanitizeEx.getMessage());
         }
 
-        // 2차: Jsoup HTML 파서 폴백 (malformed XML 대응)
+        // 3차: Jsoup 직접 파싱 (완전 비정형 피드 대응)
         try {
             List<Article> articles = parseWithJsoup(rawBody, source);
             log.info("RSS 크롤링 완료 (Jsoup 폴백): {} → {}건", source.getName(), articles.size());
