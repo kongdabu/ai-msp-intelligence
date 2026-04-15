@@ -205,6 +205,15 @@ public class RssCrawler {
                 "(?i)\\s(async|defer|checked|disabled|selected|multiple|readonly|required|autofocus|autoplay|controls|loop|muted|open|reversed)(?=[\\s/>])",
                 " $1=\"$1\""
         );
+        // 4) HTML void 요소 → 자기닫기 XML 형태 변환
+        //    예: <br> → <br/>, <img src="..."> → <img src="..."/>
+        xml = xml.replaceAll(
+                "(?i)<(br|hr|img|input|meta|col|area|base|embed|param|source|track|wbr)(\\s[^>]*)?>",
+                "<$1$2/>"
+        );
+        // 5) HTML <link> 변환 — 속성이 있는 경우만 자기닫기 처리
+        //    RSS <link>https://...</link>는 속성이 없으므로 이 패턴에 해당 없음
+        xml = xml.replaceAll("(?i)<link(\\s[^>]+)>", "<link$1/>");
         return xml;
     }
 }
