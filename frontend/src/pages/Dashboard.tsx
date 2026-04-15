@@ -9,7 +9,6 @@ import { useState, useEffect } from 'react'
 import InsightPanel from '../components/insight/InsightPanel'
 import { useInsight } from '../hooks/useInsights'
 import { Newspaper, Lightbulb, Zap, Database, Sparkles, CheckCheck } from 'lucide-react'
-import { Insight } from '../types'
 
 export default function Dashboard() {
   const { data, isLoading } = useDashboard()
