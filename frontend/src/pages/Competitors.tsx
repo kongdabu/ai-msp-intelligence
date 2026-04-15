@@ -36,9 +36,9 @@ export default function Competitors() {
   // useMemo로 고정 — 매 렌더마다 초 단위로 값이 바뀌면 쿼리 키가 달라져 API 재호출 발생
   // 날짜(일) 단위로 잘라 하루 동안 동일한 쿼리 키 유지
   const dateFromStr = useMemo(() => {
-    const since30 = new Date()
-    since30.setDate(since30.getDate() - 30)
-    return since30.toISOString().slice(0, 10) + 'T00:00:00'
+    const since10 = new Date()
+    since10.setDate(since10.getDate() - 10)
+    return since10.toISOString().slice(0, 10) + 'T00:00:00'
   }, [])
 
   const { data: articles = [], isLoading } = useArticlesList({
@@ -88,7 +88,7 @@ export default function Competitors() {
         {/* 타임라인 */}
         <div className="lg:col-span-2 card">
           <h3 className="text-sm font-semibold text-gray-700 mb-4">
-            최근 30일 기사 타임라인 ({articles.length}건)
+            최근 10일 기사 타임라인 ({articles.length}건)
           </h3>
           <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
             {isLoading ? (
@@ -157,7 +157,7 @@ export default function Competitors() {
               {COMPETITOR_LABELS[activeComp]} 프로파일
             </h3>
             <p className="text-xs text-gray-600 leading-relaxed">
-              최근 30일간 <strong>{articles.length}건</strong>의 기사가 수집되었습니다.
+              최근 10일간 <strong>{articles.length}건</strong>의 기사가 수집되었습니다.
               {catChartData.length > 0 && (
                 <> 주요 카테고리는 <strong>{catChartData[0]?.name}</strong>입니다.</>
               )}
