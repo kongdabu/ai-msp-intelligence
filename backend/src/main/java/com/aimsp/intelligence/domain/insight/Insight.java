@@ -8,9 +8,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,6 +22,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(name = "insight", indexes = {
+    @Index(name = "idx_insight_generated_at", columnList = "generated_at"),
+    @Index(name = "idx_insight_competitor", columnList = "competitor"),
+    @Index(name = "idx_insight_impact_score", columnList = "impact_score")
+})
 @Getter
 @Setter
 @NoArgsConstructor

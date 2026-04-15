@@ -88,8 +88,11 @@ public class InsightService {
                 .map(insightRepository::save)
                 .collect(Collectors.toList());
 
-        // 처리된 기사 마킹
-        articles.forEach(article -> articleService.markAsProcessed(article.getId()));
+        // 인사이트가 실제로 생성된 경우에만 기사를 처리 완료로 마킹
+        // Gemini가 0건 반환 시(API 실패 등) 기사를 마킹하면 다음 생성 때 영구 제외됨
+        if (!saved.isEmpty()) {
+            articles.forEach(article -> articleService.markAsProcessed(article.getId()));
+        }
 
         log.info("인사이트 {}건 생성 완료", saved.size());
         return saved.stream().map(InsightDto.Response::from).collect(Collectors.toList());
@@ -101,11 +104,11 @@ public class InsightService {
         return insightRepository.countByImpactScoreGreaterThanEqual(4);
     }
 
-    // 미처리 인사이트 수
+    // 최근 24시간 인사이트 수 (대시보드 KPI - COUNT 쿼리 사용)
     @Transactional(readOnly = true)
     public long getUnprocessedInsightCount() {
         LocalDateTime since = LocalDateTime.now().minusDays(1);
-        return insightRepository.findByGeneratedAtAfterOrderByImpactScoreDesc(since).size();
+        return insightRepository.countByGeneratedAtAfter(since);
     }
 
     // 최근 인사이트 3건 (대시보드용)

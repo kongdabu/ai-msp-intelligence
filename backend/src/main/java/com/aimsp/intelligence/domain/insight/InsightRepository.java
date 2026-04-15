@@ -13,6 +13,9 @@ public interface InsightRepository extends JpaRepository<Insight, Long>, JpaSpec
     // 오늘 생성된 인사이트
     List<Insight> findByGeneratedAtAfterOrderByImpactScoreDesc(LocalDateTime since);
 
+    // 특정 시점 이후 인사이트 수 (대시보드 KPI용 - 전체 로딩 없이 COUNT 쿼리)
+    long countByGeneratedAtAfter(LocalDateTime since);
+
     // 고영향도 인사이트 수
     long countByImpactScoreGreaterThanEqual(Integer minScore);
 

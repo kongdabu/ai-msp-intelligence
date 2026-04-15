@@ -41,17 +41,18 @@ public class CrawlerOrchestrator {
     private final ZdnetKoreaCrawler zdnetKoreaCrawler;
 
     // 크롤러 병렬 실행 스레드풀 (Google News 동시 요청 수 제한)
-    private static final ExecutorService CRAWLER_POOL = Executors.newFixedThreadPool(3);
+    // static이 아닌 인스턴스 필드로 선언해야 @PreDestroy로 안전하게 정리 가능
+    private final ExecutorService crawlerPool = Executors.newFixedThreadPool(3);
 
     @PreDestroy
     public void shutdown() {
-        CRAWLER_POOL.shutdown();
+        crawlerPool.shutdown();
         try {
-            if (!CRAWLER_POOL.awaitTermination(10, TimeUnit.SECONDS)) {
-                CRAWLER_POOL.shutdownNow();
+            if (!crawlerPool.awaitTermination(10, TimeUnit.SECONDS)) {
+                crawlerPool.shutdownNow();
             }
         } catch (InterruptedException e) {
-            CRAWLER_POOL.shutdownNow();
+            crawlerPool.shutdownNow();
             Thread.currentThread().interrupt();
         }
     }
@@ -69,11 +70,11 @@ public class CrawlerOrchestrator {
 
         // 1. 경쟁사별 Google News RSS 크롤러 병렬 실행
         log.info("--- 경쟁사 뉴스 수집 시작 (병렬) ---");
-        CompletableFuture<List<Article>> lgFuture   = CompletableFuture.supplyAsync(lgCnsCrawler::crawl, CRAWLER_POOL);
-        CompletableFuture<List<Article>> skFuture   = CompletableFuture.supplyAsync(skAxCrawler::crawl, CRAWLER_POOL);
-        CompletableFuture<List<Article>> bespinFuture = CompletableFuture.supplyAsync(bespinCrawler::crawl, CRAWLER_POOL);
-        CompletableFuture<List<Article>> pwcFuture  = CompletableFuture.supplyAsync(pwcCrawler::crawl, CRAWLER_POOL);
-        CompletableFuture<List<Article>> zdnetFuture = CompletableFuture.supplyAsync(zdnetKoreaCrawler::crawl, CRAWLER_POOL);
+        CompletableFuture<List<Article>> lgFuture   = CompletableFuture.supplyAsync(lgCnsCrawler::crawl, crawlerPool);
+        CompletableFuture<List<Article>> skFuture   = CompletableFuture.supplyAsync(skAxCrawler::crawl, crawlerPool);
+        CompletableFuture<List<Article>> bespinFuture = CompletableFuture.supplyAsync(bespinCrawler::crawl, crawlerPool);
+        CompletableFuture<List<Article>> pwcFuture  = CompletableFuture.supplyAsync(pwcCrawler::crawl, crawlerPool);
+        CompletableFuture<List<Article>> zdnetFuture = CompletableFuture.supplyAsync(zdnetKoreaCrawler::crawl, crawlerPool);
 
         CompletableFuture.allOf(lgFuture, skFuture, bespinFuture, pwcFuture, zdnetFuture).join();
 
