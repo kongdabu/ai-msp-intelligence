@@ -38,7 +38,7 @@ public class RssCrawler {
             // OkHttp로 피드 원문 수신 후 DOCTYPE 선언 제거
             // (일부 사이트가 RSS에 비표준 DOCTYPE을 포함 → JAXP 파서가 XXE 방지로 차단)
             String xmlBody = fetchRawXml(source.getUrl());
-            String sanitized = removeDoctypeDeclaration(xmlBody);
+            String sanitized = sanitizeXml(xmlBody);
 
             SyndFeedInput input = new SyndFeedInput();
             SyndFeed feed = input.build(new StringReader(sanitized));
@@ -97,11 +97,22 @@ public class RssCrawler {
     }
 
     /**
-     * DOCTYPE 선언 제거 (XXE 보안 설정과 충돌하는 비표준 DOCTYPE 대응)
-     * 예: <!DOCTYPE foo [ <!ENTITY bar "baz"> ]>
+     * RSS 피드 XML 정제
+     * 1) DOCTYPE 선언 제거 (JAXP XXE 방지 설정과 충돌)
+     * 2) <script> 태그 전체 제거 (피드 본문에 삽입된 불필요한 스크립트)
+     * 3) HTML5 불리언 속성 → XML 호환 형태로 변환
+     *    예: <script async> → <script async="async">
      */
-    private String removeDoctypeDeclaration(String xml) {
-        // <!DOCTYPE ... > 블록 전체 제거 (내부 대괄호 포함)
-        return xml.replaceAll("(?si)<!DOCTYPE[^>]*(?:\\[[^]]*])?\\s*>", "");
+    private String sanitizeXml(String xml) {
+        // 1) DOCTYPE 제거
+        xml = xml.replaceAll("(?si)<!DOCTYPE[^>]*(?:\\[[^]]*])?\\s*>", "");
+        // 2) <script> 블록 제거
+        xml = xml.replaceAll("(?si)<script[^>]*>.*?</script>", "");
+        // 3) HTML5 불리언 속성 → XML 속성값 형태로 변환 (공백 또는 /> 직전의 단독 속성명)
+        xml = xml.replaceAll(
+                "(?i)\\s(async|defer|checked|disabled|selected|multiple|readonly|required|autofocus|autoplay|controls|loop|muted|open|reversed)(?=[\\s/>])",
+                " $1=\"$1\""
+        );
+        return xml;
     }
 }
