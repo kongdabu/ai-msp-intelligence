@@ -28,7 +28,8 @@ public class ArticleService {
     private final ArticleRepository articleRepository;
     private final SummaryGenerator summaryGenerator;
 
-    // 기사 목록 조회 - 페이지네이션 없이 List 반환 (COUNT 쿼리 생략, 경쟁사 분석 페이지용)
+    // 기사 목록 조회 - DB LIMIT 적용 (경쟁사 분석 페이지용)
+    // findAll(spec, sort) 대신 PageRequest를 사용해 DB 레벨에서 LIMIT 처리
     @Transactional(readOnly = true)
     public List<ArticleDto.Response> getArticlesList(
             String competitor, String category, LocalDateTime dateFrom, LocalDateTime dateTo, int limit) {
@@ -42,9 +43,8 @@ public class ArticleService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        Sort sort = Sort.by(Sort.Direction.DESC, "publishedAt");
-        return articleRepository.findAll(spec, sort).stream()
-                .limit(limit)
+        Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "publishedAt"));
+        return articleRepository.findAll(spec, pageable).getContent().stream()
                 .map(ArticleDto.Response::from)
                 .collect(Collectors.toList());
     }

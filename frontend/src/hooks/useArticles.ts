@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import axios from 'axios'
 import { Article, PageResponse } from '../types'
 
@@ -56,6 +56,8 @@ export function useArticlesList(params: ArticleListParams = {}) {
       })
       return data
     },
+    staleTime: 5 * 60 * 1000,      // 5분간 캐시 유지 — 탭 전환 시 불필요한 재요청 방지
+    placeholderData: keepPreviousData, // 탭 전환 시 이전 데이터 표시 (스켈레톤 깜빡임 방지)
   })
 }
 

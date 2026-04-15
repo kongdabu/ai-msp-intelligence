@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useArticlesList } from '../hooks/useArticles'
 import { Competitor, COMPETITOR_LABELS, CATEGORY_LABELS, Category } from '../types'
 import { format } from 'date-fns'
@@ -33,11 +33,13 @@ function ArticleSkeleton() {
 export default function Competitors() {
   const [activeComp, setActiveComp] = useState<Competitor>('LG_CNS')
 
-  const since30 = new Date()
-  since30.setDate(since30.getDate() - 30)
-  // toISOString()은 "Z" 타임존 접미사를 포함 → Spring LocalDateTime 파싱 실패
-  // slice(0, 19)로 "2026-03-15T00:18:49" 형태로 잘라냄
-  const dateFromStr = since30.toISOString().slice(0, 19)
+  // useMemo로 고정 — 매 렌더마다 초 단위로 값이 바뀌면 쿼리 키가 달라져 API 재호출 발생
+  // 날짜(일) 단위로 잘라 하루 동안 동일한 쿼리 키 유지
+  const dateFromStr = useMemo(() => {
+    const since30 = new Date()
+    since30.setDate(since30.getDate() - 30)
+    return since30.toISOString().slice(0, 10) + 'T00:00:00'
+  }, [])
 
   const { data: articles = [], isLoading } = useArticlesList({
     competitor: activeComp,
