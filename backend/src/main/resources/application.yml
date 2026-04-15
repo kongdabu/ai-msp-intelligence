@@ -43,10 +43,7 @@ app:
     model: gemini-2.5-flash-lite
     max-tokens: 4096
   crawl:
-    interval-hours: ${CRAWL_INTERVAL_HOURS:24}
     request-delay-ms: 2000
-  insight:
-    cron: ${INSIGHT_CRON:0 0 7 * * ?}
 
 logging:
   level:
