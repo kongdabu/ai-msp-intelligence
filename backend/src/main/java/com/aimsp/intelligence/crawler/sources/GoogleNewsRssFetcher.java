@@ -30,19 +30,23 @@ public class GoogleNewsRssFetcher {
             try {
                 Request request = new Request.Builder()
                         .url(url)
-                        .header("User-Agent", "Mozilla/5.0 (compatible; RSSReader/1.0)")
+                        .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                        .header("Accept", "application/rss+xml, application/xml, text/xml, */*")
+                        .header("Accept-Language", "ko-KR,ko;q=0.9,en-US;q=0.8")
                         .build();
                 try (Response response = httpClient.newCall(request).execute()) {
-                    if (response.isSuccessful() && response.body() != null) {
-                        return response.body().string();
-                    }
                     int code = response.code();
-                    // 503/429는 일시적 오류 — 재시도
-                    if (code == 503 || code == 429) {
+                    if (!response.isSuccessful() || response.body() == null) {
                         lastException = new IllegalStateException("HTTP " + code);
                         continue;
                     }
-                    throw new IllegalStateException("HTTP " + code);
+                    String body = response.body().string();
+                    // 빈 바디 = Google 봇 챌린지 페이지 — 재시도
+                    if (body.isBlank()) {
+                        lastException = new IllegalStateException("HTTP " + code + " (empty body)");
+                        continue;
+                    }
+                    return body;
                 }
             } catch (IllegalStateException e) {
                 lastException = e;
