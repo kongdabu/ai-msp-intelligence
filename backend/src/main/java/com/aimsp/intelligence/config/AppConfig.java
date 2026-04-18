@@ -18,8 +18,16 @@ public class AppConfig {
     @Value("${app.gemini.max-tokens}")
     private int maxTokens;
 
+    @Value("${app.naver.client-id:}")
+    private String naverClientId;
+
+    @Value("${app.naver.client-secret:}")
+    private String naverClientSecret;
+
     public String getGeminiApiKey() { return geminiApiKey; }
     public String getGeminiApiUrl() { return geminiApiUrl; }
     public String getGeminiModel()  { return geminiModel; }
     public int getMaxTokens()       { return maxTokens; }
+    public String getNaverClientId()     { return naverClientId; }
+    public String getNaverClientSecret() { return naverClientSecret; }
 }

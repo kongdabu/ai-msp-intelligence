@@ -40,8 +40,7 @@ public class CrawlerOrchestrator {
     private final PwcCrawler pwcCrawler;
     private final ZdnetKoreaCrawler zdnetKoreaCrawler;
 
-    // Google News Rate Limit 대응: 단일 스레드로 순차 실행
-    private final ExecutorService crawlerPool = Executors.newFixedThreadPool(1);
+    private final ExecutorService crawlerPool = Executors.newFixedThreadPool(3);
 
     @PreDestroy
     public void shutdown() {

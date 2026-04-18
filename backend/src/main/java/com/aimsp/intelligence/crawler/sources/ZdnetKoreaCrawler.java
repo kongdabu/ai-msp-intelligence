@@ -1,19 +1,13 @@
 package com.aimsp.intelligence.crawler.sources;
 
+import com.aimsp.intelligence.crawler.NaverNewsClient;
+import com.aimsp.intelligence.crawler.NaverNewsClient.NaverNewsItem;
 import com.aimsp.intelligence.domain.article.Article;
-import com.rometools.rome.feed.synd.SyndEntry;
-import com.rometools.rome.feed.synd.SyndFeed;
-import com.rometools.rome.io.SyndFeedInput;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jsoup.Jsoup;
 import org.springframework.stereotype.Component;
 
-import java.io.StringReader;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Slf4j
@@ -21,38 +15,26 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ZdnetKoreaCrawler {
 
-    private static final String NEWS_RSS =
-            "https://news.google.com/rss/search?q=AI+MSP+OR+%22AI+에이전트%22+OR+%22클라우드+MSP%22+OR+ITO&hl=ko&gl=KR&ceid=KR:ko";
+    private static final String QUERY = "AI MSP";
     private static final String SOURCE_NAME = "AI MSP 업계 뉴스";
     private static final String COMPETITOR = "GENERAL";
 
-    private final GoogleNewsRssFetcher rssFetcher;
+    private final NaverNewsClient naverNewsClient;
 
     public List<Article> crawl() {
         List<Article> articles = new ArrayList<>();
         try {
-            String body = rssFetcher.fetch(NEWS_RSS);
-            SyndFeedInput input = new SyndFeedInput();
-            SyndFeed feed = input.build(new StringReader(body));
-
-            for (SyndEntry entry : feed.getEntries()) {
+            List<NaverNewsItem> items = naverNewsClient.search(QUERY);
+            for (NaverNewsItem item : items) {
                 Article article = new Article();
-                article.setUrl(entry.getLink());
-                article.setTitle(entry.getTitle());
+                article.setUrl(item.bestUrl());
+                article.setTitle(item.cleanTitle());
+                article.setOriginalContent(item.cleanDescription());
                 article.setSourceName(SOURCE_NAME);
                 article.setSourceType("NEWS");
-                article.setCompetitor(detectCompetitor(entry.getTitle()));
-
-                Date pub = entry.getPublishedDate() != null ? entry.getPublishedDate() : entry.getUpdatedDate();
-                article.setPublishedAt(pub != null
-                        ? pub.toInstant().atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime()
-                        : LocalDateTime.now());
-
-                String raw = entry.getDescription() != null ? entry.getDescription().getValue() : "";
-                article.setOriginalContent(Jsoup.parse(raw).text());
-
+                article.setCompetitor(detectCompetitor(item.cleanTitle()));
+                article.setPublishedAt(item.parsedDate());
                 articles.add(article);
-                if (articles.size() >= 20) break;
             }
             log.info("AI MSP 업계 뉴스 수집 완료: {}건", articles.size());
         } catch (Exception e) {

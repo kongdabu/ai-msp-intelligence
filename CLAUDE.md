@@ -175,6 +175,8 @@ ai-msp-intelligence/
 | 변수 | 설명 | 기본값 |
 |---|---|---|
 | `GEMINI_API_KEY` | Google Gemini API 키 | 필수 |
+| `NAVER_CLIENT_ID` | Naver 검색 API Client ID | 필수 |
+| `NAVER_CLIENT_SECRET` | Naver 검색 API Client Secret | 필수 |
 | `DB_URL` | Supabase JDBC URL (`prod` 프로파일) | 필수 (prod) |
 | `DB_USERNAME` | DB 사용자명 | 필수 (prod) |
 | `DB_PASSWORD` | DB 비밀번호 | 필수 (prod) |
