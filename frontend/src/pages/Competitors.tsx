@@ -33,8 +33,6 @@ function ArticleSkeleton() {
 export default function Competitors() {
   const [activeComp, setActiveComp] = useState<Competitor>('LG_CNS')
 
-  // useMemo로 고정 — 매 렌더마다 초 단위로 값이 바뀌면 쿼리 키가 달라져 API 재호출 발생
-  // 날짜(일) 단위로 잘라 하루 동안 동일한 쿼리 키 유지
   const dateFromStr = useMemo(() => {
     const since10 = new Date()
     since10.setDate(since10.getDate() - 10)
@@ -47,7 +45,6 @@ export default function Competitors() {
     limit: 50,
   })
 
-  // 날짜별 그룹핑
   const byDate = articles.reduce<Record<string, typeof articles>>((acc, a) => {
     const date = a.publishedAt ? a.publishedAt.slice(0, 10) : '날짜 없음'
     if (!acc[date]) acc[date] = []
@@ -55,7 +52,6 @@ export default function Competitors() {
     return acc
   }, {})
 
-  // 카테고리 분포
   const catCount = articles.reduce<Record<string, number>>((acc, a) => {
     if (a.category) acc[a.category] = (acc[a.category] ?? 0) + 1
     return acc
@@ -66,27 +62,29 @@ export default function Competitors() {
   }))
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* 탭 */}
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
-        {COMPETITORS.map((comp) => (
-          <button
-            key={comp}
-            onClick={() => setActiveComp(comp)}
-            className={`px-5 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeComp === comp
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {COMPETITOR_LABELS[comp]}
-          </button>
-        ))}
+      <div className="overflow-x-auto">
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-max">
+          {COMPETITORS.map((comp) => (
+            <button
+              key={comp}
+              onClick={() => setActiveComp(comp)}
+              className={`px-3 sm:px-5 py-2 rounded-md text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${
+                activeComp === comp
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {COMPETITOR_LABELS[comp]}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
         {/* 타임라인 */}
-        <div className="lg:col-span-2 card">
+        <div className="md:col-span-2 card">
           <h3 className="text-sm font-semibold text-gray-700 mb-4">
             최근 10일 기사 타임라인 ({articles.length}건)
           </h3>
@@ -133,7 +131,6 @@ export default function Competitors() {
 
         {/* 오른쪽 */}
         <div className="space-y-4">
-          {/* 카테고리 분포 */}
           <div className="card">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">카테고리 분포</h3>
             {catChartData.length > 0 ? (
@@ -151,7 +148,6 @@ export default function Competitors() {
             )}
           </div>
 
-          {/* 요약 프로파일 */}
           <div className="card bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100">
             <h3 className="text-sm font-semibold text-blue-800 mb-2">
               {COMPETITOR_LABELS[activeComp]} 프로파일

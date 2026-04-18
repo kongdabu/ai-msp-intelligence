@@ -30,8 +30,8 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6 animate-pulse">
-        <div className="grid grid-cols-4 gap-4">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 animate-pulse">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="h-24 bg-gray-200 rounded-lg" />
           ))}
@@ -50,24 +50,24 @@ export default function Dashboard() {
   ]
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* KPI 카드 */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {kpis.map(({ label, value, icon: Icon, color, bg }) => (
-          <div key={label} className="card flex items-center gap-4">
-            <div className={`${bg} p-3 rounded-lg`}>
-              <Icon size={22} className={color} />
+          <div key={label} className="card flex items-center gap-3 sm:gap-4">
+            <div className={`${bg} p-2.5 sm:p-3 rounded-lg shrink-0`}>
+              <Icon size={20} className={color} />
             </div>
-            <div>
-              <div className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</div>
-              <div className="text-xs text-gray-500 mt-0.5">{label}</div>
+            <div className="min-w-0">
+              <div className="text-xl sm:text-2xl font-bold text-gray-900">{value.toLocaleString()}</div>
+              <div className="text-xs text-gray-500 mt-0.5 leading-tight">{label}</div>
             </div>
           </div>
         ))}
       </div>
 
       {/* 차트 영역 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         <div className="card">
           <h3 className="text-sm font-semibold text-gray-700 mb-4">경쟁사별 기사 분포</h3>
           <CompetitorDonut data={data.competitorDistribution ?? {}} />
@@ -79,9 +79,9 @@ export default function Dashboard() {
       </div>
 
       {/* 인사이트 + 기사 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
         {/* 오늘의 인사이트 */}
-        <div className="lg:col-span-2 card">
+        <div className="md:col-span-2 card">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-gray-700">오늘의 AI 인사이트</h3>
             <button
@@ -107,7 +107,7 @@ export default function Dashboard() {
           {data.latestInsights?.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-8">인사이트가 없습니다. 위 버튼을 눌러 생성해보세요.</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {data.latestInsights?.slice(0, 4).map((insight) => (
                 <InsightCard
                   key={insight.id}
@@ -149,7 +149,6 @@ export default function Dashboard() {
         <KeywordCloud insights={data.latestInsights ?? []} />
       </div>
 
-      {/* 인사이트 상세 모달 */}
       {selectedInsightId && (
         <InsightPanel
           insight={insightDetail ?? null}

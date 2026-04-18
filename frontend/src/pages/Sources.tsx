@@ -7,6 +7,13 @@ import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { Plus, RefreshCw, CheckCircle, XCircle, CheckCheck } from 'lucide-react'
 
+const SOURCE_TYPE_COLORS: Record<string, string> = {
+  NEWS: 'bg-blue-100 text-blue-800',
+  HOMEPAGE: 'bg-purple-100 text-purple-800',
+  SNS: 'bg-pink-100 text-pink-800',
+  IDC: 'bg-orange-100 text-orange-800',
+}
+
 export default function Sources() {
   const queryClient = useQueryClient()
   const [showForm, setShowForm] = useState(false)
@@ -36,9 +43,7 @@ export default function Sources() {
   })
 
   const { mutate: triggerCrawl, isPending: isCrawling } = useTriggerCrawl({
-    onSuccess: (data) => {
-      setCrawlResult({ crawledCount: data.crawledCount })
-    },
+    onSuccess: (data) => setCrawlResult({ crawledCount: data.crawledCount }),
   })
 
   useEffect(() => {
@@ -47,47 +52,37 @@ export default function Sources() {
     return () => clearTimeout(timer)
   }, [crawlResult])
 
-  const SOURCE_TYPE_COLORS: Record<string, string> = {
-    NEWS: 'bg-blue-100 text-blue-800',
-    HOMEPAGE: 'bg-purple-100 text-purple-800',
-    SNS: 'bg-pink-100 text-pink-800',
-    IDC: 'bg-orange-100 text-orange-800',
-  }
-
   return (
-    <div className="p-6 space-y-4">
-      {/* 크롤링 완료 배너 */}
+    <div className="p-4 sm:p-6 space-y-4">
       {crawlResult && (
         <div className="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
           <CheckCheck size={16} className="shrink-0" />
-          <span>
-            수집 완료 — 신규 기사 <strong>{crawlResult.crawledCount}건</strong> 저장되었습니다. 기사 목록이 갱신되었습니다.
-          </span>
+          <span>수집 완료 — 신규 기사 <strong>{crawlResult.crawledCount}건</strong> 저장되었습니다.</span>
           <button onClick={() => setCrawlResult(null)} className="ml-auto text-green-600 hover:text-green-800">✕</button>
         </div>
       )}
 
       {/* 액션 버튼 */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div className="text-sm text-gray-500">
-          총 <span className="font-semibold text-gray-900">{sources.length}</span>개 소스
+          총 <span className="font-semibold text-gray-900">{sources.length}</span>개
           {' '}(<span className="text-green-600">{sources.filter(s => s.active).length}개 활성</span>)
         </div>
         <div className="flex gap-2">
           <button
             onClick={() => triggerCrawl()}
             disabled={isCrawling}
-            className="flex items-center gap-2 btn-secondary"
+            className="flex items-center gap-1.5 btn-secondary text-xs sm:text-sm"
           >
-            <RefreshCw size={16} className={isCrawling ? 'animate-spin' : ''} />
-            {isCrawling ? '수집 중...' : '지금 수집'}
+            <RefreshCw size={14} className={isCrawling ? 'animate-spin' : ''} />
+            <span className="hidden sm:inline">{isCrawling ? '수집 중...' : '지금 수집'}</span>
           </button>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 btn-primary"
+            className="flex items-center gap-1.5 btn-primary text-xs sm:text-sm"
           >
-            <Plus size={16} />
-            소스 추가
+            <Plus size={14} />
+            <span>소스 추가</span>
           </button>
         </div>
       </div>
@@ -96,7 +91,7 @@ export default function Sources() {
       {showForm && (
         <div className="card border-blue-200 bg-blue-50">
           <h3 className="text-sm font-semibold text-gray-700 mb-3">신규 소스 추가</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
             <input
               type="text"
               placeholder="소스 이름"
@@ -107,7 +102,7 @@ export default function Sources() {
             <input
               type="url"
               placeholder="URL"
-              className="border border-gray-300 rounded-md text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 col-span-2"
+              className="border border-gray-300 rounded-md text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:col-span-2"
               value={form.url}
               onChange={(e) => setForm({ ...form, url: e.target.value })}
             />
@@ -151,8 +146,8 @@ export default function Sources() {
           ))}
         </div>
       ) : (
-        <div className="card overflow-hidden p-0">
-          <table className="w-full">
+        <div className="card overflow-x-auto p-0">
+          <table className="w-full min-w-[640px]">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">소스명</th>
@@ -160,15 +155,15 @@ export default function Sources() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">타입</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">경쟁사</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">마지막 수집</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">수집 / 오류</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">수집/오류</th>
                 <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500">상태</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {sources.map((source) => (
                 <tr key={source.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">{source.name}</td>
-                  <td className="px-4 py-3 text-xs text-gray-500 max-w-xs truncate">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">{source.name}</td>
+                  <td className="px-4 py-3 text-xs text-gray-500 max-w-[200px] truncate">
                     <a href={source.url} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600">
                       {source.url}
                     </a>
@@ -178,27 +173,22 @@ export default function Sources() {
                       {source.type}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-xs text-gray-600">
+                  <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">
                     {COMPETITOR_LABELS[source.competitor as Competitor] ?? source.competitor}
                   </td>
-                  <td className="px-4 py-3 text-xs text-gray-500">
+                  <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
                     {source.lastCrawledAt
                       ? formatDistanceToNow(new Date(source.lastCrawledAt), { addSuffix: true, locale: ko })
                       : '-'}
                   </td>
-                  <td className="px-4 py-3 text-xs text-gray-500">
+                  <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
                     {source.crawlCount} / <span className={source.errorCount > 0 ? 'text-red-500' : ''}>{source.errorCount}</span>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <button
-                      onClick={() => toggle(source.id)}
-                      className="flex items-center gap-1 mx-auto text-xs"
-                    >
-                      {source.active ? (
-                        <CheckCircle size={18} className="text-green-500" />
-                      ) : (
-                        <XCircle size={18} className="text-gray-300" />
-                      )}
+                    <button onClick={() => toggle(source.id)} className="flex items-center gap-1 mx-auto">
+                      {source.active
+                        ? <CheckCircle size={18} className="text-green-500" />
+                        : <XCircle size={18} className="text-gray-300" />}
                     </button>
                   </td>
                 </tr>
