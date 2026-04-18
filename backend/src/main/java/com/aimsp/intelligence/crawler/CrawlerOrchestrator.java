@@ -40,9 +40,8 @@ public class CrawlerOrchestrator {
     private final PwcCrawler pwcCrawler;
     private final ZdnetKoreaCrawler zdnetKoreaCrawler;
 
-    // 크롤러 병렬 실행 스레드풀 (Google News 동시 요청 수 제한)
-    // static이 아닌 인스턴스 필드로 선언해야 @PreDestroy로 안전하게 정리 가능
-    private final ExecutorService crawlerPool = Executors.newFixedThreadPool(3);
+    // Google News Rate Limit 대응: 단일 스레드로 순차 실행
+    private final ExecutorService crawlerPool = Executors.newFixedThreadPool(1);
 
     @PreDestroy
     public void shutdown() {

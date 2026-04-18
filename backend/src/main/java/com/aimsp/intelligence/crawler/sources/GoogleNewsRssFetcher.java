@@ -6,6 +6,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import org.springframework.stereotype.Component;
 
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -13,14 +14,22 @@ import java.util.concurrent.TimeUnit;
 public class GoogleNewsRssFetcher {
 
     private static final int MAX_ATTEMPTS = 3;
-    private static final long[] RETRY_DELAYS_MS = {2000, 4000};
+    // 재시도 간격: 10s, 20s (503 rate limit 해소 대기)
+    private static final long[] RETRY_DELAYS_MS = {10_000, 20_000};
+    // 첫 요청 전 지터: 0~8초 랜덤 (병렬 크롤러 간 요청 분산)
+    private static final int JITTER_MAX_MS = 8_000;
 
     private final OkHttpClient httpClient = new OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(15, TimeUnit.SECONDS)
             .build();
 
+    private final Random random = new Random();
+
     public String fetch(String url) throws Exception {
+        // 병렬 크롤러가 동시에 Google News를 호출하지 않도록 초기 지터 적용
+        Thread.sleep(random.nextInt(JITTER_MAX_MS));
+
         Exception lastException = null;
         for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
             if (attempt > 0) {
@@ -41,7 +50,6 @@ public class GoogleNewsRssFetcher {
                         continue;
                     }
                     String body = response.body().string();
-                    // 빈 바디 = Google 봇 챌린지 페이지 — 재시도
                     if (body.isBlank()) {
                         lastException = new IllegalStateException("HTTP " + code + " (empty body)");
                         continue;
