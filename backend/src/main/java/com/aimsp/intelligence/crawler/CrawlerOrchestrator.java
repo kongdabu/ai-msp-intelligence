@@ -124,6 +124,11 @@ public class CrawlerOrchestrator {
                             article.getTitle(), article.getOriginalContent()
                     );
                     if (result != null) {
+                        if (result.relevanceScore() < 50) {
+                            log.debug("관련도 미달 기사 제외 [score={}]: {}", result.relevanceScore(), article.getTitle());
+                            skipped++;
+                            continue;
+                        }
                         article.setSummary(result.summary());
                         article.setRelevanceScore(result.relevanceScore());
                         if ("GENERAL".equals(article.getCompetitor())) {
