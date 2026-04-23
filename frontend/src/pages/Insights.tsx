@@ -18,7 +18,7 @@ export default function Insights() {
   const [page, setPage] = useState(0)
   const [selectedId, setSelectedId] = useState<number | null>(null)
 
-  const { data, isLoading } = useInsights({ type: activeTab || undefined, page, size: 12 })
+  const { data, isLoading } = useInsights({ type: activeTab || undefined, page, size: 20 })
   const { data: detail } = useInsight(selectedId)
   const { mutate: generate, isPending } = useGenerateInsights()
 
@@ -80,6 +80,28 @@ export default function Insights() {
               onClick={(ins: Insight) => setSelectedId(ins.id)}
             />
           ))}
+        </div>
+      )}
+
+      {data && data.totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-2">
+          <button
+            onClick={() => setPage(p => p - 1)}
+            disabled={page === 0}
+            className="px-3 py-1.5 text-sm rounded-md border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors"
+          >
+            이전
+          </button>
+          <span className="text-sm text-gray-600">
+            {page + 1} / {data.totalPages}
+          </span>
+          <button
+            onClick={() => setPage(p => p + 1)}
+            disabled={page >= data.totalPages - 1}
+            className="px-3 py-1.5 text-sm rounded-md border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors"
+          >
+            다음
+          </button>
         </div>
       )}
 
