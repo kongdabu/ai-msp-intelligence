@@ -2,6 +2,7 @@ package com.aimsp.intelligence.ai;
 
 import com.aimsp.intelligence.domain.article.Article;
 import com.aimsp.intelligence.domain.insight.Insight;
+import com.aimsp.intelligence.domain.insight.InsightArticle;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -42,11 +43,11 @@ public class InsightGenerator {
             - actionItems는 2개 이내로 작성
 
             [출력 형식 - 반드시 JSON만 출력, 다른 텍스트 없이]
-            {"insights":[{"title":"제목30자이내","content":"분석200자이내","type":"OPPORTUNITY","competitor":"LG_CNS","impactScore":4,"actionItems":["액션1","액션2"],"sourceArticleIds":[1,3,5]}]}
+            {"insights":[{"title":"제목30자이내","content":"분석200자이내","type":"OPPORTUNITY","competitor":"LG_CNS","impactScore":4,"actionItems":["액션1","액션2"],"sourceArticles":[{"id":1,"relevance":85},{"id":3,"relevance":70}]}]}
 
             type은 OPPORTUNITY|THREAT|TREND|STRATEGY 중 하나.
             competitor는 LG_CNS|SK_AX|BESPIN|PWC|GENERAL 중 하나.
-            sourceArticleIds는 인사이트 도출에 실제로 참조한 기사의 id 값(최대 5개)만 포함.
+            sourceArticles는 인사이트 도출에 실제로 참조한 기사 목록(최대 5개). id는 기사 id, relevance는 이 인사이트와의 관련도(0-100 정수).
 
             [수집 뉴스]
             %s
@@ -93,20 +94,32 @@ public class InsightGenerator {
                 }
                 insight.setActionItems(actionItems);
 
-                // Gemini가 실제 참조했다고 반환한 기사 ID로 소스 기사 설정
-                List<Article> sourceArticles = new ArrayList<>();
-                JsonNode sourceIds = node.path("sourceArticleIds");
-                if (!sourceIds.isMissingNode() && sourceIds.isArray()) {
-                    for (JsonNode idNode : sourceIds) {
-                        Article a = articleById.get(idNode.longValue());
-                        if (a != null) sourceArticles.add(a);
+                // Gemini가 반환한 sourceArticles에서 관련도 50% 이상인 기사만 설정
+                List<InsightArticle> insightArticles = new ArrayList<>();
+                JsonNode sourceArticlesNode = node.path("sourceArticles");
+                if (!sourceArticlesNode.isMissingNode() && sourceArticlesNode.isArray()) {
+                    for (JsonNode saNode : sourceArticlesNode) {
+                        int relevance = saNode.path("relevance").asInt(0);
+                        if (relevance < 50) continue;
+                        Article a = articleById.get(saNode.path("id").longValue());
+                        if (a != null) {
+                            InsightArticle ia = new InsightArticle();
+                            ia.setArticle(a);
+                            ia.setRelevanceScore(relevance);
+                            insightArticles.add(ia);
+                        }
                     }
                 }
-                // Gemini가 sourceArticleIds를 반환하지 않은 경우 → limited 전체를 폴백으로 사용
-                if (sourceArticles.isEmpty()) {
-                    sourceArticles.addAll(limited);
+                // Gemini가 sourceArticles를 반환하지 않은 경우 → limited 전체를 폴백으로 사용
+                if (insightArticles.isEmpty()) {
+                    for (Article a : limited) {
+                        InsightArticle ia = new InsightArticle();
+                        ia.setArticle(a);
+                        ia.setRelevanceScore(100);
+                        insightArticles.add(ia);
+                    }
                 }
-                insight.setSourceArticles(sourceArticles);
+                insight.setSourceArticles(insightArticles);
 
                 result.add(insight);
             }

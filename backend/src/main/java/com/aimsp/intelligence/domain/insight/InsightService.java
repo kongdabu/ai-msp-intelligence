@@ -85,7 +85,10 @@ public class InsightService {
         List<Insight> insights = insightGenerator.generate(articles);
 
         List<Insight> saved = insights.stream()
-                .map(insightRepository::save)
+                .map(insight -> {
+                    insight.getSourceArticles().forEach(ia -> ia.setInsight(insight));
+                    return insightRepository.save(insight);
+                })
                 .collect(Collectors.toList());
 
         // 인사이트가 실제로 생성된 경우에만 기사를 처리 완료로 마킹

@@ -1,6 +1,6 @@
 package com.aimsp.intelligence.domain.insight;
 
-import com.aimsp.intelligence.domain.article.Article;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -10,8 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -55,13 +54,8 @@ public class Insight {
     @Column(name = "action_item", length = 500)
     private List<String> actionItems = new ArrayList<>();
 
-    @ManyToMany
-    @JoinTable(
-            name = "insight_articles",
-            joinColumns = @JoinColumn(name = "insight_id"),
-            inverseJoinColumns = @JoinColumn(name = "article_id")
-    )
-    private List<Article> sourceArticles = new ArrayList<>();
+    @OneToMany(mappedBy = "insight", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<InsightArticle> sourceArticles = new ArrayList<>();
 
     private LocalDateTime generatedAt;
 }

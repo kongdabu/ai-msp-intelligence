@@ -1,7 +1,7 @@
 package com.aimsp.intelligence.dto;
 
-import com.aimsp.intelligence.domain.article.Article;
 import com.aimsp.intelligence.domain.insight.Insight;
+import com.aimsp.intelligence.domain.insight.InsightArticle;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -42,6 +42,33 @@ public class InsightDto {
 
     @Getter
     @Builder
+    public static class SourceArticleResponse {
+        private Long id;
+        private String title;
+        private String url;
+        private String competitor;
+        private String category;
+        private String summary;
+        private LocalDateTime publishedAt;
+        private Integer relevanceScore;
+
+        public static SourceArticleResponse from(InsightArticle ia) {
+            var a = ia.getArticle();
+            return SourceArticleResponse.builder()
+                    .id(a.getId())
+                    .title(a.getTitle())
+                    .url(a.getUrl())
+                    .competitor(a.getCompetitor())
+                    .category(a.getCategory())
+                    .summary(a.getSummary())
+                    .publishedAt(a.getPublishedAt())
+                    .relevanceScore(ia.getRelevanceScore())
+                    .build();
+        }
+    }
+
+    @Getter
+    @Builder
     public static class DetailResponse {
         private Long id;
         private String title;
@@ -50,12 +77,12 @@ public class InsightDto {
         private String competitor;
         private Integer impactScore;
         private List<String> actionItems;
-        private List<ArticleDto.Response> sourceArticles;
+        private List<SourceArticleResponse> sourceArticles;
         private LocalDateTime generatedAt;
 
         public static DetailResponse from(Insight insight) {
-            List<ArticleDto.Response> articles = insight.getSourceArticles() != null
-                    ? insight.getSourceArticles().stream().map(ArticleDto.Response::from).collect(Collectors.toList())
+            List<SourceArticleResponse> articles = insight.getSourceArticles() != null
+                    ? insight.getSourceArticles().stream().map(SourceArticleResponse::from).collect(Collectors.toList())
                     : List.of();
 
             return DetailResponse.builder()
