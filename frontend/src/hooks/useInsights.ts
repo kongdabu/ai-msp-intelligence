@@ -1,6 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import axios from 'axios'
 import { Insight, InsightDetail, PageResponse } from '../types'
+
+const FIVE_MINUTES = 5 * 60 * 1000
 
 interface InsightParams {
   type?: string
@@ -22,6 +24,8 @@ export function useInsights(params: InsightParams = {}) {
       })
       return data
     },
+    staleTime: FIVE_MINUTES,
+    placeholderData: keepPreviousData,
   })
 }
 
