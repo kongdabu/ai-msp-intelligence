@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useArticles } from '../hooks/useArticles'
 import { useFilterStore } from '../store/filterStore'
 import ArticleFilter from '../components/article/ArticleFilter'
@@ -77,6 +77,11 @@ export default function Articles() {
   const [page, setPage] = useState(0)
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null)
   const { articleFilter } = useFilterStore()
+
+  // 필터 변경 시 첫 페이지로 초기화
+  useEffect(() => {
+    setPage(0)
+  }, [articleFilter])
 
   const { data, isLoading } = useArticles({ ...articleFilter, page, size: 18 })
 
