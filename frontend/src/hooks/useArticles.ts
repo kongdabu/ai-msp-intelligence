@@ -24,8 +24,8 @@ export function useArticles(params: ArticleParams = {}) {
           category: params.category || undefined,
           sourceType: params.sourceType || undefined,
           keyword: params.keyword || undefined,
-          dateFrom: params.dateFrom || undefined,
-          dateTo: params.dateTo || undefined,
+          dateFrom: params.dateFrom ? `${params.dateFrom}T00:00:00` : undefined,
+          dateTo: params.dateTo ? `${params.dateTo}T23:59:59` : undefined,
         },
       })
       return data
