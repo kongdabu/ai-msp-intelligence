@@ -25,8 +25,6 @@ public class GeminiApiClient {
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     private static final int MAX_RETRIES = 3;
     private static final long DEFAULT_RETRY_DELAY_MS = 30000; // 30초
-    // 15 RPM 제한: 최소 호출 간격 4초 (SummaryGenerator/InsightGenerator 공유)
-    private static final long MIN_INTERVAL_MS = 4000;
     private final AtomicLong lastCallTime = new AtomicLong(0);
 
     private final OkHttpClient client = new OkHttpClient.Builder()
@@ -82,7 +80,11 @@ public class GeminiApiClient {
                     if (response.code() == 429) {
                         long retryDelayMs = parseRetryDelay(response);
                         log.warn("Gemini API Rate Limit(429) - {}ms 후 재시도 ({}/{})", retryDelayMs, attempt, MAX_RETRIES);
-                        if (attempt < MAX_RETRIES) { Thread.sleep(retryDelayMs); continue; }
+                        if (attempt < MAX_RETRIES) {
+                            Thread.sleep(retryDelayMs);
+                            lastCallTime.set(System.currentTimeMillis()); // 재시도 후 간격 초기화
+                            continue;
+                        }
                         throw new AiApiUnavailableException();
                     }
                     if (response.code() == 503) {
@@ -121,8 +123,9 @@ public class GeminiApiClient {
     private synchronized void applyRateLimit() throws InterruptedException {
         long now = System.currentTimeMillis();
         long elapsed = now - lastCallTime.get();
-        if (lastCallTime.get() > 0 && elapsed < MIN_INTERVAL_MS) {
-            long waitMs = MIN_INTERVAL_MS - elapsed;
+        long minInterval = appConfig.getRateLimitMs();
+        if (lastCallTime.get() > 0 && elapsed < minInterval) {
+            long waitMs = minInterval - elapsed;
             log.debug("Rate limit 대기: {}ms", waitMs);
             Thread.sleep(waitMs);
         }

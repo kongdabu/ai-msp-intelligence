@@ -43,6 +43,7 @@ app:
     api-url: https://generativelanguage.googleapis.com/v1beta/models
     model: gemini-2.5-flash-lite
     max-tokens: 4096
+    rate-limit-ms: 6000  # gemini-2.5-flash-lite free tier: 10 RPM → 6초 간격
   naver:
     client-id: ${NAVER_CLIENT_ID:}
     client-secret: ${NAVER_CLIENT_SECRET:}

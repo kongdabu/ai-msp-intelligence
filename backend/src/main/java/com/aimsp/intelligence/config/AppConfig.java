@@ -18,6 +18,9 @@ public class AppConfig {
     @Value("${app.gemini.max-tokens}")
     private int maxTokens;
 
+    @Value("${app.gemini.rate-limit-ms:6000}")
+    private long rateLimitMs;
+
     @Value("${app.naver.client-id:}")
     private String naverClientId;
 
@@ -28,6 +31,7 @@ public class AppConfig {
     public String getGeminiApiUrl() { return geminiApiUrl; }
     public String getGeminiModel()  { return geminiModel; }
     public int getMaxTokens()       { return maxTokens; }
+    public long getRateLimitMs()    { return rateLimitMs; }
     public String getNaverClientId()     { return naverClientId; }
     public String getNaverClientSecret() { return naverClientSecret; }
 }
