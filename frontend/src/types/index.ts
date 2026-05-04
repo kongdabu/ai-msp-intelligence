@@ -58,6 +58,11 @@ export interface CategoryTrend {
   count: number
 }
 
+export interface SystemConfig {
+  maxArticlesForInsight: number
+  maxInsightsPerGeneration: number
+}
+
 export interface PageResponse<T> {
   content: T[]
   totalElements: number

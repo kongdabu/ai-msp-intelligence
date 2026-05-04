@@ -1,3 +1,8 @@
+-- 시스템 설정 초기값
+INSERT INTO system_config (id, max_articles_for_insight, max_insights_per_generation)
+VALUES (1, 50, 8)
+ON CONFLICT (id) DO NOTHING;
+
 -- 초기 뉴스 소스 데이터 (PostgreSQL - INSERT ON CONFLICT)
 INSERT INTO source (name, url, type, competitor, active, last_crawled_at, crawl_count, error_count)
 VALUES ('CIO Korea', 'https://www.ciokorea.com/rss', 'NEWS', 'GENERAL', true, NULL, 0, 0)

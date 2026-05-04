@@ -7,6 +7,7 @@ import Articles from './pages/Articles'
 import Insights from './pages/Insights'
 import Competitors from './pages/Competitors'
 import Sources from './pages/Sources'
+import Settings from './pages/Settings'
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -30,6 +31,7 @@ export default function App() {
               <Route path="/insights" element={<Insights />} />
               <Route path="/competitors" element={<Competitors />} />
               <Route path="/sources" element={<Sources />} />
+              <Route path="/settings" element={<Settings />} />
             </Routes>
           </main>
         </div>

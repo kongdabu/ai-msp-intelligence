@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Newspaper, Lightbulb, Users, Database, X } from 'lucide-react'
+import { LayoutDashboard, Newspaper, Lightbulb, Users, Database, Settings, X } from 'lucide-react'
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: '대시보드' },
@@ -7,6 +7,7 @@ const navItems = [
   { to: '/insights', icon: Lightbulb, label: '인사이트' },
   { to: '/competitors', icon: Users, label: '경쟁사 분석' },
   { to: '/sources', icon: Database, label: '소스 관리' },
+  { to: '/settings', icon: Settings, label: '시스템 설정' },
 ]
 
 interface SidebarProps {

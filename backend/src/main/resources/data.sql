@@ -1,3 +1,7 @@
+-- 시스템 설정 초기값
+MERGE INTO system_config (id, max_articles_for_insight, max_insights_per_generation)
+KEY(id) VALUES (1, 50, 8);
+
 -- 초기 뉴스 소스 데이터 (H2 MERGE INTO - 중복 방지)
 -- 전용 크롤러(LG CNS, SK AX, 베스핀, PwC, AI MSP 업계)는 코드에서 직접 Google News RSS를 사용하므로 여기 미등록
 

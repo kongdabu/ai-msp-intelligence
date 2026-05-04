@@ -1,6 +1,7 @@
 package com.aimsp.intelligence.ai;
 
 import com.aimsp.intelligence.domain.article.Article;
+import com.aimsp.intelligence.domain.config.SystemConfigService;
 import com.aimsp.intelligence.domain.insight.Insight;
 import com.aimsp.intelligence.domain.insight.InsightArticle;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -20,8 +21,8 @@ public class InsightGenerator {
 
     private final GeminiApiClient geminiApiClient;
     private final ObjectMapper objectMapper;
+    private final SystemConfigService systemConfigService;
 
-    // 출력 인사이트 최대 4건, content 200자 이내로 제한 → 응답 토큰 절약
     private static final String INSIGHT_PROMPT_TEMPLATE = """
             너는 한국 AI MSP(Managed Service Provider) 사업의 수석 전략가다.
             금융·공공 엔터프라이즈 시장을 타겟으로 AI Agent 기반 ITO 전환 서비스를 제공한다.
@@ -38,7 +39,7 @@ public class InsightGenerator {
             - 한국 금융규제(망분리, 전금법), 공공 보안 요건 고려
             - Agentic ITO 모델(헤드카운트 축소→성과 기반 전환) 관점 유지
             - 추상적 의견 금지, 구체적 사업 액션 위주
-            - 인사이트는 반드시 4건 이하로 작성
+            - 인사이트는 반드시 %d건 이하로 작성
             - content는 200자 이내로 작성
             - actionItems는 2개 이내로 작성
 
@@ -51,7 +52,7 @@ public class InsightGenerator {
 
             [수집 뉴스]
             %s
-            """;
+            """; // %d: maxInsights, %s: articlesJson
 
     /**
      * 기사 목록으로 전략 인사이트 생성
@@ -60,14 +61,16 @@ public class InsightGenerator {
         List<Insight> result = new ArrayList<>();
         if (articles == null || articles.isEmpty()) return result;
 
-        // 최대 15건만 전달해 입력 토큰 제한
-        List<Article> limited = articles.size() > 15 ? articles.subList(0, 15) : articles;
+        int maxArticles = systemConfigService.getOrCreate().getMaxArticlesForInsight();
+        int maxInsights = systemConfigService.getOrCreate().getMaxInsightsPerGeneration();
+
+        List<Article> limited = articles.size() > maxArticles ? articles.subList(0, maxArticles) : articles;
         // id → Article 맵 (Gemini가 반환한 sourceArticleIds로 역조회)
         java.util.Map<Long, Article> articleById = limited.stream()
                 .collect(java.util.stream.Collectors.toMap(Article::getId, a -> a));
 
         String articlesJson = buildArticlesJson(limited);
-        String prompt = String.format(INSIGHT_PROMPT_TEMPLATE, articlesJson);
+        String prompt = String.format(INSIGHT_PROMPT_TEMPLATE, maxInsights, articlesJson);
 
         try {
             String response = geminiApiClient.call(prompt);
