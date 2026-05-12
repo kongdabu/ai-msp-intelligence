@@ -45,7 +45,8 @@ public class BattleCard {
     private Integer impactScore; // 1-5
 
     // 컬렉션 JOIN 없이 COUNT 서브쿼리로 계산 → 리스트 조회 시 N+1·메모리 페이지네이션 방지
-    @Formula("(SELECT COUNT(*) FROM battle_card_articles WHERE battle_card_id = id)")
+    // bca alias 명시: Hibernate 6가 battle_card_id를 bc1_0.battle_card_id로 잘못 prefixing하는 것을 방지
+    @Formula("(SELECT COUNT(*) FROM battle_card_articles bca WHERE bca.battle_card_id = id)")
     private int sourceArticleCount;
 
     @OneToMany(mappedBy = "battleCard", cascade = CascadeType.ALL, orphanRemoval = true)
