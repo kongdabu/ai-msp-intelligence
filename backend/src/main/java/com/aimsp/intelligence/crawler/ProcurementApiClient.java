@@ -18,6 +18,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.time.ZoneId;
 
 @Slf4j
 @Component
@@ -26,7 +27,10 @@ public class ProcurementApiClient {
 
     private static final String BASE_URL = "https://apis.data.go.kr/1230000/ad/BidPublicInfoService";
     private static final String DETAIL_BASE_URL = "https://www.g2b.go.kr:8101/ep/tbid/tbBidList.do";
-    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
+    // API 응답 날짜 형식: "2026-05-07 06:45:45"
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    // 날짜 파라미터 형식: yyyyMMddHHmm
+    private static final DateTimeFormatter PARAM_FMT = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
 
     // 조회 대상 operation (용역·기타·물품 순)
     private static final List<String> OPERATIONS = List.of(
@@ -58,12 +62,19 @@ public class ProcurementApiClient {
     private List<ProcurementItem> searchByOperation(String operation, String keyword, int numOfRows) {
         String apiUrl = BASE_URL + "/" + operation;
 
+        // 날짜 범위 필수: 최대 7일 (API 제한)
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+        String endDt   = now.format(PARAM_FMT);
+        String startDt = now.minusDays(7).format(PARAM_FMT);
+
         HttpUrl url = HttpUrl.parse(apiUrl).newBuilder()
                 .addQueryParameter("serviceKey", appConfig.getProcurementApiKey())
                 .addQueryParameter("pageNo", "1")
                 .addQueryParameter("numOfRows", String.valueOf(numOfRows))
                 .addQueryParameter("inqryDiv", "1")   // 1: 공고명 검색
-                .addQueryParameter("bidNm", keyword)   // BidPublicInfoService는 bidNm 파라미터 사용
+                .addQueryParameter("bidNm", keyword)
+                .addQueryParameter("inqryBgnDt", startDt) // 필수: 조회 시작일
+                .addQueryParameter("inqryEndDt", endDt)   // 필수: 조회 종료일
                 .addQueryParameter("type", "xml")
                 .build();
 
@@ -95,19 +106,28 @@ public class ProcurementApiClient {
         List<ProcurementItem> items = new ArrayList<>();
         Document doc = Jsoup.parse(xml, "", org.jsoup.parser.Parser.xmlParser());
 
+        // API 오류 코드 체크 (HTTP 200이어도 body에 에러가 포함될 수 있음)
+        Elements resultCode = doc.select("resultCode");
+        if (!resultCode.isEmpty() && !"00".equals(resultCode.first().text())) {
+            log.warn("[나라장터] API 오류 — resultCode={} msg={}",
+                    resultCode.first().text(),
+                    doc.select("resultMsg").isEmpty() ? "" : doc.select("resultMsg").first().text());
+            return items;
+        }
+
         for (Element item : doc.select("item")) {
             String bidNtceNm    = text(item, "bidNtceNm");
-            String bidNtceNo    = text(item, "bidNtceNo");
-            String bidNtceSqNo  = text(item, "bidNtceSqNo");
             String ntceInsttNm  = text(item, "ntceInsttNm");
             String bidNtceDt    = text(item, "bidNtceDt");
             String asignBdgtAmt = text(item, "asignBdgtAmt");
+            // API가 직접 제공하는 상세 URL 사용
+            String bidNtceUrl   = text(item, "bidNtceUrl");
 
             if (bidNtceNm.isBlank()) continue;
 
             items.add(new ProcurementItem(
                     bidNtceNm,
-                    buildDetailUrl(bidNtceNo, bidNtceSqNo),
+                    bidNtceUrl.isBlank() ? DETAIL_BASE_URL : bidNtceUrl,
                     ntceInsttNm,
                     bidNtceDt,
                     asignBdgtAmt,
@@ -120,11 +140,6 @@ public class ProcurementApiClient {
     private String text(Element el, String tag) {
         Elements found = el.select(tag);
         return found.isEmpty() ? "" : found.first().text().trim();
-    }
-
-    private String buildDetailUrl(String bidNtceNo, String bidNtceSqNo) {
-        if (bidNtceNo.isBlank()) return DETAIL_BASE_URL;
-        return DETAIL_BASE_URL + "?bidno=" + bidNtceNo + "&bidseq=" + bidNtceSqNo;
     }
 
     private LocalDateTime parseDate(String dateStr) {
