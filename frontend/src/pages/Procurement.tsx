@@ -147,7 +147,7 @@ export default function Procurement() {
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
         >
           <RefreshCw size={14} className={isCrawling ? 'animate-spin' : ''} />
-          {isCrawling ? '수집 중...' : '지금 수집'}
+          {isCrawling ? '수집 중...' : '발주공고 수집'}
         </button>
       </div>
 

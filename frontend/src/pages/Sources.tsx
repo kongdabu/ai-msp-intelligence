@@ -75,7 +75,7 @@ export default function Sources() {
             className="flex items-center gap-1.5 btn-secondary text-xs sm:text-sm"
           >
             <RefreshCw size={14} className={isCrawling ? 'animate-spin' : ''} />
-            <span className="hidden sm:inline">{isCrawling ? '수집 중...' : '지금 수집'}</span>
+            <span className="hidden sm:inline">{isCrawling ? '수집 중...' : '경쟁사 뉴스 수집'}</span>
           </button>
           <button
             onClick={() => setShowForm(!showForm)}
