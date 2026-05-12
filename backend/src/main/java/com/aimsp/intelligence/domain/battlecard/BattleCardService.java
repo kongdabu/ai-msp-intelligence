@@ -53,7 +53,7 @@ public class BattleCardService {
     // 배틀카드 단건 상세 조회 (출처 기사 포함)
     @Transactional(readOnly = true)
     public BattleCardDto.DetailResponse getBattleCardDetail(Long id) {
-        BattleCard bc = battleCardRepository.findWithDetailById(id)
+        BattleCard bc = battleCardRepository.findByIdWithArticles(id)
                 .orElseThrow(() -> new IllegalArgumentException("배틀카드를 찾을 수 없습니다: " + id));
         return BattleCardDto.DetailResponse.from(bc);
     }

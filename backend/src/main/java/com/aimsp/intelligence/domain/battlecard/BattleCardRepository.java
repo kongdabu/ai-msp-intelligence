@@ -2,6 +2,8 @@ package com.aimsp.intelligence.domain.battlecard;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -18,7 +20,10 @@ public interface BattleCardRepository extends JpaRepository<BattleCard, Long> {
     @EntityGraph(attributePaths = {"sourceArticles"})
     List<BattleCard> findTop10ByCompetitorOrderByGeneratedAtDesc(String competitor);
 
-    // 단건 상세 조회: sourceArticles + 각 article JOIN FETCH
-    @EntityGraph(attributePaths = {"sourceArticles", "sourceArticles.article"})
-    Optional<BattleCard> findWithDetailById(Long id);
+    // 단건 상세 조회: sourceArticles + article 모두 JOIN FETCH (명명 규칙 대신 @Query 사용)
+    @Query("SELECT bc FROM BattleCard bc " +
+           "LEFT JOIN FETCH bc.sourceArticles bca " +
+           "LEFT JOIN FETCH bca.article " +
+           "WHERE bc.id = :id")
+    Optional<BattleCard> findByIdWithArticles(@Param("id") Long id);
 }
