@@ -55,6 +55,22 @@ public class SchedulerConfig {
     }
 
     /**
+     * 채용공고 수집 - 매일 KST 05:00
+     */
+    @Scheduled(cron = "0 0 5 * * *", zone = "Asia/Seoul")
+    public void scheduledJobPostingCrawl() {
+        log.info("[스케줄] 채용공고 수집 시작 (KST 05:00)");
+        try {
+            int count = crawlerOrchestrator.crawlJobPostings();
+            log.info("[스케줄] 채용공고 수집 완료: {}건", count);
+        } catch (AiApiUnavailableException e) {
+            log.error("[스케줄] 채용공고 수집 중단 - Gemini API 비정상: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("[스케줄] 채용공고 수집 실패: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
      * 나라장터 공고 수집 - 매일 KST 04:00
      * 뉴스/채용(01:00) 수집 완료 후 별도 실행
      */

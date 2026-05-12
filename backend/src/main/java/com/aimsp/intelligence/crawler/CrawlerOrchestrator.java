@@ -89,11 +89,7 @@ public class CrawlerOrchestrator {
 
         totalSaved += crawlAndSave(competitorArticles, "경쟁사 뉴스");
 
-        // 2. 경쟁사 채용공고 수집
-        log.info("--- 채용공고 수집 시작 ---");
-        totalSaved += crawlAndSave(jobPostingCrawler.crawl(), "채용공고");
-
-        // 4. 소스 DB의 활성 뉴스 RSS 소스 크롤링 (NEWS 타입만)
+        // 2. 소스 DB의 활성 뉴스 RSS 소스 크롤링 (NEWS 타입만)
         log.info("--- 뉴스 RSS 소스 수집 시작 ---");
         List<Source> activeSources = sourceService.getActiveSources();
         for (Source source : activeSources) {
@@ -111,6 +107,19 @@ public class CrawlerOrchestrator {
 
         log.info("=== 크롤링 완료: 총 {}건 저장 ===", totalSaved);
         return totalSaved;
+    }
+
+    /**
+     * 채용공고 단독 수집 - KST 05:00 스케줄 전용
+     */
+    public int crawlJobPostings() {
+        if (!geminiApiClient.isAvailable()) {
+            throw new AiApiUnavailableException();
+        }
+        log.info("--- 채용공고 수집 시작 ---");
+        int saved = crawlAndSave(jobPostingCrawler.crawl(), "채용공고");
+        log.info("=== 채용공고 수집 완료: {}건 ===", saved);
+        return saved;
     }
 
     /**
