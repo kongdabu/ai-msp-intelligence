@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { BriefcaseBusiness, ExternalLink, X, CalendarDays, Building2 } from 'lucide-react'
-import { useArticles } from '../hooks/useArticles'
+import { BriefcaseBusiness, ExternalLink, X, CalendarDays, Building2, RefreshCw } from 'lucide-react'
+import { useArticles, useTriggerJobPostingCrawl } from '../hooks/useArticles'
 import { Article, Competitor, COMPETITOR_LABELS, COMPETITOR_COLORS } from '../types'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
@@ -114,6 +114,11 @@ export default function JobPostings() {
   const [activeTab, setActiveTab] = useState<Competitor | 'ALL'>('ALL')
   const [page, setPage]           = useState(0)
   const [selected, setSelected]   = useState<Article | null>(null)
+  const [crawlMsg, setCrawlMsg]   = useState<string | null>(null)
+
+  const { mutate: crawl, isPending: isCrawling } = useTriggerJobPostingCrawl({
+    onSuccess: (data) => setCrawlMsg(`신규 ${data.crawledCount}건 수집 완료`),
+  })
 
   useEffect(() => { setPage(0); setSelected(null) }, [activeTab])
 
@@ -127,11 +132,27 @@ export default function JobPostings() {
   return (
     <div className="p-4 sm:p-6 space-y-4">
       {/* 헤더 */}
-      <div className="flex items-center gap-2">
-        <BriefcaseBusiness size={22} className="text-blue-600" />
-        <h1 className="text-xl font-bold text-gray-900">경쟁사 채용공고</h1>
-        <span className="text-sm text-gray-400">채용 포지션으로 읽는 경쟁사 전략 방향</span>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2">
+          <BriefcaseBusiness size={22} className="text-blue-600" />
+          <h1 className="text-xl font-bold text-gray-900">경쟁사 채용공고</h1>
+          <span className="text-sm text-gray-400">채용 포지션으로 읽는 경쟁사 전략 방향</span>
+        </div>
+        <button
+          onClick={() => crawl()}
+          disabled={isCrawling}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+        >
+          <RefreshCw size={14} className={isCrawling ? 'animate-spin' : ''} />
+          {isCrawling ? '수집 중...' : '지금 수집'}
+        </button>
       </div>
+
+      {crawlMsg && (
+        <div className="bg-green-50 border border-green-200 text-green-800 text-sm rounded-lg px-4 py-3">
+          ✅ {crawlMsg}
+        </div>
+      )}
 
       {/* 경쟁사 탭 */}
       <div className="flex gap-1 border-b border-gray-200 overflow-x-auto">

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Building2, ExternalLink, Search, X, CalendarDays, Banknote } from 'lucide-react'
-import { useArticles } from '../hooks/useArticles'
+import { Building2, ExternalLink, Search, X, CalendarDays, Banknote, RefreshCw } from 'lucide-react'
+import { useArticles, useTriggerProcurementCrawl } from '../hooks/useArticles'
 import { Article } from '../types'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
@@ -111,6 +111,11 @@ export default function Procurement() {
   const [dateTo, setDateTo]           = useState('')
   const [selected, setSelected]       = useState<Article | null>(null)
   const [inputValue, setInputValue]   = useState('')
+  const [crawlMsg, setCrawlMsg]       = useState<string | null>(null)
+
+  const { mutate: crawl, isPending: isCrawling } = useTriggerProcurementCrawl({
+    onSuccess: (data) => setCrawlMsg(`신규 ${data.crawledCount}건 수집 완료`),
+  })
 
   const { data, isLoading } = useArticles({
     sourceType: 'PROCUREMENT',
@@ -130,11 +135,27 @@ export default function Procurement() {
   return (
     <div className="p-4 sm:p-6 space-y-4">
       {/* 헤더 */}
-      <div className="flex items-center gap-2">
-        <Building2 size={22} className="text-blue-600" />
-        <h1 className="text-xl font-bold text-gray-900">나라장터 공고</h1>
-        <span className="text-sm text-gray-400">공공기관 AI·클라우드·MSP 발주 현황</span>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2">
+          <Building2 size={22} className="text-blue-600" />
+          <h1 className="text-xl font-bold text-gray-900">나라장터 공고</h1>
+          <span className="text-sm text-gray-400">공공기관 AI·클라우드·MSP 발주 현황</span>
+        </div>
+        <button
+          onClick={() => crawl()}
+          disabled={isCrawling}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+        >
+          <RefreshCw size={14} className={isCrawling ? 'animate-spin' : ''} />
+          {isCrawling ? '수집 중...' : '지금 수집'}
+        </button>
       </div>
+
+      {crawlMsg && (
+        <div className="bg-green-50 border border-green-200 text-green-800 text-sm rounded-lg px-4 py-3">
+          ✅ {crawlMsg}
+        </div>
+      )}
 
       {/* 검색 필터 */}
       <div className="bg-white border border-gray-200 rounded-lg p-4 flex flex-wrap gap-3 items-center">

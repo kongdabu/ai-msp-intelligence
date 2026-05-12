@@ -60,11 +60,33 @@ public class ArticleController {
         return ResponseEntity.ok(articleService.getArticle(id));
     }
 
-    // 수동 크롤링 트리거
+    // 수동 크롤링 트리거 (경쟁사 뉴스 + RSS)
     @PostMapping("/crawl")
     public ResponseEntity<Map<String, Object>> triggerCrawl() {
-        log.info("수동 크롤링 시작");
+        log.info("수동 크롤링 시작 (경쟁사 뉴스 + RSS)");
         int count = crawlerOrchestrator.crawlAll();
+        Map<String, Object> result = new HashMap<>();
+        result.put("crawledCount", count);
+        result.put("triggeredAt", LocalDateTime.now());
+        return ResponseEntity.ok(result);
+    }
+
+    // 나라장터 공고 수동 수집
+    @PostMapping("/crawl/procurement")
+    public ResponseEntity<Map<String, Object>> triggerProcurementCrawl() {
+        log.info("나라장터 공고 수동 수집 시작");
+        int count = crawlerOrchestrator.crawlProcurement();
+        Map<String, Object> result = new HashMap<>();
+        result.put("crawledCount", count);
+        result.put("triggeredAt", LocalDateTime.now());
+        return ResponseEntity.ok(result);
+    }
+
+    // 채용공고 수동 수집
+    @PostMapping("/crawl/job-postings")
+    public ResponseEntity<Map<String, Object>> triggerJobPostingCrawl() {
+        log.info("채용공고 수동 수집 시작");
+        int count = crawlerOrchestrator.crawlJobPostings();
         Map<String, Object> result = new HashMap<>();
         result.put("crawledCount", count);
         result.put("triggeredAt", LocalDateTime.now());
