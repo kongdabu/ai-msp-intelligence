@@ -2,6 +2,7 @@ export interface Article {
   id: number
   url: string
   title: string
+  originalContent: string | null
   summary: string | null
   competitor: Competitor
   category: Category
