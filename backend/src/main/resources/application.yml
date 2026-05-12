@@ -47,6 +47,10 @@ app:
   naver:
     client-id: ${NAVER_CLIENT_ID:}
     client-secret: ${NAVER_CLIENT_SECRET:}
+  procurement:
+    api-key: ${PROCUREMENT_API_KEY:}  # 조달청 나라장터 공공데이터 API 키 (data.go.kr)
+  saramin:
+    api-key: ${SARAMIN_API_KEY:}      # 사람인 Open API 키 (oapi.saramin.co.kr)
   crawl:
     request-delay-ms: 2000
 

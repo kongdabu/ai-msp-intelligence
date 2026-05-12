@@ -27,6 +27,12 @@ public class AppConfig {
     @Value("${app.naver.client-secret:}")
     private String naverClientSecret;
 
+    @Value("${app.procurement.api-key:}")
+    private String procurementApiKey;
+
+    @Value("${app.saramin.api-key:}")
+    private String saraminApiKey;
+
     public String getGeminiApiKey() { return geminiApiKey; }
     public String getGeminiApiUrl() { return geminiApiUrl; }
     public String getGeminiModel()  { return geminiModel; }
@@ -34,4 +40,6 @@ public class AppConfig {
     public long getRateLimitMs()    { return rateLimitMs; }
     public String getNaverClientId()     { return naverClientId; }
     public String getNaverClientSecret() { return naverClientSecret; }
+    public String getProcurementApiKey() { return procurementApiKey; }
+    public String getSaraminApiKey()     { return saraminApiKey; }
 }

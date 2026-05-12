@@ -16,4 +16,12 @@ services:
         sync: false   # Supabase DB 비밀번호
       - key: GEMINI_API_KEY
         sync: false   # Render 대시보드에서 직접 입력
+      - key: NAVER_CLIENT_ID
+        sync: false
+      - key: NAVER_CLIENT_SECRET
+        sync: false
+      - key: PROCUREMENT_API_KEY
+        sync: false   # data.go.kr 나라장터 API 키
+      - key: SARAMIN_API_KEY
+        sync: false   # oapi.saramin.co.kr 사람인 API 키
     healthCheckPath: /actuator/health

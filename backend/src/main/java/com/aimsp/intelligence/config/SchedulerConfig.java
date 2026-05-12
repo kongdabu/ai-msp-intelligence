@@ -1,6 +1,7 @@
 package com.aimsp.intelligence.config;
 
 import com.aimsp.intelligence.crawler.CrawlerOrchestrator;
+import com.aimsp.intelligence.domain.battlecard.BattleCardService;
 import com.aimsp.intelligence.domain.insight.InsightService;
 import com.aimsp.intelligence.exception.AiApiUnavailableException;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ public class SchedulerConfig {
 
     private final CrawlerOrchestrator crawlerOrchestrator;
     private final InsightService insightService;
+    private final BattleCardService battleCardService;
 
     /**
      * 기사 수집 - 매일 KST 01:00 (UTC 16:00)
@@ -49,6 +51,23 @@ public class SchedulerConfig {
             log.error("[스케줄] 인사이트 생성 중단 - Gemini API 비정상: {}", e.getMessage());
         } catch (Exception e) {
             log.error("[스케줄] 인사이트 생성 실패: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 배틀카드 생성 - 매주 월요일 KST 03:00
+     * 주간 경쟁사 동향이 쌓인 후 영업팀 주간 미팅 전 자동 갱신
+     */
+    @Scheduled(cron = "0 0 3 * * MON", zone = "Asia/Seoul")
+    public void scheduledBattleCardGeneration() {
+        log.info("[스케줄] 배틀카드 생성 시작 (월요일 KST 03:00)");
+        try {
+            int count = battleCardService.generateBattleCards().size();
+            log.info("[스케줄] 배틀카드 생성 완료: {}건", count);
+        } catch (AiApiUnavailableException e) {
+            log.error("[스케줄] 배틀카드 생성 중단 - Gemini API 비정상: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("[스케줄] 배틀카드 생성 실패: {}", e.getMessage(), e);
         }
     }
 }

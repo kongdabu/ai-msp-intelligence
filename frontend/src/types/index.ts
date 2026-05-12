@@ -73,8 +73,21 @@ export interface PageResponse<T> {
 
 export type Competitor = 'LG_CNS' | 'SK_AX' | 'BESPIN' | 'PWC' | 'GENERAL'
 export type Category = 'AI_AGENT' | 'VERTICAL_AI' | 'ITO' | 'MSP' | 'CLOUD' | 'GEN_AI'
-export type SourceType = 'NEWS' | 'HOMEPAGE' | 'SNS' | 'IDC'
+export type SourceType = 'NEWS' | 'HOMEPAGE' | 'SNS' | 'IDC' | 'PROCUREMENT' | 'JOB_POSTING'
 export type InsightType = 'OPPORTUNITY' | 'THREAT' | 'TREND' | 'STRATEGY'
+
+export interface BattleCard {
+  id: number
+  competitor: Competitor
+  strengths: string[]
+  weaknesses: string[]
+  opportunities: string[]
+  threats: string[]
+  ourStrategy: string
+  impactScore: number
+  sourceArticleCount: number
+  generatedAt: string
+}
 
 export const COMPETITOR_LABELS: Record<Competitor, string> = {
   LG_CNS: 'LG CNS',

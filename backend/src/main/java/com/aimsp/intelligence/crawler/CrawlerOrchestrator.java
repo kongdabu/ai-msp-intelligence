@@ -3,7 +3,9 @@ package com.aimsp.intelligence.crawler;
 import com.aimsp.intelligence.ai.GeminiApiClient;
 import com.aimsp.intelligence.ai.SummaryGenerator;
 import com.aimsp.intelligence.crawler.sources.BespinCrawler;
+import com.aimsp.intelligence.crawler.sources.JobPostingCrawler;
 import com.aimsp.intelligence.crawler.sources.LgCnsCrawler;
+import com.aimsp.intelligence.crawler.sources.ProcurementCrawler;
 import com.aimsp.intelligence.crawler.sources.PwcCrawler;
 import com.aimsp.intelligence.crawler.sources.SkAxCrawler;
 import com.aimsp.intelligence.crawler.sources.ZdnetKoreaCrawler;
@@ -39,6 +41,8 @@ public class CrawlerOrchestrator {
     private final BespinCrawler bespinCrawler;
     private final PwcCrawler pwcCrawler;
     private final ZdnetKoreaCrawler zdnetKoreaCrawler;
+    private final ProcurementCrawler procurementCrawler;
+    private final JobPostingCrawler jobPostingCrawler;
 
     private final ExecutorService crawlerPool = Executors.newFixedThreadPool(3);
 
@@ -85,7 +89,15 @@ public class CrawlerOrchestrator {
 
         totalSaved += crawlAndSave(competitorArticles, "경쟁사 뉴스");
 
-        // 2. 소스 DB의 활성 뉴스 RSS 소스 크롤링 (NEWS 타입만)
+        // 2. 나라장터 공공 발주 공고 수집
+        log.info("--- 나라장터 공고 수집 시작 ---");
+        totalSaved += crawlAndSave(procurementCrawler.crawl(), "나라장터");
+
+        // 3. 경쟁사 채용공고 수집
+        log.info("--- 채용공고 수집 시작 ---");
+        totalSaved += crawlAndSave(jobPostingCrawler.crawl(), "채용공고");
+
+        // 4. 소스 DB의 활성 뉴스 RSS 소스 크롤링 (NEWS 타입만)
         log.info("--- 뉴스 RSS 소스 수집 시작 ---");
         List<Source> activeSources = sourceService.getActiveSources();
         for (Source source : activeSources) {

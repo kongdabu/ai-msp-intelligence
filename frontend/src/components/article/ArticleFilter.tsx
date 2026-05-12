@@ -27,6 +27,8 @@ const SOURCE_TYPES: { value: SourceType | ''; label: string }[] = [
   { value: 'HOMEPAGE', label: '홈페이지' },
   { value: 'SNS', label: 'SNS' },
   { value: 'IDC', label: 'IDC 리포트' },
+  { value: 'PROCUREMENT', label: '나라장터 공고' },
+  { value: 'JOB_POSTING', label: '채용공고' },
 ]
 
 export default function ArticleFilter() {
