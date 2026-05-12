@@ -37,7 +37,7 @@ public class BattleCardDto {
                     .threats(parseList(bc.getThreats()))
                     .ourStrategy(bc.getOurStrategy())
                     .impactScore(bc.getImpactScore())
-                    .sourceArticleCount(bc.getSourceArticles() != null ? bc.getSourceArticles().size() : 0)
+                    .sourceArticleCount(bc.getSourceArticleCount())
                     .generatedAt(bc.getGeneratedAt())
                     .build();
         }

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Formula;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -42,6 +43,10 @@ public class BattleCard {
     private String ourStrategy;
 
     private Integer impactScore; // 1-5
+
+    // 컬렉션 JOIN 없이 COUNT 서브쿼리로 계산 → 리스트 조회 시 N+1·메모리 페이지네이션 방지
+    @Formula("(SELECT COUNT(*) FROM battle_card_articles WHERE battle_card_id = id)")
+    private int sourceArticleCount;
 
     @OneToMany(mappedBy = "battleCard", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BattleCardArticle> sourceArticles = new ArrayList<>();
