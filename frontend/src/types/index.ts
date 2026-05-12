@@ -85,9 +85,21 @@ export interface BattleCard {
   opportunities: string[]
   threats: string[]
   ourStrategy: string
-  impactScore: number
+  impactScore: number | null
   sourceArticleCount: number
-  generatedAt: string
+  generatedAt: string | null
+}
+
+export interface BattleCardDetail extends Omit<BattleCard, 'sourceArticleCount'> {
+  sourceArticles: BattleCardSourceArticle[]
+}
+
+export interface BattleCardSourceArticle {
+  id: number
+  title: string
+  url: string
+  competitor: Competitor
+  relevanceScore: number | null
 }
 
 export const COMPETITOR_LABELS: Record<Competitor, string> = {

@@ -29,7 +29,7 @@ public class BattleCardService {
     private final BattleCardGenerator battleCardGenerator;
     private final GeminiApiClient geminiApiClient;
 
-    // 경쟁사별 최신 배틀카드 1건씩 조회
+    // 경쟁사별 최신 배틀카드 1건씩 조회 (JOIN FETCH로 N+1 방지)
     @Transactional(readOnly = true)
     public List<BattleCardDto.Response> getLatestBattleCards() {
         List<BattleCardDto.Response> result = new ArrayList<>();
@@ -41,13 +41,21 @@ public class BattleCardService {
         return result;
     }
 
-    // 특정 경쟁사 배틀카드 이력 조회
+    // 특정 경쟁사 배틀카드 이력 조회 (최근 10건 제한)
     @Transactional(readOnly = true)
     public List<BattleCardDto.Response> getBattleCardsByCompetitor(String competitor) {
-        return battleCardRepository.findByCompetitorOrderByGeneratedAtDesc(competitor)
+        return battleCardRepository.findTop10ByCompetitorOrderByGeneratedAtDesc(competitor)
                 .stream()
                 .map(BattleCardDto.Response::from)
                 .collect(Collectors.toList());
+    }
+
+    // 배틀카드 단건 상세 조회 (출처 기사 포함)
+    @Transactional(readOnly = true)
+    public BattleCardDto.DetailResponse getBattleCardDetail(Long id) {
+        BattleCard bc = battleCardRepository.findWithDetailById(id)
+                .orElseThrow(() -> new IllegalArgumentException("배틀카드를 찾을 수 없습니다: " + id));
+        return BattleCardDto.DetailResponse.from(bc);
     }
 
     // 전체 경쟁사 배틀카드 수동 생성

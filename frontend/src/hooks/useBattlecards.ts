@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { BattleCard } from '../types'
+import { BattleCard, BattleCardDetail } from '../types'
 
 const TEN_MINUTES = 10 * 60 * 1000
 
@@ -26,6 +26,18 @@ export function useBattleCardsByCompetitor(competitor: string) {
   })
 }
 
+export function useBattleCardDetail(id: number | null) {
+  return useQuery<BattleCardDetail>({
+    queryKey: ['battlecard-detail', id],
+    queryFn: async () => {
+      const { data } = await axios.get(`/api/battlecards/detail/${id}`)
+      return data
+    },
+    enabled: id !== null,
+    staleTime: TEN_MINUTES,
+  })
+}
+
 interface GenerateOptions {
   onSuccess?: (cards: BattleCard[]) => void
 }
@@ -39,6 +51,7 @@ export function useGenerateBattleCards(options?: GenerateOptions) {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['battlecards'] })
+      queryClient.invalidateQueries({ queryKey: ['battlecard-detail'] })
       options?.onSuccess?.(data)
     },
   })
