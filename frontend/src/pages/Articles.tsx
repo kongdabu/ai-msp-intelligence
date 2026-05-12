@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
-import { useArticles } from '../hooks/useArticles'
+import { useArticles, useTriggerCrawl } from '../hooks/useArticles'
 import { useFilterStore } from '../store/filterStore'
 import ArticleFilter from '../components/article/ArticleFilter'
 import ArticleList from '../components/article/ArticleList'
 import { Article, COMPETITOR_LABELS, CATEGORY_LABELS, COMPETITOR_COLORS } from '../types'
-import { X, ExternalLink } from 'lucide-react'
+import { X, ExternalLink, RefreshCw } from 'lucide-react'
 
 function ArticleDetail({ article, onClose }: { article: Article; onClose: () => void }) {
   return (
@@ -76,17 +76,40 @@ function ArticleDetail({ article, onClose }: { article: Article; onClose: () => 
 export default function Articles() {
   const [page, setPage] = useState(0)
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null)
+  const [crawlMsg, setCrawlMsg] = useState<string | null>(null)
   const { articleFilter } = useFilterStore()
 
-  // 필터 변경 시 첫 페이지로 초기화
-  useEffect(() => {
-    setPage(0)
-  }, [articleFilter])
+  useEffect(() => { setPage(0) }, [articleFilter])
 
   const { data, isLoading } = useArticles({ ...articleFilter, page, size: 18 })
+  const { mutate: crawl, isPending: isCrawling } = useTriggerCrawl({
+    onSuccess: (d) => setCrawlMsg(`신규 ${d.crawledCount}건 수집 완료`),
+  })
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
+      {/* 헤더 */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="text-sm text-gray-500">
+          {data && <>총 <span className="font-semibold text-gray-900">{data.totalElements.toLocaleString()}</span>건</>}
+        </div>
+        <button
+          onClick={() => crawl()}
+          disabled={isCrawling}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+        >
+          <RefreshCw size={14} className={isCrawling ? 'animate-spin' : ''} />
+          {isCrawling ? '수집 중...' : '지금 수집'}
+        </button>
+      </div>
+
+      {crawlMsg && (
+        <div className="bg-green-50 border border-green-200 text-green-800 text-sm rounded-lg px-4 py-3 flex justify-between">
+          ✅ {crawlMsg}
+          <button onClick={() => setCrawlMsg(null)} className="text-green-600">✕</button>
+        </div>
+      )}
+
       <ArticleFilter />
 
       {data && (
