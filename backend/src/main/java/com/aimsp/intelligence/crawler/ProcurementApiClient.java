@@ -24,9 +24,16 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class ProcurementApiClient {
 
-    private static final String API_URL = "https://apis.data.go.kr/1230000/NaraInfoSrvc/getProcurementDetail";
+    private static final String BASE_URL = "https://apis.data.go.kr/1230000/ad/BidPublicInfoService";
     private static final String DETAIL_BASE_URL = "https://www.g2b.go.kr:8101/ep/tbid/tbBidList.do";
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
+
+    // 조회 대상 operation (용역·기타·물품 순)
+    private static final List<String> OPERATIONS = List.of(
+            "getBidPblancListInfoServc",  // 용역 (AI, 클라우드, MSP 주력)
+            "getBidPblancListInfoEtc",    // 기타
+            "getBidPblancListInfoThng"    // 물품
+    );
 
     private final AppConfig appConfig;
 
@@ -41,12 +48,22 @@ public class ProcurementApiClient {
             return List.of();
         }
 
-        HttpUrl url = HttpUrl.parse(API_URL).newBuilder()
+        List<ProcurementItem> results = new ArrayList<>();
+        for (String operation : OPERATIONS) {
+            results.addAll(searchByOperation(operation, keyword, numOfRows));
+        }
+        return results;
+    }
+
+    private List<ProcurementItem> searchByOperation(String operation, String keyword, int numOfRows) {
+        String apiUrl = BASE_URL + "/" + operation;
+
+        HttpUrl url = HttpUrl.parse(apiUrl).newBuilder()
                 .addQueryParameter("serviceKey", appConfig.getProcurementApiKey())
                 .addQueryParameter("pageNo", "1")
                 .addQueryParameter("numOfRows", String.valueOf(numOfRows))
-                .addQueryParameter("inqryDiv", "1") // 1: 공고명 검색
-                .addQueryParameter("searchNm", keyword)
+                .addQueryParameter("inqryDiv", "1")   // 1: 공고명 검색
+                .addQueryParameter("bidNm", keyword)   // BidPublicInfoService는 bidNm 파라미터 사용
                 .addQueryParameter("type", "xml")
                 .build();
 
@@ -56,17 +73,20 @@ public class ProcurementApiClient {
                 .build();
 
         try (Response response = httpClient.newCall(request).execute()) {
-            if (!response.isSuccessful() || response.body() == null) {
-                if (response.code() == 500) {
-                    log.warn("[나라장터] 키워드 '{}' 처리 불가 (HTTP 500) — 해당 키워드 스킵", keyword);
-                } else {
-                    log.warn("[나라장터] API HTTP {} [키워드: {}]", response.code(), keyword);
-                }
+            String body = response.body() != null ? response.body().string() : "";
+            if (!response.isSuccessful()) {
+                log.warn("[나라장터] {} HTTP {} [키워드: {}] 응답: {}",
+                        operation, response.code(), keyword,
+                        body.length() > 300 ? body.substring(0, 300) : body);
                 return List.of();
             }
-            return parseXml(response.body().string());
+            List<ProcurementItem> items = parseXml(body);
+            if (!items.isEmpty()) {
+                log.info("[나라장터] {} '{}' 조회 {}건", operation, keyword, items.size());
+            }
+            return items;
         } catch (Exception e) {
-            log.error("[나라장터] API 호출 실패 [키워드: {}]: {}", keyword, e.getMessage());
+            log.error("[나라장터] {} 호출 실패 [키워드: {}]: {}", operation, keyword, e.getMessage());
             return List.of();
         }
     }
@@ -76,19 +96,23 @@ public class ProcurementApiClient {
         Document doc = Jsoup.parse(xml, "", org.jsoup.parser.Parser.xmlParser());
 
         for (Element item : doc.select("item")) {
-            String bidNtceNm = text(item, "bidNtceNm");
-            String bidNtceNo = text(item, "bidNtceNo");
-            String bidNtceSqNo = text(item, "bidNtceSqNo");
-            String ntceInsttNm = text(item, "ntceInsttNm");
-            String bidNtceDt  = text(item, "bidNtceDt");
+            String bidNtceNm    = text(item, "bidNtceNm");
+            String bidNtceNo    = text(item, "bidNtceNo");
+            String bidNtceSqNo  = text(item, "bidNtceSqNo");
+            String ntceInsttNm  = text(item, "ntceInsttNm");
+            String bidNtceDt    = text(item, "bidNtceDt");
             String asignBdgtAmt = text(item, "asignBdgtAmt");
 
             if (bidNtceNm.isBlank()) continue;
 
-            String detailUrl = buildDetailUrl(bidNtceNo, bidNtceSqNo);
-            LocalDateTime publishedAt = parseDate(bidNtceDt);
-
-            items.add(new ProcurementItem(bidNtceNm, detailUrl, ntceInsttNm, bidNtceDt, asignBdgtAmt, publishedAt));
+            items.add(new ProcurementItem(
+                    bidNtceNm,
+                    buildDetailUrl(bidNtceNo, bidNtceSqNo),
+                    ntceInsttNm,
+                    bidNtceDt,
+                    asignBdgtAmt,
+                    parseDate(bidNtceDt)
+            ));
         }
         return items;
     }
