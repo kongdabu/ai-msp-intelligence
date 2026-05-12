@@ -55,6 +55,23 @@ public class SchedulerConfig {
     }
 
     /**
+     * 나라장터 공고 수집 - 매일 KST 04:00
+     * 뉴스/채용(01:00) 수집 완료 후 별도 실행
+     */
+    @Scheduled(cron = "0 0 4 * * *", zone = "Asia/Seoul")
+    public void scheduledProcurementCrawl() {
+        log.info("[스케줄] 나라장터 공고 수집 시작 (KST 04:00)");
+        try {
+            int count = crawlerOrchestrator.crawlProcurement();
+            log.info("[스케줄] 나라장터 공고 수집 완료: {}건", count);
+        } catch (AiApiUnavailableException e) {
+            log.error("[스케줄] 나라장터 수집 중단 - Gemini API 비정상: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("[스케줄] 나라장터 수집 실패: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
      * 배틀카드 생성 - 매주 월요일 KST 03:00
      * 주간 경쟁사 동향이 쌓인 후 영업팀 주간 미팅 전 자동 갱신
      */

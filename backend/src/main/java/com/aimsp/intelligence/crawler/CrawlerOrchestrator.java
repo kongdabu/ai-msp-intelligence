@@ -89,11 +89,7 @@ public class CrawlerOrchestrator {
 
         totalSaved += crawlAndSave(competitorArticles, "경쟁사 뉴스");
 
-        // 2. 나라장터 공공 발주 공고 수집
-        log.info("--- 나라장터 공고 수집 시작 ---");
-        totalSaved += crawlAndSave(procurementCrawler.crawl(), "나라장터");
-
-        // 3. 경쟁사 채용공고 수집
+        // 2. 경쟁사 채용공고 수집
         log.info("--- 채용공고 수집 시작 ---");
         totalSaved += crawlAndSave(jobPostingCrawler.crawl(), "채용공고");
 
@@ -115,6 +111,19 @@ public class CrawlerOrchestrator {
 
         log.info("=== 크롤링 완료: 총 {}건 저장 ===", totalSaved);
         return totalSaved;
+    }
+
+    /**
+     * 나라장터 공고 단독 수집 - KST 04:00 스케줄 전용
+     */
+    public int crawlProcurement() {
+        if (!geminiApiClient.isAvailable()) {
+            throw new AiApiUnavailableException();
+        }
+        log.info("--- 나라장터 공고 수집 시작 ---");
+        int saved = crawlAndSave(procurementCrawler.crawl(), "나라장터");
+        log.info("=== 나라장터 수집 완료: {}건 ===", saved);
+        return saved;
     }
 
     /**
