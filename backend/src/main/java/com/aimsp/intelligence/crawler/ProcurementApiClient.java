@@ -57,12 +57,16 @@ public class ProcurementApiClient {
 
         try (Response response = httpClient.newCall(request).execute()) {
             if (!response.isSuccessful() || response.body() == null) {
-                log.warn("[나라장터] API HTTP {}: {}", response.code(), keyword);
+                if (response.code() == 500) {
+                    log.warn("[나라장터] 키워드 '{}' 처리 불가 (HTTP 500) — 해당 키워드 스킵", keyword);
+                } else {
+                    log.warn("[나라장터] API HTTP {} [키워드: {}]", response.code(), keyword);
+                }
                 return List.of();
             }
             return parseXml(response.body().string());
         } catch (Exception e) {
-            log.error("[나라장터] API 호출 실패 [{}]: {}", keyword, e.getMessage());
+            log.error("[나라장터] API 호출 실패 [키워드: {}]: {}", keyword, e.getMessage());
             return List.of();
         }
     }

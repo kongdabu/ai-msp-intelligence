@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProcurementCrawler {
 
-    private static final List<String> KEYWORDS = List.of("AI", "인공지능", "클라우드", "MSP");
+    private static final List<String> KEYWORDS = List.of("인공지능", "클라우드", "MSP", "디지털전환");
     private static final int ITEMS_PER_KEYWORD = 10;
 
     private final ProcurementApiClient procurementApiClient;
