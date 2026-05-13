@@ -112,6 +112,10 @@ spring:
       connection-timeout: 30000
       maximum-pool-size: 5
 
+  flyway:
+    baseline-on-migrate: true   # flyway_schema_history 없을 때 자동 baseline
+    baseline-version: 6         # V6까지 이미 적용된 것으로 간주 (기존 스키마 보호)
+
   jpa:
     hibernate:
       ddl-auto: validate
