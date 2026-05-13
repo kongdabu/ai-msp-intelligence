@@ -20,8 +20,8 @@ public class EmbeddingApiClient {
         RETRIEVAL_QUERY
     }
 
-    private static final String EMBEDDING_MODEL = "text-embedding-004";
-    private static final int EMBEDDING_DIM = 768;
+    private static final String EMBEDDING_MODEL = "gemini-embedding-2";
+    private static final int EMBEDDING_DIM = 3072;
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
     private final AppConfig appConfig;

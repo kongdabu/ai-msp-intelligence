@@ -62,7 +62,7 @@ public class Article {
     private Integer relevanceScore; // 0-100
 
     // pgvector: PostgreSQL 전용, H2에서는 null 유지
-    @Column(columnDefinition = "vector(768)")
+    @Column(columnDefinition = "vector(3072)")
     @JdbcTypeCode(SqlTypes.VECTOR)
     private float[] embedding;
 }
