@@ -45,4 +45,25 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
 
     // 최신 기사 N건 (발행일 기준)
     List<Article> findTop5ByOrderByPublishedAtDesc();
+
+    // pgvector 코사인 유사도 검색 (local/prod — PostgreSQL + pgvector 필요)
+    @Query(nativeQuery = true, value =
+        "SELECT * FROM article " +
+        "WHERE embedding IS NOT NULL AND relevance_score >= 50 " +
+        "ORDER BY embedding <=> CAST(:embedding AS vector) " +
+        "LIMIT :limit")
+    List<Article> findSimilarArticles(
+        @Param("embedding") String embedding,
+        @Param("limit") int limit
+    );
+
+    // LIKE 검색 fallback (H2 dev 환경 또는 embedding 미생성 시)
+    @Query("SELECT a FROM Article a WHERE " +
+        "(LOWER(a.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+        " LOWER(a.summary) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+        "AND a.relevanceScore >= 50 " +
+        "ORDER BY a.relevanceScore DESC, a.publishedAt DESC")
+    List<Article> findByKeywordForContext(
+        @Param("keyword") String keyword, Pageable pageable
+    );
 }

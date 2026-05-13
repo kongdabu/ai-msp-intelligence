@@ -57,6 +57,38 @@ logging:
 spring:
   config:
     activate:
+      on-profile: local
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/aimspdb
+    username: aimsp
+    password: aimsp_dev
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    defer-datasource-initialization: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_batch_fetch_size: 20
+
+  sql:
+    init:
+      mode: never
+
+  h2:
+    console:
+      enabled: false
+
+---
+spring:
+  config:
+    activate:
       on-profile: prod-debug
 
 logging:

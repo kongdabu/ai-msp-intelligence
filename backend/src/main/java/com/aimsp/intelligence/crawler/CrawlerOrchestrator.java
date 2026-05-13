@@ -126,6 +126,7 @@ public class CrawlerOrchestrator {
                         }
                         article.setSummary(result.summary());
                         article.setRelevanceScore(result.relevanceScore());
+                        article.setEmbedding(result.embedding()); // null 가능 (H2 or 실패)
                         if ("GENERAL".equals(article.getCompetitor())) {
                             article.setCompetitor(result.detectedCompetitor());
                         }

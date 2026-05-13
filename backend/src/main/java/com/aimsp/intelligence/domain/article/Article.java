@@ -10,6 +10,8 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -58,4 +60,9 @@ public class Article {
 
     private Boolean isProcessed = false;
     private Integer relevanceScore; // 0-100
+
+    // pgvector: PostgreSQL 전용, H2에서는 null 유지
+    @Column(columnDefinition = "vector(768)")
+    @JdbcTypeCode(SqlTypes.VECTOR)
+    private float[] embedding;
 }

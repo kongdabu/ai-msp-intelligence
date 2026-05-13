@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 public class SummaryGenerator {
 
     private final GeminiApiClient geminiApiClient;
+    private final EmbeddingApiClient embeddingApiClient;
     private final ObjectMapper objectMapper;
 
     private static final String SUMMARY_PROMPT_TEMPLATE = """
@@ -39,13 +40,14 @@ public class SummaryGenerator {
             """;
 
     /**
-     * 기사 요약 생성 결과
+     * 기사 요약 생성 결과 (embedding 포함)
      */
     public record SummaryResult(
             String summary,
             int relevanceScore,
             String detectedCompetitor,
-            String detectedCategory
+            String detectedCategory,
+            float[] embedding    // null 가능 (H2 환경 또는 임베딩 실패 시)
     ) {}
 
     /**
@@ -69,11 +71,21 @@ public class SummaryGenerator {
 
             JsonNode node = objectMapper.readTree(response);
 
+            String summary = node.path("summary").asText(null);
+
+            // 요약 완료 후 임베딩 생성 (title + summary 조합, 실패해도 기사 저장 계속)
+            String embeddingText = (title != null ? title : "") +
+                    (summary != null ? " " + summary : "");
+            float[] embedding = embeddingApiClient.embed(
+                    embeddingText, EmbeddingApiClient.TaskType.RETRIEVAL_DOCUMENT
+            );
+
             return new SummaryResult(
-                    node.path("summary").asText(null),
+                    summary,
                     node.path("relevanceScore").asInt(0),
                     node.path("detectedCompetitor").asText("GENERAL"),
-                    node.path("detectedCategory").asText("GEN_AI")
+                    node.path("detectedCategory").asText("GEN_AI"),
+                    embedding
             );
         } catch (AiApiUnavailableException e) {
             throw e;  // 상위로 전파하여 작업 중단
