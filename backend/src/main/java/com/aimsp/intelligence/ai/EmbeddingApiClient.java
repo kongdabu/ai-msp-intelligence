@@ -67,26 +67,40 @@ public class EmbeddingApiClient {
                     .build();
 
             try (Response response = client.newCall(request).execute()) {
+                if (response.code() == 429) {
+                    log.warn("[임베딩] Rate Limit(429) — 60초 대기 후 1회 재시도");
+                    Thread.sleep(60000);
+                    try (Response retry = client.newCall(request).execute()) {
+                        if (!retry.isSuccessful() || retry.body() == null) {
+                            log.warn("[임베딩] 재시도 실패 HTTP {}", retry.code());
+                            return null;
+                        }
+                        return parseEmbedding(objectMapper.readTree(retry.body().string()));
+                    }
+                }
                 if (!response.isSuccessful() || response.body() == null) {
                     log.warn("[임베딩] API 오류 HTTP {}", response.code());
                     return null;
                 }
-                JsonNode root = objectMapper.readTree(response.body().string());
-                JsonNode values = root.path("embedding").path("values");
-                if (values.isMissingNode() || values.size() != EMBEDDING_DIM) {
-                    log.warn("[임베딩] 응답 형식 오류: values.size={}", values.size());
-                    return null;
-                }
-                float[] embedding = new float[EMBEDDING_DIM];
-                for (int i = 0; i < EMBEDDING_DIM; i++) {
-                    embedding[i] = (float) values.get(i).asDouble();
-                }
-                return embedding;
+                return parseEmbedding(objectMapper.readTree(response.body().string()));
             }
         } catch (Exception e) {
             log.warn("[임베딩] 생성 실패: {}", e.getMessage());
             return null;
         }
+    }
+
+    private float[] parseEmbedding(JsonNode root) {
+        JsonNode values = root.path("embedding").path("values");
+        if (values.isMissingNode() || values.size() != EMBEDDING_DIM) {
+            log.warn("[임베딩] 응답 형식 오류: values.size={}", values.size());
+            return null;
+        }
+        float[] embedding = new float[EMBEDDING_DIM];
+        for (int i = 0; i < EMBEDDING_DIM; i++) {
+            embedding[i] = (float) values.get(i).asDouble();
+        }
+        return embedding;
     }
 
     /**

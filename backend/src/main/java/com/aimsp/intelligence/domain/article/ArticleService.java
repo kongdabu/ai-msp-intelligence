@@ -165,6 +165,7 @@ public class ArticleService {
      * summary가 있고 embedding이 없는 기사를 batchSize씩 처리.
      * @return {total, done, failed}
      */
+    @Transactional
     public Map<String, Long> backfillEmbeddings(int batchSize) {
         long total = articleRepository.countByEmbeddingIsNull();
         long done = 0;
@@ -195,8 +196,8 @@ public class ArticleService {
                     } else {
                         failed++;
                     }
-                    // API rate limit 방지 (약 100 RPM 제한)
-                    Thread.sleep(700);
+                    // API rate limit 방지 (약 30 RPM 안전 간격)
+                    Thread.sleep(2000);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;
