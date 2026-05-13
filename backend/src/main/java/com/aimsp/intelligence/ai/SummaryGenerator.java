@@ -40,14 +40,14 @@ public class SummaryGenerator {
             """;
 
     /**
-     * 기사 요약 생성 결과 (embedding 포함)
+     * 기사 요약 생성 결과
      */
     public record SummaryResult(
             String summary,
             int relevanceScore,
             String detectedCompetitor,
             String detectedCategory,
-            float[] embedding    // null 가능 (H2 환경 또는 임베딩 실패 시)
+            float[] embedding    // null 가능 (H2 환경 또는 임베딩 실패 시), native SQL로 저장
     ) {}
 
     /**

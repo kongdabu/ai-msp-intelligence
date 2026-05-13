@@ -187,8 +187,10 @@ public class ArticleService {
                             text.trim(), EmbeddingApiClient.TaskType.RETRIEVAL_DOCUMENT
                     );
                     if (embedding != null) {
-                        article.setEmbedding(embedding);
-                        articleRepository.save(article);
+                        articleRepository.updateEmbedding(
+                                article.getId(),
+                                EmbeddingApiClient.toVectorString(embedding)
+                        );
                         done++;
                     } else {
                         failed++;

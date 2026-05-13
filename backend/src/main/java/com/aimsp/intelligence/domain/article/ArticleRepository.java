@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -56,6 +57,12 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
         @Param("embedding") String embedding,
         @Param("limit") int limit
     );
+
+    // embedding 저장 — native SQL로 Hibernate 타입 충돌 우회
+    @Modifying
+    @Query(nativeQuery = true,
+        value = "UPDATE article SET embedding = CAST(:embedding AS vector) WHERE id = :id")
+    void updateEmbedding(@Param("id") Long id, @Param("embedding") String embedding);
 
     // 임베딩 미생성 기사 조회 (백필용)
     @Query("SELECT a FROM Article a WHERE a.embedding IS NULL AND a.summary IS NOT NULL ORDER BY a.publishedAt DESC")

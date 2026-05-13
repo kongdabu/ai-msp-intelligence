@@ -35,7 +35,6 @@ dependencies {
     // Database
     runtimeOnly 'com.h2database:h2'
     runtimeOnly 'org.postgresql:postgresql'
-    implementation 'com.pgvector:pgvector:0.1.6'
 
 
     // Crawling

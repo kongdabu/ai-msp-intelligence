@@ -1,5 +1,6 @@
 package com.aimsp.intelligence.crawler;
 
+import com.aimsp.intelligence.ai.EmbeddingApiClient;
 import com.aimsp.intelligence.ai.GeminiApiClient;
 import com.aimsp.intelligence.ai.SummaryGenerator;
 import com.aimsp.intelligence.crawler.sources.BespinCrawler;
@@ -8,6 +9,7 @@ import com.aimsp.intelligence.crawler.sources.PwcCrawler;
 import com.aimsp.intelligence.crawler.sources.SkAxCrawler;
 import com.aimsp.intelligence.crawler.sources.ZdnetKoreaCrawler;
 import com.aimsp.intelligence.domain.article.Article;
+import com.aimsp.intelligence.domain.article.ArticleRepository;
 import com.aimsp.intelligence.domain.article.ArticleService;
 import com.aimsp.intelligence.domain.source.Source;
 import com.aimsp.intelligence.domain.source.SourceService;
@@ -30,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 public class CrawlerOrchestrator {
 
     private final ArticleService articleService;
+    private final ArticleRepository articleRepository;
     private final SourceService sourceService;
     private final SummaryGenerator summaryGenerator;
     private final GeminiApiClient geminiApiClient;
@@ -114,8 +117,9 @@ public class CrawlerOrchestrator {
                     continue;
                 }
 
+                SummaryGenerator.SummaryResult result = null;
                 if (article.getOriginalContent() != null && !article.getOriginalContent().isBlank()) {
-                    SummaryGenerator.SummaryResult result = summaryGenerator.generateSummary(
+                    result = summaryGenerator.generateSummary(
                             article.getTitle(), article.getOriginalContent()
                     );
                     if (result != null) {
@@ -126,7 +130,6 @@ public class CrawlerOrchestrator {
                         }
                         article.setSummary(result.summary());
                         article.setRelevanceScore(result.relevanceScore());
-                        article.setEmbedding(result.embedding()); // null 가능 (H2 or 실패)
                         if ("GENERAL".equals(article.getCompetitor())) {
                             article.setCompetitor(result.detectedCompetitor());
                         }
@@ -137,7 +140,16 @@ public class CrawlerOrchestrator {
                 }
 
                 Article savedArticle = articleService.saveIfNotExists(article);
-                if (savedArticle != null) saved++;
+                if (savedArticle != null) {
+                    saved++;
+                    // embedding은 Hibernate 타입 충돌 우회를 위해 native SQL로 저장
+                    if (result != null && result.embedding() != null) {
+                        articleRepository.updateEmbedding(
+                                savedArticle.getId(),
+                                EmbeddingApiClient.toVectorString(result.embedding())
+                        );
+                    }
+                }
             } catch (AiApiUnavailableException e) {
                 throw e;
             } catch (Exception e) {

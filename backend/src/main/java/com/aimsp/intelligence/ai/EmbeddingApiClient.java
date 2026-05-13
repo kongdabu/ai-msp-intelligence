@@ -88,4 +88,17 @@ public class EmbeddingApiClient {
             return null;
         }
     }
+
+    /**
+     * float[] 임베딩을 pgvector 문자열 "[0.1,0.2,...]"으로 변환.
+     * ArticleRepository.updateEmbedding() native SQL CAST에 사용.
+     */
+    public static String toVectorString(float[] embedding) {
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < embedding.length; i++) {
+            if (i > 0) sb.append(',');
+            sb.append(embedding[i]);
+        }
+        return sb.append(']').toString();
+    }
 }
