@@ -93,30 +93,3 @@ export function useTriggerCrawl(options?: TriggerCrawlOptions) {
   })
 }
 
-export function useTriggerProcurementCrawl(options?: TriggerCrawlOptions) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async () => {
-      const { data } = await axios.post('/api/articles/crawl/procurement')
-      return data as { crawledCount: number; triggeredAt: string }
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['articles'] })
-      options?.onSuccess?.(data)
-    },
-  })
-}
-
-export function useTriggerJobPostingCrawl(options?: TriggerCrawlOptions) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async () => {
-      const { data } = await axios.post('/api/articles/crawl/job-postings')
-      return data as { crawledCount: number; triggeredAt: string }
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['articles'] })
-      options?.onSuccess?.(data)
-    },
-  })
-}

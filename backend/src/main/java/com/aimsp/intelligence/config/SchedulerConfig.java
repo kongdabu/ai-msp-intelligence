@@ -22,7 +22,6 @@ public class SchedulerConfig {
 
     /**
      * 기사 수집 - 매일 KST 01:00 (UTC 16:00)
-     * zone = "Asia/Seoul" 로 설정해 서버 타임존(UTC)과 무관하게 한국시간 기준 실행
      */
     @Scheduled(cron = "0 0 1 * * *", zone = "Asia/Seoul")
     public void scheduledCrawl() {
@@ -39,7 +38,6 @@ public class SchedulerConfig {
 
     /**
      * 인사이트 생성 - 매일 KST 02:00 (UTC 17:00)
-     * 크롤링(01:00) 완료 후 1시간 뒤 실행
      */
     @Scheduled(cron = "0 0 2 * * *", zone = "Asia/Seoul")
     public void scheduledInsightGeneration() {
@@ -55,41 +53,7 @@ public class SchedulerConfig {
     }
 
     /**
-     * 채용공고 수집 - 매일 KST 05:00
-     */
-    @Scheduled(cron = "0 0 5 * * *", zone = "Asia/Seoul")
-    public void scheduledJobPostingCrawl() {
-        log.info("[스케줄] 채용공고 수집 시작 (KST 05:00)");
-        try {
-            int count = crawlerOrchestrator.crawlJobPostings();
-            log.info("[스케줄] 채용공고 수집 완료: {}건", count);
-        } catch (AiApiUnavailableException e) {
-            log.error("[스케줄] 채용공고 수집 중단 - Gemini API 비정상: {}", e.getMessage());
-        } catch (Exception e) {
-            log.error("[스케줄] 채용공고 수집 실패: {}", e.getMessage(), e);
-        }
-    }
-
-    /**
-     * 나라장터 공고 수집 - 매일 KST 04:00
-     * 뉴스/채용(01:00) 수집 완료 후 별도 실행
-     */
-    @Scheduled(cron = "0 0 4 * * *", zone = "Asia/Seoul")
-    public void scheduledProcurementCrawl() {
-        log.info("[스케줄] 나라장터 공고 수집 시작 (KST 04:00)");
-        try {
-            int count = crawlerOrchestrator.crawlProcurement();
-            log.info("[스케줄] 나라장터 공고 수집 완료: {}건", count);
-        } catch (AiApiUnavailableException e) {
-            log.error("[스케줄] 나라장터 수집 중단 - Gemini API 비정상: {}", e.getMessage());
-        } catch (Exception e) {
-            log.error("[스케줄] 나라장터 수집 실패: {}", e.getMessage(), e);
-        }
-    }
-
-    /**
      * 배틀카드 생성 - 매주 월요일 KST 03:00
-     * 주간 경쟁사 동향이 쌓인 후 영업팀 주간 미팅 전 자동 갱신
      */
     @Scheduled(cron = "0 0 3 * * MON", zone = "Asia/Seoul")
     public void scheduledBattleCardGeneration() {

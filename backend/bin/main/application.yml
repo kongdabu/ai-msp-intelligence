@@ -17,7 +17,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        default_batch_fetch_size: 20
 
   h2:
     console:
@@ -41,12 +40,13 @@ app:
   gemini:
     api-key: ${GEMINI_API_KEY:}
     api-url: https://generativelanguage.googleapis.com/v1beta/models
-    model: gemini-3.1-flash-lite
+    model: gemini-2.5-flash-lite
     max-tokens: 4096
-    rate-limit-ms: 15000  # gemini-2.5-flash-lite free tier: 10 RPM → 15초 간격 (충분한 버퍼)
   naver:
     client-id: ${NAVER_CLIENT_ID:}
     client-secret: ${NAVER_CLIENT_SECRET:}
+  crawl:
+    request-delay-ms: 2000
 
 logging:
   level:
@@ -87,7 +87,6 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        default_batch_fetch_size: 20
 
   sql:
     init:

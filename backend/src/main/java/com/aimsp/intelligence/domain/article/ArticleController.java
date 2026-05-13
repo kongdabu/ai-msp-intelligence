@@ -71,28 +71,6 @@ public class ArticleController {
         return ResponseEntity.ok(result);
     }
 
-    // 나라장터 공고 수동 수집
-    @PostMapping("/crawl/procurement")
-    public ResponseEntity<Map<String, Object>> triggerProcurementCrawl() {
-        log.info("나라장터 공고 수동 수집 시작");
-        int count = crawlerOrchestrator.crawlProcurement();
-        Map<String, Object> result = new HashMap<>();
-        result.put("crawledCount", count);
-        result.put("triggeredAt", LocalDateTime.now());
-        return ResponseEntity.ok(result);
-    }
-
-    // 채용공고 수동 수집
-    @PostMapping("/crawl/job-postings")
-    public ResponseEntity<Map<String, Object>> triggerJobPostingCrawl() {
-        log.info("채용공고 수동 수집 시작");
-        int count = crawlerOrchestrator.crawlJobPostings();
-        Map<String, Object> result = new HashMap<>();
-        result.put("crawledCount", count);
-        result.put("triggeredAt", LocalDateTime.now());
-        return ResponseEntity.ok(result);
-    }
-
     // 통계 조회
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getStats() {

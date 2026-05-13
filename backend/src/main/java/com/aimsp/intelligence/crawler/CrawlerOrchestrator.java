@@ -3,9 +3,7 @@ package com.aimsp.intelligence.crawler;
 import com.aimsp.intelligence.ai.GeminiApiClient;
 import com.aimsp.intelligence.ai.SummaryGenerator;
 import com.aimsp.intelligence.crawler.sources.BespinCrawler;
-import com.aimsp.intelligence.crawler.sources.JobPostingCrawler;
 import com.aimsp.intelligence.crawler.sources.LgCnsCrawler;
-import com.aimsp.intelligence.crawler.sources.ProcurementCrawler;
 import com.aimsp.intelligence.crawler.sources.PwcCrawler;
 import com.aimsp.intelligence.crawler.sources.SkAxCrawler;
 import com.aimsp.intelligence.crawler.sources.ZdnetKoreaCrawler;
@@ -41,8 +39,6 @@ public class CrawlerOrchestrator {
     private final BespinCrawler bespinCrawler;
     private final PwcCrawler pwcCrawler;
     private final ZdnetKoreaCrawler zdnetKoreaCrawler;
-    private final ProcurementCrawler procurementCrawler;
-    private final JobPostingCrawler jobPostingCrawler;
 
     private final ExecutorService crawlerPool = Executors.newFixedThreadPool(3);
 
@@ -61,7 +57,6 @@ public class CrawlerOrchestrator {
 
     /**
      * 전체 소스 크롤링 - 5개 전용 크롤러 병렬 실행 후 RSS 소스 수집
-     * 시작 전 Gemini API 헬스체크 수행 - 비정상 시 GeminiApiUnavailableException 발생
      */
     public int crawlAll() {
         if (!geminiApiClient.isAvailable()) {
@@ -72,20 +67,20 @@ public class CrawlerOrchestrator {
 
         // 1. 경쟁사별 Google News RSS 크롤러 병렬 실행
         log.info("--- 경쟁사 뉴스 수집 시작 (병렬) ---");
-        CompletableFuture<List<Article>> lgFuture   = CompletableFuture.supplyAsync(lgCnsCrawler::crawl, crawlerPool);
-        CompletableFuture<List<Article>> skFuture   = CompletableFuture.supplyAsync(skAxCrawler::crawl, crawlerPool);
+        CompletableFuture<List<Article>> lgFuture     = CompletableFuture.supplyAsync(lgCnsCrawler::crawl, crawlerPool);
+        CompletableFuture<List<Article>> skFuture     = CompletableFuture.supplyAsync(skAxCrawler::crawl, crawlerPool);
         CompletableFuture<List<Article>> bespinFuture = CompletableFuture.supplyAsync(bespinCrawler::crawl, crawlerPool);
-        CompletableFuture<List<Article>> pwcFuture  = CompletableFuture.supplyAsync(pwcCrawler::crawl, crawlerPool);
-        CompletableFuture<List<Article>> zdnetFuture = CompletableFuture.supplyAsync(zdnetKoreaCrawler::crawl, crawlerPool);
+        CompletableFuture<List<Article>> pwcFuture    = CompletableFuture.supplyAsync(pwcCrawler::crawl, crawlerPool);
+        CompletableFuture<List<Article>> zdnetFuture  = CompletableFuture.supplyAsync(zdnetKoreaCrawler::crawl, crawlerPool);
 
         CompletableFuture.allOf(lgFuture, skFuture, bespinFuture, pwcFuture, zdnetFuture).join();
 
         List<Article> competitorArticles = new ArrayList<>();
-        competitorArticles.addAll(safeGet(lgFuture,    "LG_CNS"));
-        competitorArticles.addAll(safeGet(skFuture,    "SK_AX"));
-        competitorArticles.addAll(safeGet(bespinFuture,"BESPIN"));
-        competitorArticles.addAll(safeGet(pwcFuture,   "PWC"));
-        competitorArticles.addAll(safeGet(zdnetFuture, "GENERAL"));
+        competitorArticles.addAll(safeGet(lgFuture,     "LG_CNS"));
+        competitorArticles.addAll(safeGet(skFuture,     "SK_AX"));
+        competitorArticles.addAll(safeGet(bespinFuture, "BESPIN"));
+        competitorArticles.addAll(safeGet(pwcFuture,    "PWC"));
+        competitorArticles.addAll(safeGet(zdnetFuture,  "GENERAL"));
 
         totalSaved += crawlAndSave(competitorArticles, "경쟁사 뉴스");
 
@@ -109,37 +104,11 @@ public class CrawlerOrchestrator {
         return totalSaved;
     }
 
-    /**
-     * 채용공고 단독 수집 - KST 05:00 스케줄 전용
-     * 키워드 필터링된 구조화 데이터 → Gemini 호출 불필요
-     */
-    public int crawlJobPostings() {
-        log.info("--- 채용공고 수집 시작 ---");
-        int saved = saveDirectly(jobPostingCrawler.crawl(), "채용공고");
-        log.info("=== 채용공고 수집 완료: {}건 ===", saved);
-        return saved;
-    }
-
-    /**
-     * 나라장터 공고 단독 수집 - KST 04:00 스케줄 전용
-     * 키워드 필터링된 구조화 데이터 → Gemini 호출 불필요
-     */
-    public int crawlProcurement() {
-        log.info("--- 나라장터 공고 수집 시작 ---");
-        int saved = saveDirectly(procurementCrawler.crawl(), "나라장터");
-        log.info("=== 나라장터 수집 완료: {}건 ===", saved);
-        return saved;
-    }
-
-    /**
-     * 기사 목록 저장 - 중복 URL은 Gemini 호출 없이 즉시 스킵 (API 호출 최소화)
-     */
     private int crawlAndSave(List<Article> articles, String sourceName) {
         int saved = 0;
         int skipped = 0;
         for (Article article : articles) {
             try {
-                // 중복 체크를 Gemini 호출 전에 수행 → 신규 기사에만 AI 요약 생성
                 if (articleService.existsByUrl(article.getUrl())) {
                     skipped++;
                     continue;
@@ -169,29 +138,7 @@ public class CrawlerOrchestrator {
                 Article savedArticle = articleService.saveIfNotExists(article);
                 if (savedArticle != null) saved++;
             } catch (AiApiUnavailableException e) {
-                throw e;  // AI API 서버 오류 시 즉시 작업 중단
-            } catch (Exception e) {
-                log.error("기사 저장 실패 [{}]: {}", article.getTitle(), e.getMessage());
-            }
-        }
-        log.info("[{}] 신규 {}건 저장, 중복 {}건 스킵", sourceName, saved, skipped);
-        return saved;
-    }
-
-    /**
-     * 구조화 데이터(나라장터·채용공고) 저장 — Gemini 호출 없이 중복 체크 후 즉시 저장
-     */
-    private int saveDirectly(List<Article> articles, String sourceName) {
-        int saved = 0;
-        int skipped = 0;
-        for (Article article : articles) {
-            try {
-                if (articleService.existsByUrl(article.getUrl())) {
-                    skipped++;
-                    continue;
-                }
-                Article savedArticle = articleService.saveIfNotExists(article);
-                if (savedArticle != null) saved++;
+                throw e;
             } catch (Exception e) {
                 log.error("기사 저장 실패 [{}]: {}", article.getTitle(), e.getMessage());
             }
