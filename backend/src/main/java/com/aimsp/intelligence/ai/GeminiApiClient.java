@@ -88,8 +88,9 @@ public class GeminiApiClient {
                         throw new AiApiUnavailableException();
                     }
                     if (response.code() == 503) {
-                        log.warn("Gemini API 일시적 과부하(503) - 10초 후 재시도 ({}/{})", attempt, MAX_RETRIES);
-                        if (attempt < MAX_RETRIES) { Thread.sleep(10000); continue; }
+                        long waitMs = 30000L * attempt; // 지수 백오프: 1차 30초, 2차 60초, 3차 90초
+                        log.warn("Gemini API 일시적 과부하(503) - {}초 후 재시도 ({}/{})", waitMs / 1000, attempt, MAX_RETRIES);
+                        if (attempt < MAX_RETRIES) { Thread.sleep(waitMs); continue; }
                         throw new AiApiUnavailableException();
                     }
                     if (response.code() >= 500) {

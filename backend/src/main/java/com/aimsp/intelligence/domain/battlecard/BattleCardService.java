@@ -78,7 +78,8 @@ public class BattleCardService {
                 bc.getSourceArticles().forEach(bca -> bca.setBattleCard(bc));
                 result.add(BattleCardDto.Response.from(battleCardRepository.save(bc)));
             } catch (AiApiUnavailableException e) {
-                throw e;
+                // AI API 일시 오류는 해당 경쟁사만 스킵, 나머지 경쟁사 계속 진행
+                log.warn("[배틀카드] AI API 오류로 스킵 [{}]: 다음 경쟁사로 계속", competitor);
             } catch (Exception e) {
                 log.error("[배틀카드] 생성 실패 [{}]: {}", competitor, e.getMessage(), e);
             }
