@@ -57,6 +57,13 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
         @Param("limit") int limit
     );
 
+    // 임베딩 미생성 기사 조회 (백필용)
+    @Query("SELECT a FROM Article a WHERE a.embedding IS NULL AND a.summary IS NOT NULL ORDER BY a.publishedAt DESC")
+    List<Article> findByEmbeddingIsNull(Pageable pageable);
+
+    @Query("SELECT COUNT(a) FROM Article a WHERE a.embedding IS NULL AND a.summary IS NOT NULL")
+    long countByEmbeddingIsNull();
+
     // LIKE 검색 fallback (H2 dev 환경 또는 embedding 미생성 시)
     @Query("SELECT a FROM Article a WHERE " +
         "(LOWER(a.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +

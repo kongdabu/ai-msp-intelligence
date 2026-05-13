@@ -1,5 +1,6 @@
 package com.aimsp.intelligence.domain.article;
 
+import com.aimsp.intelligence.ai.EmbeddingApiClient;
 import com.aimsp.intelligence.ai.SummaryGenerator;
 import com.aimsp.intelligence.dto.ArticleDto;
 import jakarta.persistence.criteria.Predicate;
@@ -27,6 +28,7 @@ public class ArticleService {
 
     private final ArticleRepository articleRepository;
     private final SummaryGenerator summaryGenerator;
+    private final EmbeddingApiClient embeddingApiClient;
 
     // 기사 목록 조회 - DB LIMIT 적용 (경쟁사 분석 페이지용)
     // findAll(spec, sort) 대신 PageRequest를 사용해 DB 레벨에서 LIMIT 처리
@@ -156,5 +158,62 @@ public class ArticleService {
                 .stream()
                 .map(ArticleDto.Response::from)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 기존 기사 임베딩 일괄 생성 (백필).
+     * summary가 있고 embedding이 없는 기사를 batchSize씩 처리.
+     * @return {total, done, failed}
+     */
+    public Map<String, Long> backfillEmbeddings(int batchSize) {
+        long total = articleRepository.countByEmbeddingIsNull();
+        long done = 0;
+        long failed = 0;
+        int page = 0;
+
+        log.info("[임베딩 백필] 시작: 대상 {}건, 배치 크기 {}", total, batchSize);
+
+        while (true) {
+            List<Article> batch = articleRepository.findByEmbeddingIsNull(
+                    PageRequest.of(page, batchSize)
+            );
+            if (batch.isEmpty()) break;
+
+            for (Article article : batch) {
+                try {
+                    String text = (article.getTitle() != null ? article.getTitle() : "") +
+                            " " + (article.getSummary() != null ? article.getSummary() : "");
+                    float[] embedding = embeddingApiClient.embed(
+                            text.trim(), EmbeddingApiClient.TaskType.RETRIEVAL_DOCUMENT
+                    );
+                    if (embedding != null) {
+                        article.setEmbedding(embedding);
+                        articleRepository.save(article);
+                        done++;
+                    } else {
+                        failed++;
+                    }
+                    // API rate limit 방지 (약 100 RPM 제한)
+                    Thread.sleep(700);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                } catch (Exception e) {
+                    log.warn("[임베딩 백필] 실패 [id={}]: {}", article.getId(), e.getMessage());
+                    failed++;
+                }
+            }
+
+            log.info("[임베딩 백필] 진행: {}건 완료, {}건 실패", done, failed);
+            // 마지막 페이지였으면 종료
+            if (batch.size() < batchSize) break;
+        }
+
+        log.info("[임베딩 백필] 완료: 전체 {} / 성공 {} / 실패 {}", total, done, failed);
+        Map<String, Long> result = new HashMap<>();
+        result.put("total", total);
+        result.put("done", done);
+        result.put("failed", failed);
+        return result;
     }
 }
