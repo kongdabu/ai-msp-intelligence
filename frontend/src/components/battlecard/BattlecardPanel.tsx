@@ -10,10 +10,10 @@ interface Props {
 }
 
 const SWOT_CONFIG = [
-  { key: 'strengths',     label: '강점',  bg: 'bg-blue-50',   border: 'border-blue-200',   text: 'text-blue-800',   dot: 'bg-blue-500' },
-  { key: 'weaknesses',    label: '약점',  bg: 'bg-red-50',    border: 'border-red-200',    text: 'text-red-800',    dot: 'bg-red-500' },
-  { key: 'opportunities', label: '기회',  bg: 'bg-green-50',  border: 'border-green-200',  text: 'text-green-800',  dot: 'bg-green-500' },
-  { key: 'threats',       label: '위협',  bg: 'bg-amber-50',  border: 'border-amber-200',  text: 'text-amber-800',  dot: 'bg-amber-500' },
+  { key: 'strengths',     label: '강점',  subject: 'competitor', subLabel: '경쟁사 강점',       bg: 'bg-blue-50',   border: 'border-blue-200',   text: 'text-blue-800',   badge: 'bg-blue-100 text-blue-600',   dot: 'bg-blue-500' },
+  { key: 'weaknesses',    label: '약점',  subject: 'competitor', subLabel: '경쟁사 약점',       bg: 'bg-red-50',    border: 'border-red-200',    text: 'text-red-800',    badge: 'bg-red-100 text-red-600',     dot: 'bg-red-500' },
+  { key: 'opportunities', label: '기회',  subject: 'ours',       subLabel: '우리의 공략 포인트', bg: 'bg-green-50',  border: 'border-green-200',  text: 'text-green-800',  badge: 'bg-green-100 text-green-600', dot: 'bg-green-500' },
+  { key: 'threats',       label: '위협',  subject: 'ours',       subLabel: '우리에 대한 위협',   bg: 'bg-amber-50',  border: 'border-amber-200',  text: 'text-amber-800',  badge: 'bg-amber-100 text-amber-600', dot: 'bg-amber-500' },
 ] as const
 
 export default function BattlecardPanel({ card }: Props) {
@@ -52,11 +52,17 @@ export default function BattlecardPanel({ card }: Props) {
 
       {/* SWOT 2×2 그리드 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {SWOT_CONFIG.map(({ key, label, bg, border, text, dot }) => {
+        {SWOT_CONFIG.map(({ key, label, subject, subLabel, bg, border, text, badge, dot }) => {
           const items = card[key as keyof Pick<BattleCard, 'strengths' | 'weaknesses' | 'opportunities' | 'threats'>]
+          const subjectName = subject === 'competitor' ? competitorLabel : '우리'
           return (
             <div key={key} className={`${bg} ${border} border rounded-lg p-4`}>
-              <div className={`text-xs font-semibold ${text} mb-2`}>{label}</div>
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-xs font-semibold ${text}`}>{label}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge}`}>
+                  {subject === 'competitor' ? `${subjectName} 기준` : subLabel}
+                </span>
+              </div>
               {items.length === 0 ? (
                 <p className="text-xs text-gray-400">데이터 없음</p>
               ) : (
