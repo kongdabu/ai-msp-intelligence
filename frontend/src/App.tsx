@@ -9,7 +9,6 @@ import Competitors from './pages/Competitors'
 import Sources from './pages/Sources'
 import Settings from './pages/Settings'
 import Battlecards from './pages/Battlecards'
-import StrategicQA from './pages/StrategicQA'
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -35,7 +34,6 @@ export default function App() {
               <Route path="/sources" element={<Sources />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/battlecards" element={<Battlecards />} />
-              <Route path="/qa" element={<StrategicQA />} />
             </Routes>
           </main>
         </div>

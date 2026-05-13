@@ -57,38 +57,6 @@ logging:
 spring:
   config:
     activate:
-      on-profile: local
-
-  datasource:
-    url: jdbc:postgresql://localhost:5432/aimspdb
-    username: aimsp
-    password: aimsp_dev
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      connection-timeout: 30000
-      maximum-pool-size: 5
-
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    defer-datasource-initialization: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        default_batch_fetch_size: 20
-
-  sql:
-    init:
-      mode: never
-
-  h2:
-    console:
-      enabled: false
-
----
-spring:
-  config:
-    activate:
       on-profile: prod-debug
 
 logging:
@@ -113,8 +81,9 @@ spring:
       maximum-pool-size: 5
 
   flyway:
-    baseline-on-migrate: true   # flyway_schema_history 없을 때 자동 baseline
-    baseline-version: 6         # V6까지 이미 적용된 것으로 간주 (기존 스키마 보호)
+    baseline-on-migrate: true
+    baseline-version: 6
+    ignore-missing-migrations: true   # 삭제된 V5~V7 마이그레이션 파일 무시
 
   jpa:
     hibernate:

@@ -58,7 +58,4 @@ public class Article {
 
     private Boolean isProcessed = false;
     private Integer relevanceScore; // 0-100
-    // embedding 컬럼은 Hibernate 타입 충돌(bytea) 우회를 위해 엔티티에서 제외
-    // 저장: ArticleRepository.updateEmbedding() native SQL 사용
-    // 조회: ArticleRepository.findSimilarArticles() native SQL 사용
 }

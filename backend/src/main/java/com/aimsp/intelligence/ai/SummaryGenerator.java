@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 public class SummaryGenerator {
 
     private final GeminiApiClient geminiApiClient;
-    private final EmbeddingApiClient embeddingApiClient;
     private final ObjectMapper objectMapper;
 
     private static final String SUMMARY_PROMPT_TEMPLATE = """
@@ -39,23 +38,14 @@ public class SummaryGenerator {
             기사 내용: %s
             """;
 
-    /**
-     * 기사 요약 생성 결과
-     */
     public record SummaryResult(
             String summary,
             int relevanceScore,
             String detectedCompetitor,
-            String detectedCategory,
-            float[] embedding    // null 가능 (H2 환경 또는 임베딩 실패 시), native SQL로 저장
+            String detectedCategory
     ) {}
 
-    /**
-     * 기사 제목과 내용으로 AI 요약 생성
-     * 고정 sleep 대신 스마트 Rate Limiter: 마지막 호출 이후 경과 시간만큼만 대기
-     */
     public SummaryResult generateSummary(String title, String content) {
-        // 내용을 5000자로 제한
         String truncatedContent = content != null && content.length() > 5000
                 ? content.substring(0, 5000) + "..."
                 : content;
@@ -71,28 +61,17 @@ public class SummaryGenerator {
 
             JsonNode node = objectMapper.readTree(response);
 
-            String summary = node.path("summary").asText(null);
-
-            // 요약 완료 후 임베딩 생성 (title + summary 조합, 실패해도 기사 저장 계속)
-            String embeddingText = (title != null ? title : "") +
-                    (summary != null ? " " + summary : "");
-            float[] embedding = embeddingApiClient.embed(
-                    embeddingText, EmbeddingApiClient.TaskType.RETRIEVAL_DOCUMENT
-            );
-
             return new SummaryResult(
-                    summary,
+                    node.path("summary").asText(null),
                     node.path("relevanceScore").asInt(0),
                     node.path("detectedCompetitor").asText("GENERAL"),
-                    node.path("detectedCategory").asText("GEN_AI"),
-                    embedding
+                    node.path("detectedCategory").asText("GEN_AI")
             );
         } catch (AiApiUnavailableException e) {
-            throw e;  // 상위로 전파하여 작업 중단
+            throw e;
         } catch (Exception e) {
             log.error("AI 요약 파싱 실패: {} - {}", title, e.getMessage());
             return null;
         }
     }
-
 }

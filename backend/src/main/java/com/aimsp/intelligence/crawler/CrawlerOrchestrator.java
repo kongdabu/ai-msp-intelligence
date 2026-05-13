@@ -1,6 +1,5 @@
 package com.aimsp.intelligence.crawler;
 
-import com.aimsp.intelligence.ai.EmbeddingApiClient;
 import com.aimsp.intelligence.ai.GeminiApiClient;
 import com.aimsp.intelligence.ai.SummaryGenerator;
 import com.aimsp.intelligence.crawler.sources.BespinCrawler;
@@ -9,7 +8,6 @@ import com.aimsp.intelligence.crawler.sources.PwcCrawler;
 import com.aimsp.intelligence.crawler.sources.SkAxCrawler;
 import com.aimsp.intelligence.crawler.sources.ZdnetKoreaCrawler;
 import com.aimsp.intelligence.domain.article.Article;
-import com.aimsp.intelligence.domain.article.ArticleRepository;
 import com.aimsp.intelligence.domain.article.ArticleService;
 import com.aimsp.intelligence.domain.source.Source;
 import com.aimsp.intelligence.domain.source.SourceService;
@@ -32,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 public class CrawlerOrchestrator {
 
     private final ArticleService articleService;
-    private final ArticleRepository articleRepository;
     private final SourceService sourceService;
     private final SummaryGenerator summaryGenerator;
     private final GeminiApiClient geminiApiClient;
@@ -58,9 +55,6 @@ public class CrawlerOrchestrator {
         }
     }
 
-    /**
-     * 전체 소스 크롤링 - 5개 전용 크롤러 병렬 실행 후 RSS 소스 수집
-     */
     public int crawlAll() {
         if (!geminiApiClient.isAvailable()) {
             throw new AiApiUnavailableException();
@@ -68,7 +62,6 @@ public class CrawlerOrchestrator {
 
         int totalSaved = 0;
 
-        // 1. 경쟁사별 Google News RSS 크롤러 병렬 실행
         log.info("--- 경쟁사 뉴스 수집 시작 (병렬) ---");
         CompletableFuture<List<Article>> lgFuture     = CompletableFuture.supplyAsync(lgCnsCrawler::crawl, crawlerPool);
         CompletableFuture<List<Article>> skFuture     = CompletableFuture.supplyAsync(skAxCrawler::crawl, crawlerPool);
@@ -87,7 +80,6 @@ public class CrawlerOrchestrator {
 
         totalSaved += crawlAndSave(competitorArticles, "경쟁사 뉴스");
 
-        // 2. 소스 DB의 활성 뉴스 RSS 소스 크롤링 (NEWS 타입만)
         log.info("--- 뉴스 RSS 소스 수집 시작 ---");
         List<Source> activeSources = sourceService.getActiveSources();
         for (Source source : activeSources) {
@@ -117,9 +109,8 @@ public class CrawlerOrchestrator {
                     continue;
                 }
 
-                SummaryGenerator.SummaryResult result = null;
                 if (article.getOriginalContent() != null && !article.getOriginalContent().isBlank()) {
-                    result = summaryGenerator.generateSummary(
+                    SummaryGenerator.SummaryResult result = summaryGenerator.generateSummary(
                             article.getTitle(), article.getOriginalContent()
                     );
                     if (result != null) {
@@ -140,16 +131,7 @@ public class CrawlerOrchestrator {
                 }
 
                 Article savedArticle = articleService.saveIfNotExists(article);
-                if (savedArticle != null) {
-                    saved++;
-                    // embedding은 Hibernate 타입 충돌 우회를 위해 native SQL로 저장
-                    if (result != null && result.embedding() != null) {
-                        articleRepository.updateEmbedding(
-                                savedArticle.getId(),
-                                EmbeddingApiClient.toVectorString(result.embedding())
-                        );
-                    }
-                }
+                if (savedArticle != null) saved++;
             } catch (AiApiUnavailableException e) {
                 throw e;
             } catch (Exception e) {

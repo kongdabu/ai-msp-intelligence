@@ -4,7 +4,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -20,15 +19,12 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
 
     boolean existsByUrl(String url);
 
-    // 오늘 수집된 기사 수
     @Query("SELECT COUNT(a) FROM Article a WHERE a.collectedAt >= :startOfDay")
     long countTodayArticles(@Param("startOfDay") LocalDateTime startOfDay);
 
-    // 경쟁사별 기사 수
     @Query("SELECT a.competitor, COUNT(a) FROM Article a GROUP BY a.competitor")
     List<Object[]> countByCompetitor();
 
-    // 카테고리별 기사 수 (날짜 범위)
     @Query("""
         SELECT a.category, CAST(a.publishedAt AS date), COUNT(a)
         FROM Article a
@@ -38,48 +34,9 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
     """)
     List<Object[]> countByCategoryAndDate(@Param("since") LocalDateTime since);
 
-    // 미처리 기사 목록
     List<Article> findByIsProcessedFalseOrderByCollectedAtDesc();
 
-    // 특정 경쟁사 최근 기사
     Page<Article> findByCompetitorOrderByPublishedAtDesc(String competitor, Pageable pageable);
 
-    // 최신 기사 N건 (발행일 기준)
     List<Article> findTop5ByOrderByPublishedAtDesc();
-
-    // pgvector 코사인 유사도 검색 (local/prod — PostgreSQL + pgvector 필요)
-    @Query(nativeQuery = true, value =
-        "SELECT * FROM article " +
-        "WHERE embedding IS NOT NULL AND relevance_score >= 50 " +
-        "ORDER BY embedding <=> CAST(:embedding AS vector) " +
-        "LIMIT :limit")
-    List<Article> findSimilarArticles(
-        @Param("embedding") String embedding,
-        @Param("limit") int limit
-    );
-
-    // embedding 저장 — native SQL로 Hibernate 타입 충돌 우회
-    @Modifying
-    @Query(nativeQuery = true,
-        value = "UPDATE article SET embedding = CAST(:embedding AS vector) WHERE id = :id")
-    void updateEmbedding(@Param("id") Long id, @Param("embedding") String embedding);
-
-    // 임베딩 미생성 기사 조회 (백필용) — embedding은 엔티티 필드 없으므로 native SQL 사용
-    @Query(nativeQuery = true,
-        value = "SELECT * FROM article WHERE embedding IS NULL AND summary IS NOT NULL ORDER BY published_at DESC")
-    List<Article> findByEmbeddingIsNull(Pageable pageable);
-
-    @Query(nativeQuery = true,
-        value = "SELECT COUNT(*) FROM article WHERE embedding IS NULL AND summary IS NOT NULL")
-    long countByEmbeddingIsNull();
-
-    // LIKE 검색 fallback (H2 dev 환경 또는 embedding 미생성 시)
-    @Query("SELECT a FROM Article a WHERE " +
-        "(LOWER(a.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-        " LOWER(a.summary) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-        "AND a.relevanceScore >= 50 " +
-        "ORDER BY a.relevanceScore DESC, a.publishedAt DESC")
-    List<Article> findByKeywordForContext(
-        @Param("keyword") String keyword, Pageable pageable
-    );
 }

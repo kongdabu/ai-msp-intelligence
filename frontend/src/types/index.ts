@@ -141,27 +141,4 @@ export const INSIGHT_TYPE_COLORS: Record<InsightType, string> = {
   STRATEGY: 'bg-purple-100 text-purple-800',
 }
 
-// Q&A 타입
-export interface QaSession {
-  id: number
-  title: string
-  createdAt: string
-  messageCount: number
-}
-
-export interface QaSourceArticle {
-  id: number
-  title: string
-  url: string
-  competitor: Competitor
-  category: Category
-}
-
-export interface QaMessage {
-  id: number
-  role: 'USER' | 'ASSISTANT'
-  content: string
-  sourceArticles: QaSourceArticle[]
-  createdAt: string
-}
 

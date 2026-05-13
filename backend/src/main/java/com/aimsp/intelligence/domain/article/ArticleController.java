@@ -71,17 +71,6 @@ public class ArticleController {
         return ResponseEntity.ok(result);
     }
 
-    // 기존 기사 임베딩 일괄 생성 (백필)
-    @PostMapping("/embeddings/backfill")
-    public ResponseEntity<Map<String, Object>> backfillEmbeddings(
-            @RequestParam(defaultValue = "50") int batchSize) {
-        log.info("임베딩 백필 시작 (batchSize={})", batchSize);
-        Map<String, Long> result = articleService.backfillEmbeddings(batchSize);
-        Map<String, Object> response = new HashMap<>(result);
-        response.put("triggeredAt", java.time.LocalDateTime.now());
-        return ResponseEntity.ok(response);
-    }
-
     // 통계 조회
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getStats() {
