@@ -64,11 +64,13 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
         value = "UPDATE article SET embedding = CAST(:embedding AS vector) WHERE id = :id")
     void updateEmbedding(@Param("id") Long id, @Param("embedding") String embedding);
 
-    // 임베딩 미생성 기사 조회 (백필용)
-    @Query("SELECT a FROM Article a WHERE a.embedding IS NULL AND a.summary IS NOT NULL ORDER BY a.publishedAt DESC")
+    // 임베딩 미생성 기사 조회 (백필용) — embedding은 엔티티 필드 없으므로 native SQL 사용
+    @Query(nativeQuery = true,
+        value = "SELECT * FROM article WHERE embedding IS NULL AND summary IS NOT NULL ORDER BY published_at DESC")
     List<Article> findByEmbeddingIsNull(Pageable pageable);
 
-    @Query("SELECT COUNT(a) FROM Article a WHERE a.embedding IS NULL AND a.summary IS NOT NULL")
+    @Query(nativeQuery = true,
+        value = "SELECT COUNT(*) FROM article WHERE embedding IS NULL AND summary IS NOT NULL")
     long countByEmbeddingIsNull();
 
     // LIKE 검색 fallback (H2 dev 환경 또는 embedding 미생성 시)
