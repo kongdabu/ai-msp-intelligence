@@ -111,26 +111,22 @@ public class CrawlerOrchestrator {
 
     /**
      * 채용공고 단독 수집 - KST 05:00 스케줄 전용
+     * 키워드 필터링된 구조화 데이터 → Gemini 호출 불필요
      */
     public int crawlJobPostings() {
-        if (!geminiApiClient.isAvailable()) {
-            throw new AiApiUnavailableException();
-        }
         log.info("--- 채용공고 수집 시작 ---");
-        int saved = crawlAndSave(jobPostingCrawler.crawl(), "채용공고");
+        int saved = saveDirectly(jobPostingCrawler.crawl(), "채용공고");
         log.info("=== 채용공고 수집 완료: {}건 ===", saved);
         return saved;
     }
 
     /**
      * 나라장터 공고 단독 수집 - KST 04:00 스케줄 전용
+     * 키워드 필터링된 구조화 데이터 → Gemini 호출 불필요
      */
     public int crawlProcurement() {
-        if (!geminiApiClient.isAvailable()) {
-            throw new AiApiUnavailableException();
-        }
         log.info("--- 나라장터 공고 수집 시작 ---");
-        int saved = crawlAndSave(procurementCrawler.crawl(), "나라장터");
+        int saved = saveDirectly(procurementCrawler.crawl(), "나라장터");
         log.info("=== 나라장터 수집 완료: {}건 ===", saved);
         return saved;
     }
@@ -174,6 +170,28 @@ public class CrawlerOrchestrator {
                 if (savedArticle != null) saved++;
             } catch (AiApiUnavailableException e) {
                 throw e;  // AI API 서버 오류 시 즉시 작업 중단
+            } catch (Exception e) {
+                log.error("기사 저장 실패 [{}]: {}", article.getTitle(), e.getMessage());
+            }
+        }
+        log.info("[{}] 신규 {}건 저장, 중복 {}건 스킵", sourceName, saved, skipped);
+        return saved;
+    }
+
+    /**
+     * 구조화 데이터(나라장터·채용공고) 저장 — Gemini 호출 없이 중복 체크 후 즉시 저장
+     */
+    private int saveDirectly(List<Article> articles, String sourceName) {
+        int saved = 0;
+        int skipped = 0;
+        for (Article article : articles) {
+            try {
+                if (articleService.existsByUrl(article.getUrl())) {
+                    skipped++;
+                    continue;
+                }
+                Article savedArticle = articleService.saveIfNotExists(article);
+                if (savedArticle != null) saved++;
             } catch (Exception e) {
                 log.error("기사 저장 실패 [{}]: {}", article.getTitle(), e.getMessage());
             }
