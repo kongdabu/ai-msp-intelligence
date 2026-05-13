@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Component
@@ -25,6 +26,7 @@ public class JobPostingApiClient {
     private static final String API_URL = "https://oapi.saramin.co.kr/job-search";
 
     private final AppConfig appConfig;
+    private final AtomicLong lastCallTime = new AtomicLong(0);
 
     private final OkHttpClient httpClient = new OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
@@ -33,7 +35,23 @@ public class JobPostingApiClient {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    private synchronized void applyRateLimit() throws InterruptedException {
+        long now = System.currentTimeMillis();
+        long elapsed = now - lastCallTime.get();
+        long minInterval = appConfig.getRequestDelayMs();
+        if (lastCallTime.get() > 0 && elapsed < minInterval) {
+            Thread.sleep(minInterval - elapsed);
+        }
+        lastCallTime.set(System.currentTimeMillis());
+    }
+
     public List<JobItem> searchByCompany(String companyName, int count) {
+        try {
+            applyRateLimit();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return List.of();
+        }
         if (appConfig.getSaraminApiKey().isBlank()) {
             log.warn("[사람인] API 키 미설정 — 수집 스킵: {}", companyName);
             return List.of();

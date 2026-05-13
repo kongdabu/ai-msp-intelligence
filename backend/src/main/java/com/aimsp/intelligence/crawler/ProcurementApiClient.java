@@ -18,6 +18,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.time.ZoneId;
 
 @Slf4j
@@ -40,6 +41,7 @@ public class ProcurementApiClient {
     );
 
     private final AppConfig appConfig;
+    private final AtomicLong lastCallTime = new AtomicLong(0);
 
     private final OkHttpClient httpClient = new OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
@@ -59,7 +61,24 @@ public class ProcurementApiClient {
         return results;
     }
 
+    private synchronized void applyRateLimit() throws InterruptedException {
+        long now = System.currentTimeMillis();
+        long elapsed = now - lastCallTime.get();
+        long minInterval = appConfig.getRequestDelayMs();
+        if (lastCallTime.get() > 0 && elapsed < minInterval) {
+            Thread.sleep(minInterval - elapsed);
+        }
+        lastCallTime.set(System.currentTimeMillis());
+    }
+
     private List<ProcurementItem> searchByOperation(String operation, String keyword, int numOfRows) {
+        try {
+            applyRateLimit();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return List.of();
+        }
+
         String apiUrl = BASE_URL + "/" + operation;
 
         // 날짜 범위 필수: 최대 7일 (API 제한)

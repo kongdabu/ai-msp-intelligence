@@ -33,6 +33,9 @@ public class AppConfig {
     @Value("${app.saramin.api-key:}")
     private String saraminApiKey;
 
+    @Value("${app.crawl.request-delay-ms:2000}")
+    private long requestDelayMs;
+
     public String getGeminiApiKey() { return geminiApiKey; }
     public String getGeminiApiUrl() { return geminiApiUrl; }
     public String getGeminiModel()  { return geminiModel; }
@@ -42,4 +45,5 @@ public class AppConfig {
     public String getNaverClientSecret() { return naverClientSecret; }
     public String getProcurementApiKey() { return procurementApiKey; }
     public String getSaraminApiKey()     { return saraminApiKey; }
+    public long getRequestDelayMs()      { return requestDelayMs; }
 }
