@@ -19,7 +19,7 @@ public class SystemConfig {
     private Long id = 1L; // 싱글톤 레코드
 
     @Column(nullable = false)
-    private int maxArticlesForInsight = 50; // 인사이트 생성 시 입력 기사 최대 수
+    private int maxArticlesForInsight = 150; // 인사이트 생성 시 입력 기사 최대 수
 
     @Column(nullable = false)
     private int maxInsightsPerGeneration = 8; // 인사이트 생성 최대 건수
