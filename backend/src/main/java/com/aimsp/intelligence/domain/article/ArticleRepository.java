@@ -39,4 +39,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
     Page<Article> findByCompetitorOrderByPublishedAtDesc(String competitor, Pageable pageable);
 
     List<Article> findTop5ByOrderByPublishedAtDesc();
+
+    @Query("SELECT a FROM Article a WHERE a.publishedAt >= :from AND a.publishedAt < :to ORDER BY a.publishedAt DESC")
+    List<Article> findByPublishedAtBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 }

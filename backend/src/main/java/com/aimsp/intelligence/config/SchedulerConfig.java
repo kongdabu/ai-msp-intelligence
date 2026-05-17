@@ -19,7 +19,6 @@ public class SchedulerConfig {
     private final CrawlerOrchestrator crawlerOrchestrator;
     private final InsightService insightService;
     private final BattleCardService battleCardService;
-
     /**
      * 기사 수집 - 매일 KST 01:00 (UTC 16:00)
      */
@@ -67,4 +66,5 @@ public class SchedulerConfig {
             log.error("[스케줄] 배틀카드 생성 실패: {}", e.getMessage(), e);
         }
     }
+
 }
