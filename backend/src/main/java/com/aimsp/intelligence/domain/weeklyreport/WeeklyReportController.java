@@ -1,13 +1,15 @@
 package com.aimsp.intelligence.domain.weeklyreport;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -41,18 +43,14 @@ public class WeeklyReportController {
                 .body(report.getDocxContent());
     }
 
-    // Python 스크립트가 생성 후 업로드하는 엔드포인트
+    // Python 스크립트가 생성 후 업로드하는 엔드포인트 (JSON + Base64)
     @PostMapping("/upload")
-    public ResponseEntity<Map<String, Object>> upload(
-            @RequestParam String title,
-            @RequestParam String weekStart,
-            @RequestParam String weekEnd,
-            @RequestParam int articleCount,
-            @RequestParam int insightCount,
-            @RequestParam MultipartFile file) {
+    public ResponseEntity<Map<String, Object>> upload(@RequestBody UploadRequest req) {
         try {
+            byte[] content = Base64.getDecoder().decode(req.getContent());
             WeeklyReport saved = weeklyReportService.saveUploadedReport(
-                    title, weekStart, weekEnd, articleCount, insightCount, file.getBytes());
+                    req.getTitle(), req.getWeekStart(), req.getWeekEnd(),
+                    req.getArticleCount(), req.getInsightCount(), content);
             log.info("주간 레포트 업로드 완료: id={}, title={}", saved.getId(), saved.getTitle());
             return ResponseEntity.ok(Map.of(
                     "id", saved.getId(),
@@ -64,5 +62,15 @@ public class WeeklyReportController {
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", e.getMessage()));
         }
+    }
+
+    @Getter @Setter
+    public static class UploadRequest {
+        private String title;
+        private String weekStart;
+        private String weekEnd;
+        private int articleCount;
+        private int insightCount;
+        private String content; // Base64 인코딩된 DOCX
     }
 }

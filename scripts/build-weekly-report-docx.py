@@ -25,29 +25,29 @@ def load_env() -> dict:
 
 
 def upload_to_server(output_path: Path, meta: dict) -> str | None:
-    """생성된 Word 파일을 운영 서버에 업로드하여 다운로드 URL 반환"""
+    """생성된 Word 파일을 운영 서버에 업로드하여 다운로드 URL 반환 (JSON+Base64)"""
+    import base64
     week_start = meta.get("weekStart", "")
     week_end   = meta.get("weekEnd", "")
     title      = f"AI MSP 주간 전략 레포트 ({week_start} ~ {week_end})"
 
     try:
-        with open(output_path, "rb") as f:
-            resp = requests.post(
-                f"{PROD_API_BASE}/api/weekly-reports/upload",
-                data={
-                    "title":        title,
-                    "weekStart":    week_start,
-                    "weekEnd":      week_end,
-                    "articleCount": str(meta.get("articleCount", 0)),
-                    "insightCount": str(meta.get("insightCount", 0)),
-                },
-                files={"file": (output_path.name, f,
-                                "application/vnd.openxmlformats-officedocument"
-                                ".wordprocessingml.document")},
-                timeout=60
-            )
+        content_b64 = base64.b64encode(output_path.read_bytes()).decode()
+        payload = {
+            "title":        title,
+            "weekStart":    week_start,
+            "weekEnd":      week_end,
+            "articleCount": meta.get("articleCount", 0),
+            "insightCount": meta.get("insightCount", 0),
+            "content":      content_b64,
+        }
+        resp = requests.post(
+            f"{PROD_API_BASE}/api/weekly-reports/upload",
+            json=payload,
+            timeout=60
+        )
         if resp.ok:
-            data = resp.json()
+            data         = resp.json()
             report_id    = data.get("id")
             download_url = f"{PROD_API_BASE}/api/weekly-reports/{report_id}/download"
             return download_url
