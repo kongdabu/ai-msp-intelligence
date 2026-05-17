@@ -21,22 +21,25 @@ public class WeeklyReport {
     private String title;
 
     @Column(columnDefinition = "TEXT")
-    private String competitorTrends;       // 경쟁사 동향 (JSON 텍스트)
+    private String competitorTrends;
 
     @Column(columnDefinition = "TEXT")
-    private String aiTrends;               // AI 사업 Trend (JSON 텍스트)
+    private String aiTrends;
 
     @Column(columnDefinition = "TEXT")
-    private String strategyRecommendations; // 추진 전략 (JSON 텍스트)
+    private String strategyRecommendations;
 
-    private LocalDate weekStart;           // 대상 주간 시작일 (월요일)
-    private LocalDate weekEnd;             // 대상 주간 종료일 (일요일)
+    private LocalDate weekStart;
+    private LocalDate weekEnd;
 
     private Integer articleCount;
     private Integer insightCount;
 
     @Column(length = 500)
-    private String docxPath;              // 생성된 Word 파일 경로
+    private String docxPath;
+
+    @Column(columnDefinition = "BYTEA")
+    private byte[] docxContent;             // Word 파일 바이너리 (DB 저장, 원격 다운로드용)
 
     private LocalDateTime generatedAt;
 }

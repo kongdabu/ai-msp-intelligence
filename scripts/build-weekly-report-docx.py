@@ -1,13 +1,62 @@
 #!/usr/bin/env python3
-"""전문가 에이전트 분석 결과 → MS Word 주간 전략 레포트 생성"""
+"""전문가 에이전트 분석 결과 → MS Word 주간 전략 레포트 생성 + 운영 서버 업로드"""
 
 import sys
 import json
 import datetime
+import requests
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).parent.parent
-REPORT_DIR   = PROJECT_ROOT / "reports" / "weekly"
+PROJECT_ROOT  = Path(__file__).parent.parent
+REPORT_DIR    = PROJECT_ROOT / "reports" / "weekly"
+ENV_FILE      = PROJECT_ROOT / ".env"
+PROD_API_BASE = "https://aimsp-backend.onrender.com"
+
+
+def load_env() -> dict:
+    env = {}
+    if ENV_FILE.exists():
+        for line in ENV_FILE.read_text().splitlines():
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                k, v = line.split('=', 1)
+                env[k.strip()] = v.strip().strip('"').strip("'")
+    return env
+
+
+def upload_to_server(output_path: Path, meta: dict) -> str | None:
+    """생성된 Word 파일을 운영 서버에 업로드하여 다운로드 URL 반환"""
+    week_start = meta.get("weekStart", "")
+    week_end   = meta.get("weekEnd", "")
+    title      = f"AI MSP 주간 전략 레포트 ({week_start} ~ {week_end})"
+
+    try:
+        with open(output_path, "rb") as f:
+            resp = requests.post(
+                f"{PROD_API_BASE}/api/weekly-reports/upload",
+                data={
+                    "title":        title,
+                    "weekStart":    week_start,
+                    "weekEnd":      week_end,
+                    "articleCount": str(meta.get("articleCount", 0)),
+                    "insightCount": str(meta.get("insightCount", 0)),
+                },
+                files={"file": (output_path.name, f,
+                                "application/vnd.openxmlformats-officedocument"
+                                ".wordprocessingml.document")},
+                timeout=60
+            )
+        if resp.ok:
+            data = resp.json()
+            report_id    = data.get("id")
+            download_url = f"{PROD_API_BASE}/api/weekly-reports/{report_id}/download"
+            return download_url
+        else:
+            print(f"  ⚠️  업로드 실패: {resp.status_code} {resp.text[:200]}", file=sys.stderr)
+            return None
+    except Exception as e:
+        print(f"  ⚠️  업로드 오류: {e}", file=sys.stderr)
+        return None
 
 
 def load_json(path: Path) -> dict:
@@ -249,6 +298,16 @@ def main():
         print(f"\n✅ 레포트 생성 완료: {output_path.absolute()}")
         print(f"   파일 크기: {output_path.stat().st_size:,} bytes")
         print(f"REPORT_PATH={output_path.absolute()}")
+
+        # 운영 서버에 업로드 → 원격 다운로드 URL 확보
+        print("\n☁️  운영 서버 업로드 중...")
+        download_url = upload_to_server(output_path, meta)
+        if download_url:
+            print(f"✅ 업로드 완료!")
+            print(f"🔗 다운로드 URL: {download_url}")
+        else:
+            print("⚠️  업로드 실패 — 로컬 파일은 정상 생성됨")
+
     except ImportError:
         print("❌ python-docx 미설치: pip3 install python-docx", file=sys.stderr)
         sys.exit(1)
