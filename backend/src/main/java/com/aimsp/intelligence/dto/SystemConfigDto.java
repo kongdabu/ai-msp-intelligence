@@ -1,6 +1,8 @@
 package com.aimsp.intelligence.dto;
 
 import com.aimsp.intelligence.domain.config.SystemConfig;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,7 +18,7 @@ public class SystemConfigDto {
 
         public static Response from(SystemConfig config) {
             Response dto = new Response();
-            dto.maxArticlesForInsight = config.getMaxArticlesForInsight();
+            dto.maxArticlesForInsight    = config.getMaxArticlesForInsight();
             dto.maxInsightsPerGeneration = config.getMaxInsightsPerGeneration();
             return dto;
         }
@@ -26,7 +28,10 @@ public class SystemConfigDto {
     @Setter
     @NoArgsConstructor
     public static class Request {
+        @Min(1) @Max(500)
         private int maxArticlesForInsight;
+
+        @Min(1) @Max(50)
         private int maxInsightsPerGeneration;
     }
 }

@@ -37,15 +37,18 @@ public class GeminiApiClient {
      * Gemini API 헬스체크 - GET /models/{model} (토큰 소비 없음)
      */
     public boolean isAvailable() {
-        String healthUrl = appConfig.getGeminiApiUrl() + "/" + appConfig.getGeminiModel()
-                + "?key=" + appConfig.getGeminiApiKey();
-        Request request = new Request.Builder().url(healthUrl).get().build();
+        String healthUrl = appConfig.getGeminiApiUrl() + "/" + appConfig.getGeminiModel();
+        Request request = new Request.Builder()
+                .url(healthUrl)
+                .header("x-goog-api-key", appConfig.getGeminiApiKey())
+                .get()
+                .build();
         try (Response response = client.newCall(request).execute()) {
             boolean ok = response.isSuccessful();
             log.info("Gemini API 헬스체크: {} (HTTP {})", ok ? "정상" : "비정상", response.code());
             return ok;
         } catch (Exception e) {
-            log.error("Gemini API 헬스체크 실패: {}", e.getMessage());
+            log.error("Gemini API 헬스체크 실패: {}", maskKey(e.getMessage()));
             return false;
         }
     }
@@ -66,7 +69,7 @@ public class GeminiApiClient {
         if (requestBody == null) return null;
 
         String apiUrl = appConfig.getGeminiApiUrl() + "/" + appConfig.getGeminiModel()
-                + ":generateContent?key=" + appConfig.getGeminiApiKey();
+                + ":generateContent";
 
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
@@ -74,6 +77,7 @@ public class GeminiApiClient {
                         .url(apiUrl)
                         .post(RequestBody.create(requestBody, JSON))
                         .header("content-type", "application/json")
+                        .header("x-goog-api-key", appConfig.getGeminiApiKey())
                         .build();
 
                 try (Response response = client.newCall(request).execute()) {
@@ -114,7 +118,7 @@ public class GeminiApiClient {
                 Thread.currentThread().interrupt();
                 return null;
             } catch (IOException e) {
-                log.error("Gemini API 호출 실패: {}", e.getMessage());
+                log.error("Gemini API 호출 실패: {}", maskKey(e.getMessage()));
                 return null;
             }
         }
@@ -152,6 +156,11 @@ public class GeminiApiClient {
             log.error("Gemini 요청 바디 생성 실패: {}", e.getMessage());
             return null;
         }
+    }
+
+    private static String maskKey(String msg) {
+        if (msg == null) return "(null)";
+        return msg.replaceAll("key=[^&\\s\"]+", "key=***");
     }
 
     private long parseRetryDelay(Response response) {

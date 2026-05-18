@@ -1,6 +1,7 @@
 package com.aimsp.intelligence.domain.config;
 
 import com.aimsp.intelligence.dto.SystemConfigDto;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +19,7 @@ public class SystemConfigController {
     }
 
     @PutMapping
-    public ResponseEntity<SystemConfigDto.Response> updateConfig(@RequestBody SystemConfigDto.Request request) {
+    public ResponseEntity<SystemConfigDto.Response> updateConfig(@Valid @RequestBody SystemConfigDto.Request request) {
         return ResponseEntity.ok(systemConfigService.updateConfig(request));
     }
 }

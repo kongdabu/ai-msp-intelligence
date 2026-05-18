@@ -47,6 +47,10 @@ app:
   naver:
     client-id: ${NAVER_CLIENT_ID:}
     client-secret: ${NAVER_CLIENT_SECRET:}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:80,http://frontend:80,https://ai-msp-intelligence.vercel.app}
+  api:
+    secret-token: ${API_SECRET_TOKEN:}
 logging:
   level:
     com.aimsp: INFO

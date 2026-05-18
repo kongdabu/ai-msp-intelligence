@@ -27,6 +27,8 @@ def load_env() -> dict:
 def upload_to_server(output_path: Path, meta: dict) -> str | None:
     """생성된 Word 파일을 운영 서버에 업로드하여 다운로드 URL 반환 (JSON+Base64)"""
     import base64
+    env        = load_env()
+    api_token  = env.get("API_SECRET_TOKEN") or os.environ.get("API_SECRET_TOKEN", "")
     week_start = meta.get("weekStart", "")
     week_end   = meta.get("weekEnd", "")
     title      = f"AI MSP 주간 전략 레포트 ({week_start} ~ {week_end})"
@@ -41,9 +43,11 @@ def upload_to_server(output_path: Path, meta: dict) -> str | None:
             "insightCount": meta.get("insightCount", 0),
             "content":      content_b64,
         }
+        headers = {"X-API-Token": api_token} if api_token else {}
         resp = requests.post(
             f"{PROD_API_BASE}/api/weekly-reports/upload",
             json=payload,
+            headers=headers,
             timeout=60
         )
         if resp.ok:

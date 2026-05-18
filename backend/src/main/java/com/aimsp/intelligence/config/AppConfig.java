@@ -27,11 +27,17 @@ public class AppConfig {
     @Value("${app.naver.client-secret:}")
     private String naverClientSecret;
 
-    public String getGeminiApiKey() { return geminiApiKey; }
-    public String getGeminiApiUrl() { return geminiApiUrl; }
-    public String getGeminiModel()  { return geminiModel; }
-    public int getMaxTokens()       { return maxTokens; }
-    public long getRateLimitMs()    { return rateLimitMs; }
+    @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:80,http://frontend:80}")
+    private String corsAllowedOrigins;
+
+    public String getGeminiApiKey()      { return geminiApiKey; }
+    public String getGeminiApiUrl()      { return geminiApiUrl; }
+    public String getGeminiModel()       { return geminiModel; }
+    public int    getMaxTokens()         { return maxTokens; }
+    public long   getRateLimitMs()       { return rateLimitMs; }
     public String getNaverClientId()     { return naverClientId; }
     public String getNaverClientSecret() { return naverClientSecret; }
+    public String[] getCorsAllowedOrigins() {
+        return corsAllowedOrigins.split(",");
+    }
 }

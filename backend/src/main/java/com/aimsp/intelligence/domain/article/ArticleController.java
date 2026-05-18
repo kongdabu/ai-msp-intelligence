@@ -33,7 +33,7 @@ public class ArticleController {
             @RequestParam(defaultValue = "50") int limit) {
 
         return ResponseEntity.ok(
-                articleService.getArticlesList(competitor, category, dateFrom, dateTo, limit)
+                articleService.getArticlesList(competitor, category, dateFrom, dateTo, Math.min(limit, 100))
         );
     }
 
@@ -49,8 +49,10 @@ public class ArticleController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        int safePage = Math.max(page, 0);
         return ResponseEntity.ok(
-                articleService.getArticles(competitor, category, sourceType, keyword, dateFrom, dateTo, page, size)
+                articleService.getArticles(competitor, category, sourceType, keyword, dateFrom, dateTo, safePage, safeSize)
         );
     }
 
