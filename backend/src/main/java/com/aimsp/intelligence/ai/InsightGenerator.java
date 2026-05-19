@@ -44,11 +44,11 @@ public class InsightGenerator {
             - actionItems는 2개 이내로 작성
 
             [출력 형식 - 반드시 JSON만 출력, 다른 텍스트 없이]
-            {"insights":[{"title":"제목30자이내","content":"분석200자이내","type":"OPPORTUNITY","competitor":"LG_CNS","impactScore":4,"actionItems":["액션1","액션2"],"sourceArticles":[{"id":1,"relevance":85},{"id":3,"relevance":70}]}]}
+            {"insights":[{"title":"제목30자이내","content":"분석200자이내","type":"OPPORTUNITY","competitor":"LG_CNS","impactScore":4,"actionItems":["액션1","액션2"],"sourceArticles":[{"id":1,"relevance":85},{"id":3,"relevance":72},{"id":7,"relevance":65},{"id":12,"relevance":58}]}]}
 
             type은 OPPORTUNITY|THREAT|TREND|STRATEGY 중 하나.
             competitor는 LG_CNS|SK_AX|BESPIN|PWC|GENERAL 중 하나.
-            sourceArticles는 인사이트 도출에 실제로 참조한 기사 목록(최대 5개). id는 기사 id, relevance는 이 인사이트와의 관련도(0-100 정수).
+            sourceArticles는 인사이트 도출에 실제로 참조한 기사 목록(최대 5개, 최소 3개). id는 기사 id, relevance는 이 인사이트와의 관련도(0-100 정수). 관련된 기사가 있으면 반드시 포함할 것.
 
             [수집 뉴스]
             %s
