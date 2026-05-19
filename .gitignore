@@ -26,3 +26,7 @@ frontend/node_modules/
 
 # 로그
 *.log
+
+# 주간 레포트 작업 디렉토리 (로컬 전용)
+_workspace/
+reports/

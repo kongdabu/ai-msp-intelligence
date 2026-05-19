@@ -22,6 +22,4 @@ public interface InsightRepository extends JpaRepository<Insight, Long>, JpaSpec
     // 최근 인사이트 N건 (대시보드용)
     List<Insight> findTop3ByOrderByGeneratedAtDesc();
 
-    // 주간 레포트용: 특정 기간 인사이트 (영향도 내림차순)
-    List<Insight> findByGeneratedAtBetweenOrderByImpactScoreDesc(LocalDateTime from, LocalDateTime to);
 }

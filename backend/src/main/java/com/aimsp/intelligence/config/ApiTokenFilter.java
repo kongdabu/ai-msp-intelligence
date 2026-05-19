@@ -24,7 +24,6 @@ public class ApiTokenFilter extends OncePerRequestFilter {
             "/api/articles/crawl",
             "/api/insights/generate",
             "/api/battlecards/generate",
-            "/api/weekly-reports/upload",
             "/api/sources",
             "/api/admin/config"
     );

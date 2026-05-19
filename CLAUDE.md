@@ -3,7 +3,7 @@
 ## 목적
 AI MSP 사업 전략팀용 경쟁사 동향 모니터링 플랫폼.
 LG CNS, SK AX, 베스핀글로벌, PwC의 AI/AI Agent/ITO 관련 뉴스를
-자동 수집·요약·분석하여 전략적 인사이트와 주간 전략 레포트를 제공한다.
+자동 수집·요약·분석하여 전략적 인사이트를 제공한다.
 
 ## 비즈니스 컨텍스트
 - 타겟: 한국 금융·공공 엔터프라이즈
@@ -34,11 +34,6 @@ LG CNS, SK AX, 베스핀글로벌, PwC의 AI/AI Agent/ITO 관련 뉴스를
 - TanStack Query 5.28.6 (staleTime: 5분), Zustand 4.5.2, React Router 6.22.3, Axios 1.6.8
 - lucide-react 0.363.0, date-fns 3.6.0, clsx 2.1.0, tailwind-merge 2.2.2
 
-### 주간 레포트 (Harness 에이전트 팀 + Python 스크립트)
-- 데이터 수집: `scripts/fetch-weekly-data.py` (프로덕션 REST API)
-- 전문가 분석: Claude Opus 에이전트 3인 팀 (AI MSP·ITO·IT 전략 전문가)
-- Word 생성: `scripts/build-weekly-report-docx.py` (python-docx)
-
 ---
 
 ## 프로젝트 구조
@@ -58,73 +53,45 @@ ai-msp-intelligence/
 │   │   │   ├── NaverNewsClient.java        # Naver 뉴스 검색 API 클라이언트
 │   │   │   ├── RssCrawler.java             # RSS 3-phase 파싱 (Rome → Sanitized XML → Jsoup)
 │   │   │   └── sources/                   # 경쟁사별 Google News RSS 크롤러
-│   │   │       ├── LgCnsCrawler.java       # "LG CNS" 검색어
-│   │   │       ├── SkAxCrawler.java        # "SK AX" 검색어
-│   │   │       ├── BespinCrawler.java      # "베스핀글로벌" 검색어
-│   │   │       ├── PwcCrawler.java         # "PwC" 검색어
-│   │   │       └── ZdnetKoreaCrawler.java  # ZDNet Korea RSS (일반 기술 뉴스)
+│   │   │       ├── LgCnsCrawler.java
+│   │   │       ├── SkAxCrawler.java
+│   │   │       ├── BespinCrawler.java
+│   │   │       ├── PwcCrawler.java
+│   │   │       └── ZdnetKoreaCrawler.java
 │   │   ├── domain/
-│   │   │   ├── article/       # Article 엔티티, Controller, Service, Repository, DashboardController
-│   │   │   ├── insight/       # Insight 엔티티, Controller, Service, Repository
-│   │   │   ├── battlecard/    # BattleCard 엔티티, Controller, Service, Repository
-│   │   │   ├── weeklyreport/  # WeeklyReport 엔티티, Controller, Service, Repository
-│   │   │   ├── source/        # Source 엔티티, Controller, Service, Repository
-│   │   │   └── config/        # SystemConfig 싱글톤 설정 엔티티 (인사이트 생성 파라미터)
+│   │   │   ├── article/   # Article 엔티티, Controller, Service, Repository, DashboardController
+│   │   │   ├── insight/   # Insight 엔티티, Controller, Service, Repository
+│   │   │   ├── battlecard/ # BattleCard 엔티티, Controller, Service, Repository
+│   │   │   ├── source/    # Source 엔티티, Controller, Service, Repository
+│   │   │   └── config/    # SystemConfig 싱글톤 설정 엔티티
 │   │   ├── config/
-│   │   │   ├── AppConfig.java       # Gemini·Naver·Report 설정값 바인딩
+│   │   │   ├── AppConfig.java       # Gemini·Naver·CORS 설정값 바인딩
+│   │   │   ├── ApiTokenFilter.java  # X-API-Token 변조성 엔드포인트 보호
 │   │   │   ├── CorsConfig.java
-│   │   │   └── SchedulerConfig.java # 자동 스케줄 (4개 작업)
-│   │   ├── dto/           # ArticleDto, InsightDto, BattleCardDto, WeeklyReportDto,
-│   │   │                  # SourceDto, DashboardDto, SystemConfigDto
+│   │   │   └── SchedulerConfig.java # 자동 스케줄 (3개 작업)
+│   │   ├── dto/           # ArticleDto, InsightDto, BattleCardDto, SourceDto, DashboardDto, SystemConfigDto
 │   │   └── exception/     # GlobalExceptionHandler, AiApiUnavailableException
 │   ├── src/main/resources/
-│   │   ├── application.yml           # 환경 설정 (default: H2, prod: Supabase)
-│   │   ├── data.sql                  # 로컬 초기 데이터
-│   │   ├── data-prod.sql             # prod 초기 소스 데이터 (ON CONFLICT DO NOTHING)
-│   │   └── db/migration/
-│   │       ├── V2__fix_bytea_columns.sql
-│   │       └── V3__insight_articles_add_relevance_score.sql
-│   ├── data/                         # H2 파일 DB (로컬 전용)
-│   └── Dockerfile                    # eclipse-temurin:21, multi-stage build
+│   │   ├── application.yml
+│   │   ├── data.sql
+│   │   ├── data-prod.sql
+│   │   └── db/migration/  # V2~V4, V10(weekly_report 테이블 제거)
+│   └── Dockerfile
 │
 ├── frontend/                         # React SPA
 │   ├── src/
-│   │   ├── pages/        # Dashboard, Articles, Insights, Competitors,
-│   │   │                 # Battlecards, Sources, Settings
-│   │   ├── components/
-│   │   │   ├── article/  # ArticleCard, ArticleFilter, ArticleList
-│   │   │   ├── insight/  # InsightCard, InsightPanel
-│   │   │   ├── battlecard/ # BattlecardPanel
-│   │   │   ├── dashboard/  # TrendChart, CompetitorDonut, KeywordCloud
-│   │   │   └── layout/   # Header, Sidebar
-│   │   ├── hooks/        # useArticles, useInsights, useBattlecards,
-│   │   │                 # useDashboard, useSystemConfig
+│   │   ├── pages/        # Dashboard, Articles, Insights, Competitors, Battlecards, Sources, Settings
+│   │   ├── components/   # article/, insight/, battlecard/, dashboard/, layout/
+│   │   ├── hooks/        # useArticles, useInsights, useBattlecards, useDashboard, useSystemConfig
 │   │   ├── store/        # filterStore (Zustand)
 │   │   └── types/        # index.ts 공통 타입
-│   ├── vite.config.ts    # dev proxy: /api → http://localhost:8080
-│   ├── vercel.json       # /api/* → https://aimsp-backend.onrender.com/api/* 프록시
-│   └── Dockerfile        # nginx 기반
+│   ├── vite.config.ts
+│   ├── vercel.json       # /api/* → Render 백엔드 프록시
+│   └── Dockerfile
 │
-├── scripts/
-│   ├── fetch-weekly-data.py          # 프로덕션 API → _workspace 데이터 수집
-│   └── build-weekly-report-docx.py  # 전문가 분석 결과 → Word 레포트 생성
-│
-├── _workspace/
-│   └── weekly_{YYYY-MM-DD}/          # 에이전트 팀 작업 공간
-│       ├── articles.json             # 수집된 기사
-│       ├── insights.json             # 수집된 인사이트
-│       ├── meta.json                 # 수집 메타 정보
-│       ├── ai_msp_analysis.json      # AI MSP 전문가 분석
-│       ├── ito_analysis.json         # ITO 전문가 분석
-│       └── it_strategy_analysis.json # IT 전략 전문가 분석
-│
-├── reports/
-│   └── weekly/                       # 생성된 Word 레포트 저장 디렉토리
-│       └── YYYY-MM-DD_ai-msp-weekly-report.docx
-│
-├── render.yaml           # Render 배포 설정 (backend Docker)
-├── docker-compose.yml    # 로컬 전체 스택 (postgres 15 + backend + frontend + nginx)
-└── nginx/nginx.conf      # 로컬 리버스 프록시
+├── render.yaml
+├── docker-compose.yml
+└── nginx/nginx.conf
 ```
 
 ---
@@ -182,23 +149,6 @@ ai-msp-intelligence/
 
 인덱스: `competitor`, `generated_at`
 
-### WeeklyReport 엔티티
-| 필드 | 타입 | 설명 |
-|---|---|---|
-| `id` | Long (PK) | 자동 증가 |
-| `title` | String (200) | 레포트 제목 |
-| `competitorTrends` | TEXT | 경쟁사 동향 (JSON) |
-| `aiTrends` | TEXT | AI 사업 Trend (JSON) |
-| `strategyRecommendations` | TEXT | AI MSP 추진 전략 (JSON) |
-| `weekStart` | LocalDate | 대상 주 시작일 (월요일) |
-| `weekEnd` | LocalDate | 대상 주 종료일 (일요일) |
-| `articleCount` | Integer | 참조 기사 수 |
-| `insightCount` | Integer | 참조 인사이트 수 |
-| `docxPath` | String (500) | 생성된 Word 파일 절대 경로 |
-| `generatedAt` | LocalDateTime | 생성일시 |
-
-인덱스: `week_start`
-
 ### SystemConfig 엔티티 (싱글톤, id=1 고정)
 | 필드 | 타입 | 기본값 | 설명 |
 |---|---|---|---|
@@ -227,7 +177,6 @@ ai-msp-intelligence/
 | 매일 KST 01:00 | `0 0 1 * * *` | 기사 수집 (`CrawlerOrchestrator`) |
 | 매일 KST 02:00 | `0 0 2 * * *` | 인사이트 생성 (`InsightService`) |
 | 매주 월요일 KST 03:00 | `0 0 3 * * MON` | 배틀카드 생성 (`BattleCardService`) |
-| 매주 월요일 KST 05:00 | Claude Code `/schedule` | 주간 전략 레포트 (Harness 에이전트 팀) |
 
 ---
 
@@ -251,15 +200,6 @@ ai-msp-intelligence/
 - `BattleCardGenerator`로 Gemini 호출 → SWOT + 대응 전략 JSON 반환
 - 경쟁사별 배틀카드 저장
 
-### 주간 전략 레포트 생성 (Harness 에이전트 팀)
-1. **데이터 수집**: `scripts/fetch-weekly-data.py` → 프로덕션 API에서 기사·인사이트 수집 → `_workspace/weekly_{date}/`
-2. **전문가 병렬 분석**: Claude Opus 에이전트 3인 동시 실행
-   - AI MSP 전문가 → `ai_msp_analysis.json`
-   - ITO 전문가 → `ito_analysis.json`
-   - IT 전략 전문가 → `it_strategy_analysis.json`
-3. **레포트 통합**: `scripts/build-weekly-report-docx.py` → 3개 분석 통합 → Word 파일 생성
-4. 매주 월요일 `weekly-report-orchestrate` 스킬로 실행
-
 ### RSS 파싱 3-phase (`RssCrawler.java`)
 1. **Phase 1**: Rome XML 파서 직접 파싱 (정상 피드)
 2. **Phase 2**: HTML 보이드 요소 → self-closing 변환 후 Rome 재시도 (비표준 피드)
@@ -278,7 +218,8 @@ ai-msp-intelligence/
 | `DB_USERNAME` | DB 사용자명 | 필수 (prod) |
 | `DB_PASSWORD` | DB 비밀번호 | 필수 (prod) |
 | `SPRING_PROFILES_ACTIVE` | `prod` 설정 시 Supabase 사용 | `default` (H2) |
-| `REPORT_DIRECTORY` | Word 레포트 저장 경로 | `reports/weekly` |
+| `CORS_ALLOWED_ORIGINS` | CORS 허용 오리진 (콤마 구분) | localhost + Vercel 도메인 |
+| `API_SECRET_TOKEN` | 변조성 API 보호 토큰 | 선택 (미설정 시 비활성) |
 
 ---
 
@@ -334,9 +275,9 @@ ai-msp-intelligence/
 | Method | Path | 설명 |
 |---|---|---|
 | GET | `/api/articles` | 페이지네이션 목록 (params: competitor, category, sourceType, keyword, dateFrom, dateTo, page, size) |
-| GET | `/api/articles/list` | 비페이지네이션 목록 (Competitors 페이지용, params: competitor, category, dateFrom, dateTo, limit=50) |
+| GET | `/api/articles/list` | 비페이지네이션 목록 (params: competitor, category, dateFrom, dateTo, limit=50) |
 | GET | `/api/articles/{id}` | 기사 상세 (originalContent 포함) |
-| POST | `/api/articles/crawl` | 크롤링 수동 실행 |
+| POST | `/api/articles/crawl` | 크롤링 수동 실행 🔒 |
 | GET | `/api/articles/stats` | 통계 (todayCount, byCompetitor, categoryTrend) |
 
 ### Insights (`/api/insights`)
@@ -344,7 +285,7 @@ ai-msp-intelligence/
 |---|---|---|
 | GET | `/api/insights` | 페이지네이션 목록 (params: type, competitor, page, size) |
 | GET | `/api/insights/{id}` | 인사이트 상세 (sourceArticles 배열 포함) |
-| POST | `/api/insights/generate` | 인사이트 생성 수동 실행 |
+| POST | `/api/insights/generate` | 인사이트 생성 수동 실행 🔒 |
 | GET | `/api/insights/today` | 오늘 생성된 인사이트 목록 |
 
 ### BattleCards (`/api/battlecards`)
@@ -353,39 +294,20 @@ ai-msp-intelligence/
 | GET | `/api/battlecards` | 경쟁사별 최신 배틀카드 4건 |
 | GET | `/api/battlecards/{competitor}` | 특정 경쟁사 배틀카드 이력 (최근 10건) |
 | GET | `/api/battlecards/detail/{id}` | 배틀카드 상세 (출처 기사 포함) |
-| POST | `/api/battlecards/generate` | 배틀카드 수동 생성 |
-
-### Weekly Reports (`/api/weekly-reports`)
-| Method | Path | 설명 |
-|---|---|---|
-| POST | `/api/weekly-reports/generate` | 주간 레포트 생성 (DB 저장 + Word 파일 생성) |
-| GET | `/api/weekly-reports` | 최근 레포트 목록 (최대 10건) |
-| GET | `/api/weekly-reports/{id}/download` | Word 파일 다운로드 |
+| POST | `/api/battlecards/generate` | 배틀카드 수동 생성 🔒 |
 
 ### Sources (`/api/sources`)
 | Method | Path | 설명 |
 |---|---|---|
 | GET | `/api/sources` | 전체 소스 목록 |
-| POST | `/api/sources` | 소스 추가 |
+| POST | `/api/sources` | 소스 추가 🔒 |
 | PUT | `/api/sources/{id}/toggle` | 소스 활성/비활성 토글 |
 
 ### Dashboard & Admin
 | Method | Path | 설명 |
 |---|---|---|
 | GET | `/api/dashboard/summary` | KPI, 경쟁사 분포, 카테고리 트렌드, 최신 인사이트/기사 |
-| GET | `/api/admin/config` | SystemConfig 조회 (인사이트 생성 파라미터) |
-| PUT | `/api/admin/config` | SystemConfig 수정 |
+| GET | `/api/admin/config` | SystemConfig 조회 |
+| PUT | `/api/admin/config` | SystemConfig 수정 🔒 |
 
----
-
-## 하네스: AI MSP 주간 전략 레포트
-
-**목표:** 지난주 수집 기사·인사이트를 기반으로 AI MSP 전략 주간 레포트(MS Word)를 자동 생성한다.
-
-**트리거:** "주간 레포트", "weekly report", "레포트 생성", "레포트 재실행", "레포트 업데이트" 요청 시 `weekly-report-orchestrate` 스킬을 사용하라. 레포트 즉시 실행만 원하면 `weekly-report-run` 스킬을 직접 사용 가능.
-
-**변경 이력:**
-| 날짜 | 변경 내용 | 대상 | 사유 |
-|------|----------|------|------|
-| 2026-05-17 | 초기 구성 | 전체 | 개별 인사이트 중심 한계 → 전략적 주간 레포트 필요 |
-| 2026-05-18 | Gemini 생성 제거, 에이전트 팀 방식으로 전환 | 전체 | AI MSP·ITO·IT전략 전문가 3인 병렬 분석으로 품질 향상 |
+> 🔒 = `X-API-Token` 헤더 필요 (API_SECRET_TOKEN 환경변수 설정 시 활성)
