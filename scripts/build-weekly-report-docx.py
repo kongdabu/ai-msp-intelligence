@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """전문가 에이전트 분석 결과 → MS Word 주간 전략 레포트 생성 + 운영 서버 업로드"""
 
+import os
 import sys
 import json
 import datetime
