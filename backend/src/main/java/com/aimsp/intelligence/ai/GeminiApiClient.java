@@ -110,9 +110,22 @@ public class GeminiApiClient {
                     if (responseBody == null) return null;
 
                     JsonNode jsonNode = objectMapper.readTree(responseBody);
-                    return jsonNode.path("candidates").get(0)
-                            .path("content").path("parts").get(0)
-                            .path("text").asText();
+                    JsonNode candidates = jsonNode.path("candidates");
+                    if (candidates.isMissingNode() || !candidates.isArray() || candidates.isEmpty()) {
+                        log.error("Gemini API가 빈 후보군(candidates)을 반환했습니다. (검열 또는 모델 오류 의심)");
+                        return null;
+                    }
+                    JsonNode candidate = candidates.get(0);
+                    if (candidate == null) return null;
+
+                    JsonNode parts = candidate.path("content").path("parts");
+                    if (parts.isMissingNode() || !parts.isArray() || parts.isEmpty()) {
+                        return null;
+                    }
+                    JsonNode part = parts.get(0);
+                    if (part == null) return null;
+
+                    return part.path("text").asText();
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

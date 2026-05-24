@@ -10,7 +10,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +30,7 @@ public class BattleCardService {
     private final ArticleRepository articleRepository;
     private final BattleCardGenerator battleCardGenerator;
     private final GeminiApiClient geminiApiClient;
+    private final PlatformTransactionManager transactionManager;
 
     // 경쟁사별 최신 배틀카드 1건씩 조회 (JOIN FETCH로 N+1 방지)
     @Transactional(readOnly = true)
@@ -59,7 +62,6 @@ public class BattleCardService {
     }
 
     // 전체 경쟁사 배틀카드 수동 생성
-    @Transactional
     public List<BattleCardDto.Response> generateBattleCards() {
         if (!geminiApiClient.isAvailable()) {
             throw new AiApiUnavailableException();
@@ -69,14 +71,23 @@ public class BattleCardService {
         List<BattleCardDto.Response> result = new ArrayList<>();
         for (String competitor : COMPETITORS) {
             try {
+                // DB Read (Spring Data JPA findBy... is implicitly transactional/safe for read)
                 List<Article> articles = articleRepository.findByCompetitorOrderByPublishedAtDesc(
                         competitor, PageRequest.of(0, ARTICLES_PER_COMPETITOR)).getContent();
 
+                // Heavy sequential Gemini calls (run OUTSIDE database transaction)
                 BattleCard bc = battleCardGenerator.generate(competitor, articles);
                 if (bc == null) continue;
 
-                bc.getSourceArticles().forEach(bca -> bca.setBattleCard(bc));
-                result.add(BattleCardDto.Response.from(battleCardRepository.save(bc)));
+                // DB Write (wrapped in a short-lived transaction)
+                BattleCardDto.Response savedDto = new TransactionTemplate(transactionManager).execute(status -> {
+                    bc.getSourceArticles().forEach(bca -> bca.setBattleCard(bc));
+                    return BattleCardDto.Response.from(battleCardRepository.save(bc));
+                });
+
+                if (savedDto != null) {
+                    result.add(savedDto);
+                }
             } catch (AiApiUnavailableException e) {
                 // AI API 일시 오류는 해당 경쟁사만 스킵, 나머지 경쟁사 계속 진행
                 log.warn("[배틀카드] AI API 오류로 스킵 [{}]: 다음 경쟁사로 계속", competitor);

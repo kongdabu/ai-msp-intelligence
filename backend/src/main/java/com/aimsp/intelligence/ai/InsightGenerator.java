@@ -104,7 +104,7 @@ public class InsightGenerator {
                     for (JsonNode saNode : sourceArticlesNode) {
                         int relevance = saNode.path("relevance").asInt(0);
                         if (relevance < 50) continue;
-                        Article a = articleById.get(saNode.path("id").longValue());
+                        Article a = articleById.get(saNode.path("id").asLong(0L));
                         if (a != null) {
                             InsightArticle ia = new InsightArticle();
                             ia.setArticle(a);

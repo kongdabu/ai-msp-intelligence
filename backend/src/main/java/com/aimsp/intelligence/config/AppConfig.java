@@ -38,6 +38,12 @@ public class AppConfig {
     public String getNaverClientId()     { return naverClientId; }
     public String getNaverClientSecret() { return naverClientSecret; }
     public String[] getCorsAllowedOrigins() {
-        return corsAllowedOrigins.split(",");
+        if (corsAllowedOrigins == null || corsAllowedOrigins.isBlank()) {
+            return new String[0];
+        }
+        return java.util.Arrays.stream(corsAllowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .toArray(String[]::new);
     }
 }

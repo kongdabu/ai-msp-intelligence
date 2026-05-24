@@ -50,12 +50,13 @@ public class RssCrawler {
             return List.of();
         }
 
-        // 1차: Rome + 원본 XML (정상 피드에 불필요한 정규식 적용 방지)
+        // 1차: Rome + 원본 XML (정상 피드에 불필요한 정규식 적용 방지, SAXBuilder로 XXE 방지)
         try {
+            org.jdom2.Document doc = buildSecureSaxBuilder().build(new StringReader(rawBody));
             SyndFeedInput input = new SyndFeedInput();
-            SyndFeed feed = input.build(new StringReader(rawBody));
+            SyndFeed feed = input.build(doc);
             List<Article> articles = toArticles(feed.getEntries(), source);
-            log.info("RSS 크롤링 완료 (XML): {} → {}건", source.getName(), articles.size());
+            log.info("RSS 크롤링 완료 (XML - Secure): {} → {}건", source.getName(), articles.size());
             return articles;
         } catch (Exception ignored) {
             // 1차 실패 시 로그 없이 2차로 진행
@@ -64,10 +65,11 @@ public class RssCrawler {
         // 2차: Rome + sanitizeXml (HTML void 요소·DOCTYPE 등 비표준 패턴 정제 후 재시도)
         try {
             String sanitized = sanitizeXml(rawBody);
+            org.jdom2.Document doc = buildSecureSaxBuilder().build(new StringReader(sanitized));
             SyndFeedInput input = new SyndFeedInput();
-            SyndFeed feed = input.build(new StringReader(sanitized));
+            SyndFeed feed = input.build(doc);
             List<Article> articles = toArticles(feed.getEntries(), source);
-            log.info("RSS 크롤링 완료 (sanitized XML): {} → {}건", source.getName(), articles.size());
+            log.info("RSS 크롤링 완료 (sanitized XML - Secure): {} → {}건", source.getName(), articles.size());
             return articles;
         } catch (Exception sanitizeEx) {
             log.warn("RSS sanitized XML 파싱 실패 [{}], Jsoup 폴백 시도: {}", source.getName(), sanitizeEx.getMessage());
@@ -199,6 +201,17 @@ public class RssCrawler {
             }
             return response.body().string();
         }
+    }
+
+    // ── XXE 방지 SAXBuilder 생성 ──────────────────────────────────────────────
+
+    private org.jdom2.input.SAXBuilder buildSecureSaxBuilder() {
+        org.jdom2.input.SAXBuilder builder = new org.jdom2.input.SAXBuilder();
+        builder.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        builder.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        builder.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        builder.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        return builder;
     }
 
     // ── XML 1차 정제 (Rome 파싱 전처리) ──────────────────────────────────────

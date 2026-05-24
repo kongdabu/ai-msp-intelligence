@@ -88,7 +88,7 @@ public class BattleCardGenerator {
             for (JsonNode sa : root.path("sourceArticles")) {
                 int relevance = sa.path("relevance").asInt(0);
                 if (relevance < 50) continue;
-                Article a = articleById.get(sa.path("id").longValue());
+                Article a = articleById.get(sa.path("id").asLong(0L));
                 if (a != null) {
                     BattleCardArticle bca = new BattleCardArticle();
                     bca.setArticle(a);
