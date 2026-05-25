@@ -21,6 +21,7 @@ public class SystemConfigService {
         SystemConfig config = getOrCreate();
         config.setMaxArticlesForInsight(request.getMaxArticlesForInsight());
         config.setMaxInsightsPerGeneration(request.getMaxInsightsPerGeneration());
+        config.setMinRelevanceScoreForInsight(request.getMinRelevanceScoreForInsight());
         return SystemConfigDto.Response.from(systemConfigRepository.save(config));
     }
 

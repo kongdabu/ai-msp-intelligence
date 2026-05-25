@@ -69,8 +69,16 @@ export default function InsightCard({ insight, onClick }: Props) {
         <span>{timeAgo}</span>
       </div>
 
-      <div className="text-xs text-gray-400 mt-1">
-        근거 기사 {insight.sourceArticleCount}건
+      <div className="flex items-center justify-between mt-1">
+        <span className="text-xs text-gray-400">근거 기사 {insight.sourceArticleCount}건</span>
+        {insight.confidenceScore != null && (
+          <div className="flex items-center gap-1">
+            <div className={`w-2 h-2 rounded-full ${
+              insight.confidenceScore >= 70 ? 'bg-green-400' : 'bg-yellow-400'
+            }`} />
+            <span className="text-xs text-gray-400">신뢰도 {insight.confidenceScore}</span>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -2,6 +2,7 @@ package com.aimsp.intelligence.domain.insight;
 
 import com.aimsp.intelligence.ai.GeminiApiClient;
 import com.aimsp.intelligence.ai.InsightGenerator;
+import com.aimsp.intelligence.ai.InsightValidator;
 import com.aimsp.intelligence.domain.article.Article;
 import com.aimsp.intelligence.domain.article.ArticleService;
 import com.aimsp.intelligence.exception.AiApiUnavailableException;
@@ -31,6 +32,7 @@ public class InsightService {
     private final InsightRepository insightRepository;
     private final ArticleService articleService;
     private final InsightGenerator insightGenerator;
+    private final InsightValidator insightValidator;
     private final GeminiApiClient geminiApiClient;
     private final PlatformTransactionManager transactionManager;
 
@@ -84,7 +86,11 @@ public class InsightService {
         }
 
         log.info("{}건 기사로 인사이트 생성 중...", articles.size());
-        List<Insight> insights = insightGenerator.generate(articles);
+        List<Insight> recentInsights = insightRepository
+                .findByGeneratedAtAfterOrderByImpactScoreDesc(LocalDateTime.now().minusDays(7));
+
+        List<Insight> generated = insightGenerator.generate(articles, recentInsights);
+        List<Insight> insights = insightValidator.validate(generated, recentInsights);
 
         // API 호출 완료 후, DB 저장 및 마킹만 개별 트랜잭션으로 처리 (Connection starvation 방지)
         // DTO 변환도 트랜잭션 내부에서 수행 — 세션 종료 후 지연 로딩 컬렉션 접근 방지

@@ -24,6 +24,8 @@ export interface Insight {
   actionItems: string[]
   sourceArticleCount: number
   generatedAt: string
+  confidenceScore?: number
+  validationReason?: string
 }
 
 export interface InsightDetail extends Insight {
@@ -62,6 +64,7 @@ export interface CategoryTrend {
 export interface SystemConfig {
   maxArticlesForInsight: number
   maxInsightsPerGeneration: number
+  minRelevanceScoreForInsight: number
 }
 
 export interface PageResponse<T> {

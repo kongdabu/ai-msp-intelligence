@@ -23,4 +23,7 @@ public class SystemConfig {
 
     @Column(nullable = false)
     private int maxInsightsPerGeneration = 8; // 인사이트 생성 최대 건수
+
+    @Column(nullable = false)
+    private int minRelevanceScoreForInsight = 65; // 인사이트 근거로 연결할 기사의 최소 관련도 점수
 }

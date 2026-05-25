@@ -58,4 +58,10 @@ public class Insight {
     private List<InsightArticle> sourceArticles = new ArrayList<>();
 
     private LocalDateTime generatedAt;
+
+    @Column
+    private Integer confidenceScore; // InsightValidator가 평가한 품질 점수 (0-100)
+
+    @Column(columnDefinition = "TEXT")
+    private String validationReason; // Validator 판단 근거
 }

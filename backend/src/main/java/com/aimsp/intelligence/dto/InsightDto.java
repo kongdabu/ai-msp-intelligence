@@ -24,6 +24,8 @@ public class InsightDto {
         private List<String> actionItems;
         private int sourceArticleCount;
         private LocalDateTime generatedAt;
+        private Integer confidenceScore;
+        private String validationReason;
 
         public static Response from(Insight insight) {
             return Response.builder()
@@ -36,6 +38,8 @@ public class InsightDto {
                     .actionItems(new ArrayList<>(insight.getActionItems()))
                     .sourceArticleCount(insight.getSourceArticles() != null ? insight.getSourceArticles().size() : 0)
                     .generatedAt(insight.getGeneratedAt())
+                    .confidenceScore(insight.getConfidenceScore())
+                    .validationReason(insight.getValidationReason())
                     .build();
         }
     }

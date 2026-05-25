@@ -15,11 +15,13 @@ public class SystemConfigDto {
     public static class Response {
         private int maxArticlesForInsight;
         private int maxInsightsPerGeneration;
+        private int minRelevanceScoreForInsight;
 
         public static Response from(SystemConfig config) {
             Response dto = new Response();
-            dto.maxArticlesForInsight    = config.getMaxArticlesForInsight();
-            dto.maxInsightsPerGeneration = config.getMaxInsightsPerGeneration();
+            dto.maxArticlesForInsight         = config.getMaxArticlesForInsight();
+            dto.maxInsightsPerGeneration      = config.getMaxInsightsPerGeneration();
+            dto.minRelevanceScoreForInsight   = config.getMinRelevanceScoreForInsight();
             return dto;
         }
     }
@@ -33,5 +35,8 @@ public class SystemConfigDto {
 
         @Min(1) @Max(50)
         private int maxInsightsPerGeneration;
+
+        @Min(50) @Max(100)
+        private int minRelevanceScoreForInsight;
     }
 }

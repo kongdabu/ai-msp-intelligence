@@ -10,6 +10,7 @@ export default function Settings() {
   const [form, setForm] = useState<SystemConfig>({
     maxArticlesForInsight: 50,
     maxInsightsPerGeneration: 8,
+    minRelevanceScoreForInsight: 65,
   })
   const [saved, setSaved] = useState(false)
 
@@ -76,6 +77,23 @@ export default function Settings() {
                   onChange={(e) => setForm({ ...form, maxInsightsPerGeneration: Number(e.target.value) })}
                 />
                 <span className="text-sm text-gray-500">건 (1회 생성 시 최대 인사이트 수)</span>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                기사 최소 관련도 점수
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  min={50}
+                  max={100}
+                  className="w-28 border border-gray-300 rounded-md text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={form.minRelevanceScoreForInsight}
+                  onChange={(e) => setForm({ ...form, minRelevanceScoreForInsight: Number(e.target.value) })}
+                />
+                <span className="text-sm text-gray-500">점 이상 기사만 인사이트 근거로 연결 (50~100)</span>
               </div>
             </div>
 
