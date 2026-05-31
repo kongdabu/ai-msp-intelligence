@@ -1,8 +1,9 @@
 import { InsightDetail, INSIGHT_TYPE_LABELS, INSIGHT_TYPE_COLORS, COMPETITOR_LABELS } from '../../types'
-import { X, Star, CheckSquare, Square, ExternalLink } from 'lucide-react'
-import { useState } from 'react'
+import { X, Star, CheckSquare, Square, ExternalLink, Bookmark } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
+import { useToggleBookmark } from '../../hooks/useInsights'
 
 interface Props {
   insight: InsightDetail | null
@@ -11,6 +12,13 @@ interface Props {
 
 export default function InsightPanel({ insight, onClose }: Props) {
   const [checked, setChecked] = useState<Set<number>>(new Set())
+  const [note, setNote] = useState('')
+  const { mutate: toggleBookmark, isPending } = useToggleBookmark()
+
+  // 패널에 표시된 인사이트가 바뀌면 메모 입력값 동기화
+  useEffect(() => {
+    setNote(insight?.bookmarkNote ?? '')
+  }, [insight?.id, insight?.bookmarkNote])
 
   if (!insight) return null
 
@@ -18,6 +26,22 @@ export default function InsightPanel({ insight, onClose }: Props) {
     const next = new Set(checked)
     next.has(i) ? next.delete(i) : next.add(i)
     setChecked(next)
+  }
+
+  // 저장 토글: 저장 시 현재 메모 함께 반영, 해제 시 메모 제거
+  const handleToggleBookmark = () => {
+    if (isPending) return
+    toggleBookmark({
+      id: insight.id,
+      bookmarked: !insight.bookmarked,
+      note: !insight.bookmarked ? note.trim() || undefined : undefined,
+    })
+  }
+
+  // 메모만 저장 (저장 상태로 전환하며 메모 갱신)
+  const handleSaveNote = () => {
+    if (isPending) return
+    toggleBookmark({ id: insight.id, bookmarked: true, note: note.trim() || undefined })
   }
 
   return (
@@ -53,9 +77,22 @@ export default function InsightPanel({ insight, onClose }: Props) {
               </p>
             )}
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={handleToggleBookmark}
+              disabled={isPending}
+              aria-label={insight.bookmarked ? '저장 해제' : '저장'}
+              title={insight.bookmarked ? '저장 해제' : '나중에 다시 보기'}
+              className={`p-1.5 rounded-md transition-colors disabled:opacity-40 ${
+                insight.bookmarked ? 'text-blue-500 hover:bg-blue-50' : 'text-gray-400 hover:text-blue-500 hover:bg-gray-100'
+              }`}
+            >
+              <Bookmark size={18} className={insight.bookmarked ? 'fill-blue-500' : ''} />
+            </button>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1.5">
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* 본문 */}
@@ -115,6 +152,38 @@ export default function InsightPanel({ insight, onClose }: Props) {
               </ul>
             </div>
           )}
+
+          {/* 리마인드 메모 (저장한 인사이트 나중에 다시 보기용) */}
+          <div className="pt-1">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
+                <Bookmark size={14} className="text-blue-500" />
+                리마인드 메모
+              </h4>
+              {insight.bookmarked && insight.bookmarkedAt && (
+                <span className="text-xs text-gray-400">
+                  {format(new Date(insight.bookmarkedAt), 'M월 d일 HH:mm', { locale: ko })} 저장됨
+                </span>
+              )}
+            </div>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              maxLength={500}
+              rows={2}
+              placeholder="나중에 다시 볼 이유나 확인할 내용을 적어두세요. (선택)"
+              className="w-full text-sm border border-gray-200 rounded-md px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+            />
+            <div className="flex justify-end mt-2">
+              <button
+                onClick={handleSaveNote}
+                disabled={isPending}
+                className="btn-primary text-xs disabled:opacity-50"
+              >
+                {isPending ? '저장 중...' : insight.bookmarked ? '메모 저장' : '저장하고 메모 남기기'}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

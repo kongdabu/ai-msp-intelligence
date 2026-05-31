@@ -4,6 +4,8 @@ import com.aimsp.intelligence.domain.insight.Insight;
 import com.aimsp.intelligence.domain.insight.InsightArticle;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -26,6 +28,9 @@ public class InsightDto {
         private LocalDateTime generatedAt;
         private Integer confidenceScore;
         private String validationReason;
+        private boolean bookmarked;
+        private LocalDateTime bookmarkedAt;
+        private String bookmarkNote;
 
         public static Response from(Insight insight) {
             return Response.builder()
@@ -40,6 +45,9 @@ public class InsightDto {
                     .generatedAt(insight.getGeneratedAt())
                     .confidenceScore(insight.getConfidenceScore())
                     .validationReason(insight.getValidationReason())
+                    .bookmarked(Boolean.TRUE.equals(insight.getBookmarked()))
+                    .bookmarkedAt(insight.getBookmarkedAt())
+                    .bookmarkNote(insight.getBookmarkNote())
                     .build();
         }
     }
@@ -83,6 +91,9 @@ public class InsightDto {
         private List<String> actionItems;
         private List<SourceArticleResponse> sourceArticles;
         private LocalDateTime generatedAt;
+        private boolean bookmarked;
+        private LocalDateTime bookmarkedAt;
+        private String bookmarkNote;
 
         public static DetailResponse from(Insight insight) {
             List<SourceArticleResponse> articles = insight.getSourceArticles() != null
@@ -99,7 +110,19 @@ public class InsightDto {
                     .actionItems(new ArrayList<>(insight.getActionItems()))
                     .sourceArticles(articles)
                     .generatedAt(insight.getGeneratedAt())
+                    .bookmarked(Boolean.TRUE.equals(insight.getBookmarked()))
+                    .bookmarkedAt(insight.getBookmarkedAt())
+                    .bookmarkNote(insight.getBookmarkNote())
                     .build();
         }
+    }
+
+    // 북마크 토글/메모 갱신 요청
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class BookmarkRequest {
+        private Boolean bookmarked; // true=저장, false=해제
+        private String note;        // 리마인드 메모 (선택)
     }
 }

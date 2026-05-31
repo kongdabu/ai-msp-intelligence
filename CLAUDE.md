@@ -129,8 +129,11 @@ ai-msp-intelligence/
 | `actionItems` | List\<String\> (각 500자, 최대 2개) | 대응 액션 아이템 |
 | `sourceArticles` | OneToMany → InsightArticle | 근거 기사 (relevance_score 포함) |
 | `generatedAt` | LocalDateTime | 생성일시 |
+| `bookmarked` | Boolean (default: false) | 저장(북마크) 여부 — 나중에 다시 조회 |
+| `bookmarkedAt` | LocalDateTime | 저장한 일시 (해제 시 null) |
+| `bookmarkNote` | String (500) | 리마인드용 메모 (저장 시 작성) |
 
-인덱스: `generated_at`, `competitor`, `impact_score`
+인덱스: `generated_at`, `competitor`, `impact_score`, `bookmarked`
 
 ### BattleCard 엔티티
 | 필드 | 타입 | 설명 |
@@ -284,7 +287,9 @@ ai-msp-intelligence/
 | Method | Path | 설명 |
 |---|---|---|
 | GET | `/api/insights` | 페이지네이션 목록 (params: type, competitor, page, size) |
+| GET | `/api/insights/bookmarked` | 저장(북마크)한 인사이트 목록 (최근 저장순, params: page, size) |
 | GET | `/api/insights/{id}` | 인사이트 상세 (sourceArticles 배열 포함) |
+| PUT | `/api/insights/{id}/bookmark` | 인사이트 저장/해제 토글 + 메모 갱신 (body: bookmarked, note) |
 | POST | `/api/insights/generate` | 인사이트 생성 수동 실행 🔒 |
 | GET | `/api/insights/today` | 오늘 생성된 인사이트 목록 |
 

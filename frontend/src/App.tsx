@@ -5,6 +5,7 @@ import Header from './components/layout/Header'
 import Dashboard from './pages/Dashboard'
 import Articles from './pages/Articles'
 import Insights from './pages/Insights'
+import Saved from './pages/Saved'
 import Competitors from './pages/Competitors'
 import Sources from './pages/Sources'
 import Settings from './pages/Settings'
@@ -30,6 +31,7 @@ export default function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/articles" element={<Articles />} />
               <Route path="/insights" element={<Insights />} />
+              <Route path="/saved" element={<Saved />} />
               <Route path="/competitors" element={<Competitors />} />
               <Route path="/sources" element={<Sources />} />
               <Route path="/settings" element={<Settings />} />

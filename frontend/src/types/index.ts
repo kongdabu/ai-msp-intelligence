@@ -26,6 +26,9 @@ export interface Insight {
   generatedAt: string
   confidenceScore?: number
   validationReason?: string
+  bookmarked: boolean
+  bookmarkedAt?: string | null
+  bookmarkNote?: string | null
 }
 
 export interface InsightDetail extends Insight {
