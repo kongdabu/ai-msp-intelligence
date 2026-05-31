@@ -58,6 +58,7 @@ public class ArticleController {
 
     // 기사 상세 조회
     @GetMapping("/{id}")
+    @SuppressWarnings("null")
     public ResponseEntity<ArticleDto.Response> getArticle(@PathVariable Long id) {
         return ResponseEntity.ok(articleService.getArticle(id));
     }

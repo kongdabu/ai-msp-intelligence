@@ -16,6 +16,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.lang.NonNull;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -34,7 +35,7 @@ public class InsightService {
     private final InsightGenerator insightGenerator;
     private final InsightValidator insightValidator;
     private final GeminiApiClient geminiApiClient;
-    private final PlatformTransactionManager transactionManager;
+    private final @NonNull PlatformTransactionManager transactionManager;
 
     // 인사이트 목록 조회
     // Specification 사용 - null 조건은 쿼리에서 제외하여 PostgreSQL 타입 추론 오류 방지
@@ -52,7 +53,7 @@ public class InsightService {
 
     // 인사이트 상세 조회
     @Transactional(readOnly = true)
-    public InsightDto.DetailResponse getInsight(Long id) {
+    public InsightDto.DetailResponse getInsight(@NonNull Long id) {
         Insight insight = insightRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("인사이트를 찾을 수 없습니다: " + id));
         return InsightDto.DetailResponse.from(insight);
@@ -68,7 +69,7 @@ public class InsightService {
 
     // 북마크 토글 및 메모 갱신
     @Transactional
-    public InsightDto.Response toggleBookmark(Long id, Boolean bookmarked, String note) {
+    public InsightDto.Response toggleBookmark(@NonNull Long id, Boolean bookmarked, String note) {
         Insight insight = insightRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("인사이트를 찾을 수 없습니다: " + id));
 
@@ -101,6 +102,7 @@ public class InsightService {
     }
 
     // 미처리 기사 기반 인사이트 생성
+    @SuppressWarnings("null")
     private List<InsightDto.Response> generateFromRecentArticles() {
         List<Article> articles = articleService.getUnprocessedArticles();
         if (articles.isEmpty()) {
