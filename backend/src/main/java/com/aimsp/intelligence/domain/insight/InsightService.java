@@ -58,6 +58,29 @@ public class InsightService {
         return InsightDto.DetailResponse.from(insight);
     }
 
+    // 저장(북마크)된 인사이트 목록 — 최근 저장 순
+    @Transactional(readOnly = true)
+    public Page<InsightDto.Response> getBookmarkedInsights(int page, int size) {
+        Specification<Insight> spec = (root, query, cb) -> cb.isTrue(root.get("bookmarked"));
+        return insightRepository.findAll(spec, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "bookmarkedAt")))
+                .map(InsightDto.Response::from);
+    }
+
+    // 북마크 토글 및 메모 갱신
+    @Transactional
+    public InsightDto.Response toggleBookmark(Long id, Boolean bookmarked, String note) {
+        Insight insight = insightRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("인사이트를 찾을 수 없습니다: " + id));
+
+        boolean save = Boolean.TRUE.equals(bookmarked);
+        insight.setBookmarked(save);
+        insight.setBookmarkedAt(save ? LocalDateTime.now() : null);
+        // 저장 시에만 메모 반영, 해제 시 메모 제거
+        insight.setBookmarkNote(save ? note : null);
+
+        return InsightDto.Response.from(insightRepository.save(insight));
+    }
+
     // 오늘 인사이트 조회
     @Transactional(readOnly = true)
     public List<InsightDto.Response> getTodayInsights() {

@@ -40,6 +40,40 @@ export function useInsight(id: number | null) {
   })
 }
 
+// 저장(북마크)한 인사이트 목록
+export function useBookmarkedInsights(params: { page?: number; size?: number } = {}) {
+  return useQuery<PageResponse<Insight>>({
+    queryKey: ['insights', 'bookmarked', params],
+    queryFn: async () => {
+      const { data } = await axios.get('/api/insights/bookmarked', { params })
+      return data
+    },
+    staleTime: FIVE_MINUTES,
+    placeholderData: keepPreviousData,
+  })
+}
+
+interface ToggleBookmarkInput {
+  id: number
+  bookmarked: boolean
+  note?: string
+}
+
+// 인사이트 저장/해제 및 메모 갱신
+export function useToggleBookmark() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, bookmarked, note }: ToggleBookmarkInput) => {
+      const { data } = await axios.put(`/api/insights/${id}/bookmark`, { bookmarked, note })
+      return data as Insight
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['insights'] })
+      queryClient.invalidateQueries({ queryKey: ['insight', variables.id] })
+    },
+  })
+}
+
 interface GenerateInsightsOptions {
   onSuccess?: (insights: import('../types').Insight[]) => void
 }

@@ -22,4 +22,7 @@ public interface InsightRepository extends JpaRepository<Insight, Long>, JpaSpec
     // 최근 인사이트 N건 (대시보드용)
     List<Insight> findTop3ByOrderByGeneratedAtDesc();
 
+    // 저장(북마크)된 인사이트 수
+    long countByBookmarkedTrue();
+
 }

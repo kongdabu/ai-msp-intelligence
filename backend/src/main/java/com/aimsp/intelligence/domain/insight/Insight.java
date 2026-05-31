@@ -24,7 +24,8 @@ import java.util.List;
 @Table(name = "insight", indexes = {
     @Index(name = "idx_insight_generated_at", columnList = "generated_at"),
     @Index(name = "idx_insight_competitor", columnList = "competitor"),
-    @Index(name = "idx_insight_impact_score", columnList = "impact_score")
+    @Index(name = "idx_insight_impact_score", columnList = "impact_score"),
+    @Index(name = "idx_insight_bookmarked", columnList = "bookmarked")
 })
 @Getter
 @Setter
@@ -64,4 +65,13 @@ public class Insight {
 
     @Column(columnDefinition = "TEXT")
     private String validationReason; // Validator 판단 근거
+
+    @Column(nullable = false)
+    private Boolean bookmarked = false; // 저장(북마크) 여부 — 나중에 다시 조회
+
+    @Column
+    private LocalDateTime bookmarkedAt; // 저장한 일시 (저장 해제 시 null)
+
+    @Column(length = 500)
+    private String bookmarkNote; // 리마인드용 메모 (왜 저장했는지 등)
 }

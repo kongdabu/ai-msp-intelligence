@@ -1,7 +1,8 @@
 import { Insight, COMPETITOR_LABELS, INSIGHT_TYPE_LABELS, INSIGHT_TYPE_COLORS, COMPETITOR_COLORS } from '../../types'
-import { Star } from 'lucide-react'
+import { Star, Bookmark } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
+import { useToggleBookmark } from '../../hooks/useInsights'
 
 interface Props {
   insight: Insight
@@ -9,9 +10,18 @@ interface Props {
 }
 
 export default function InsightCard({ insight, onClick }: Props) {
+  const { mutate: toggleBookmark, isPending } = useToggleBookmark()
+
   const timeAgo = insight.generatedAt
     ? formatDistanceToNow(new Date(insight.generatedAt), { addSuffix: true, locale: ko })
     : ''
+
+  // 카드 클릭(상세 열기)과 분리하기 위해 이벤트 전파 차단
+  const handleBookmark = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (isPending) return
+    toggleBookmark({ id: insight.id, bookmarked: !insight.bookmarked, note: insight.bookmarkNote ?? undefined })
+  }
 
   return (
     <div
@@ -29,6 +39,19 @@ export default function InsightCard({ insight, onClick }: Props) {
         >
           {COMPETITOR_LABELS[insight.competitor] ?? insight.competitor}
         </span>
+        <button
+          type="button"
+          onClick={handleBookmark}
+          disabled={isPending}
+          aria-label={insight.bookmarked ? '저장 해제' : '저장'}
+          title={insight.bookmarked ? '저장 해제' : '나중에 다시 보기'}
+          className="ml-auto text-gray-300 hover:text-blue-500 transition-colors disabled:opacity-40"
+        >
+          <Bookmark
+            size={16}
+            className={insight.bookmarked ? 'fill-blue-500 text-blue-500' : ''}
+          />
+        </button>
       </div>
 
       {/* 제목 */}
@@ -80,6 +103,15 @@ export default function InsightCard({ insight, onClick }: Props) {
           </div>
         )}
       </div>
+
+      {/* 리마인드 메모 (저장 시 작성) */}
+      {insight.bookmarkNote && (
+        <div className="mt-2 pt-2 border-t border-gray-100">
+          <p className="text-xs text-blue-600 bg-blue-50 rounded px-2 py-1 line-clamp-2">
+            📌 {insight.bookmarkNote}
+          </p>
+        </div>
+      )}
     </div>
   )
 }
