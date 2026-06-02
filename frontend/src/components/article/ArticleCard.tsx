@@ -1,6 +1,8 @@
 import { Article, COMPETITOR_LABELS, COMPETITOR_COLORS, CATEGORY_LABELS } from '../../types'
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
+import { Bookmark } from 'lucide-react'
+import { useToggleArticleBookmark } from '../../hooks/useArticles'
 
 interface Props {
   article: Article
@@ -8,11 +10,19 @@ interface Props {
 }
 
 export default function ArticleCard({ article, onClick }: Props) {
+  const { mutate: toggleBookmark, isPending } = useToggleArticleBookmark()
+
   const timeAgo = article.publishedAt
     ? formatDistanceToNow(new Date(article.publishedAt), { addSuffix: true, locale: ko })
     : ''
 
   const competitorColor = COMPETITOR_COLORS[article.competitor] ?? '#6b7280'
+
+  const handleBookmark = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (isPending) return
+    toggleBookmark({ id: article.id, bookmarked: !article.bookmarked, note: article.bookmarkNote ?? undefined })
+  }
 
   return (
     <div
@@ -33,6 +43,16 @@ export default function ArticleCard({ article, onClick }: Props) {
           </span>
         )}
         <span className="badge bg-blue-50 text-blue-700">{article.sourceType}</span>
+        <button
+          type="button"
+          onClick={handleBookmark}
+          disabled={isPending}
+          aria-label={article.bookmarked ? '저장 해제' : '저장'}
+          title={article.bookmarked ? '저장 해제' : '나중에 다시 보기'}
+          className="ml-auto text-gray-300 hover:text-blue-500 transition-colors disabled:opacity-40"
+        >
+          <Bookmark size={16} className={article.bookmarked ? 'fill-blue-500 text-blue-500' : ''} />
+        </button>
       </div>
 
       {/* 제목 */}
@@ -50,6 +70,15 @@ export default function ArticleCard({ article, onClick }: Props) {
         <span className="truncate max-w-[120px]">{article.sourceName}</span>
         <span>{timeAgo}</span>
       </div>
+
+      {/* 북마크 메모 미리보기 */}
+      {article.bookmarkNote && (
+        <div className="mt-2 pt-2 border-t border-gray-100">
+          <p className="text-xs text-blue-600 bg-blue-50 rounded px-2 py-1 line-clamp-2">
+            📌 {article.bookmarkNote}
+          </p>
+        </div>
+      )}
 
       {/* 관련도 점수 바 */}
       {article.relevanceScore !== null && article.relevanceScore !== undefined && (

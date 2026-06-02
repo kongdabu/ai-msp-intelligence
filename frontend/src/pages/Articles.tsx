@@ -1,12 +1,33 @@
 import { useState, useEffect } from 'react'
-import { useArticles, useTriggerCrawl } from '../hooks/useArticles'
+import { useArticles, useTriggerCrawl, useToggleArticleBookmark } from '../hooks/useArticles'
 import { useFilterStore } from '../store/filterStore'
 import ArticleFilter from '../components/article/ArticleFilter'
 import ArticleList from '../components/article/ArticleList'
 import { Article, COMPETITOR_LABELS, CATEGORY_LABELS, COMPETITOR_COLORS } from '../types'
-import { X, ExternalLink, RefreshCw } from 'lucide-react'
+import { X, ExternalLink, RefreshCw, Bookmark } from 'lucide-react'
+import { format } from 'date-fns'
+import { ko } from 'date-fns/locale'
 
 function ArticleDetail({ article, onClose }: { article: Article; onClose: () => void }) {
+  const { mutate: toggleBookmark, isPending, data: updated } = useToggleArticleBookmark()
+  // 최신 북마크 상태: 토글/메모 저장 응답이 있으면 우선 반영 (부모 스냅샷은 갱신되지 않으므로)
+  const current = updated && updated.id === article.id ? updated : article
+  const [note, setNote] = useState(article.bookmarkNote ?? '')
+
+  useEffect(() => {
+    setNote(article.bookmarkNote ?? '')
+  }, [article.id])
+
+  const handleToggleBookmark = () => {
+    if (isPending) return
+    toggleBookmark({ id: article.id, bookmarked: !current.bookmarked, note })
+  }
+
+  const handleSaveNote = () => {
+    if (isPending) return
+    toggleBookmark({ id: article.id, bookmarked: true, note })
+  }
+
   return (
     <div className="p-5">
       <div className="flex items-start justify-between mb-4">
@@ -23,9 +44,22 @@ function ArticleDetail({ article, onClose }: { article: Article; onClose: () => 
             </span>
           )}
         </div>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 ml-2 shrink-0">
-          <X size={20} />
-        </button>
+        <div className="flex items-center gap-1 ml-2 shrink-0">
+          <button
+            onClick={handleToggleBookmark}
+            disabled={isPending}
+            aria-label={current.bookmarked ? '저장 해제' : '저장'}
+            title={current.bookmarked ? '저장 해제' : '나중에 다시 보기'}
+            className={`p-1.5 rounded-md transition-colors disabled:opacity-40 ${
+              current.bookmarked ? 'text-blue-500 hover:bg-blue-50' : 'text-gray-400 hover:text-blue-500 hover:bg-gray-100'
+            }`}
+          >
+            <Bookmark size={18} className={current.bookmarked ? 'fill-blue-500' : ''} />
+          </button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X size={20} />
+          </button>
+        </div>
       </div>
 
       <h2 className="text-base font-bold text-gray-900 mb-1">{article.title}</h2>
@@ -67,8 +101,40 @@ function ArticleDetail({ article, onClose }: { article: Article; onClose: () => 
       )}
 
       {article.summary === null && (
-        <div className="text-xs text-gray-400 italic">AI 요약이 없습니다.</div>
+        <div className="text-xs text-gray-400 italic mb-4">AI 요약이 없습니다.</div>
       )}
+
+      {/* 북마크 메모 */}
+      <div className="border-t border-gray-100 pt-4">
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
+            <Bookmark size={14} className="text-blue-500" />
+            리마인드 메모
+          </h4>
+          {current.bookmarked && current.bookmarkedAt && (
+            <span className="text-xs text-gray-400">
+              {format(new Date(current.bookmarkedAt), 'M월 d일 HH:mm', { locale: ko })} 저장됨
+            </span>
+          )}
+        </div>
+        <textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          maxLength={500}
+          rows={2}
+          placeholder="나중에 다시 볼 이유나 확인할 내용을 적어두세요. (선택)"
+          className="w-full text-sm border border-gray-200 rounded-md px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+        />
+        <div className="flex justify-end mt-2">
+          <button
+            onClick={handleSaveNote}
+            disabled={isPending}
+            className="btn-primary text-xs disabled:opacity-50"
+          >
+            {isPending ? '저장 중...' : current.bookmarked ? '메모 저장' : '저장하고 메모 남기기'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

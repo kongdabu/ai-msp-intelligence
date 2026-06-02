@@ -9,6 +9,7 @@ interface ArticleParams {
   keyword?: string
   dateFrom?: string
   dateTo?: string
+  bookmarked?: boolean
   page?: number
   size?: number
 }
@@ -26,6 +27,7 @@ export function useArticles(params: ArticleParams = {}) {
           keyword: params.keyword || undefined,
           dateFrom: params.dateFrom ? `${params.dateFrom}T00:00:00` : undefined,
           dateTo: params.dateTo ? `${params.dateTo}T23:59:59` : undefined,
+          bookmarked: params.bookmarked ? true : undefined,
         },
       })
       return data
@@ -69,6 +71,27 @@ export function useArticle(id: number | null) {
       return data
     },
     enabled: id !== null,
+  })
+}
+
+interface ToggleArticleBookmarkInput {
+  id: number
+  bookmarked: boolean
+  note?: string
+}
+
+export function useToggleArticleBookmark() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, bookmarked, note }: ToggleArticleBookmarkInput) => {
+      const { data } = await axios.put(`/api/articles/${id}/bookmark`, { bookmarked, note })
+      return data as Article
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['articles'] })
+      queryClient.invalidateQueries({ queryKey: ['articles-list'] })
+      queryClient.invalidateQueries({ queryKey: ['article', variables.id] })
+    },
   })
 }
 

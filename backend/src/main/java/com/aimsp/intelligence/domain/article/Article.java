@@ -18,7 +18,8 @@ import java.time.LocalDateTime;
     @Index(name = "idx_article_competitor_published", columnList = "competitor, published_at"),
     @Index(name = "idx_article_collected_at", columnList = "collected_at"),
     @Index(name = "idx_article_published_at", columnList = "published_at"),
-    @Index(name = "idx_article_is_processed", columnList = "is_processed")
+    @Index(name = "idx_article_is_processed", columnList = "is_processed"),
+    @Index(name = "idx_article_bookmarked", columnList = "bookmarked")
 })
 @Getter
 @Setter
@@ -58,4 +59,13 @@ public class Article {
 
     private Boolean isProcessed = false;
     private Integer relevanceScore; // 0-100
+
+    @Column(nullable = false)
+    private Boolean bookmarked = false; // 저장(북마크) 여부 — 나중에 다시 조회
+
+    @Column
+    private LocalDateTime bookmarkedAt; // 저장한 일시 (저장 해제 시 null)
+
+    @Column(length = 500)
+    private String bookmarkNote; // 리마인드용 메모 (왜 저장했는지 등)
 }

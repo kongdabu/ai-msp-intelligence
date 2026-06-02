@@ -46,13 +46,14 @@ public class ArticleController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dateFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dateTo,
+            @RequestParam(required = false) Boolean bookmarked,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
         int safeSize = Math.min(Math.max(size, 1), 100);
         int safePage = Math.max(page, 0);
         return ResponseEntity.ok(
-                articleService.getArticles(competitor, category, sourceType, keyword, dateFrom, dateTo, safePage, safeSize)
+                articleService.getArticles(competitor, category, sourceType, keyword, dateFrom, dateTo, bookmarked, safePage, safeSize)
         );
     }
 
@@ -60,6 +61,14 @@ public class ArticleController {
     @GetMapping("/{id}")
     public ResponseEntity<ArticleDto.Response> getArticle(@PathVariable Long id) {
         return ResponseEntity.ok(articleService.getArticle(id));
+    }
+
+    // 북마크 토글 및 메모 갱신
+    @PutMapping("/{id}/bookmark")
+    public ResponseEntity<ArticleDto.Response> toggleBookmark(
+            @PathVariable Long id,
+            @RequestBody ArticleDto.BookmarkRequest request) {
+        return ResponseEntity.ok(articleService.toggleBookmark(id, request.getBookmarked(), request.getNote()));
     }
 
     // 수동 크롤링 트리거 (경쟁사 뉴스 + RSS)

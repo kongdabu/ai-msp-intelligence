@@ -8,6 +8,7 @@ interface ArticleFilter {
   keyword: string
   dateFrom: string
   dateTo: string
+  bookmarked: boolean
 }
 
 interface FilterStore {
@@ -23,6 +24,7 @@ const defaultFilter: ArticleFilter = {
   keyword: '',
   dateFrom: '',
   dateTo: '',
+  bookmarked: false,
 }
 
 export const useFilterStore = create<FilterStore>((set) => ({

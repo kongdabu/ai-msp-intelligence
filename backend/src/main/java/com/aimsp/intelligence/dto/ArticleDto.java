@@ -3,6 +3,8 @@ package com.aimsp.intelligence.dto;
 import com.aimsp.intelligence.domain.article.Article;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -23,6 +25,9 @@ public class ArticleDto {
         private LocalDateTime collectedAt;
         private Boolean isProcessed;
         private Integer relevanceScore;
+        private boolean bookmarked;
+        private LocalDateTime bookmarkedAt;
+        private String bookmarkNote;
 
         public static Response from(Article article) {
             return Response.builder()
@@ -38,6 +43,9 @@ public class ArticleDto {
                     .collectedAt(article.getCollectedAt())
                     .isProcessed(article.getIsProcessed())
                     .relevanceScore(article.getRelevanceScore())
+                    .bookmarked(Boolean.TRUE.equals(article.getBookmarked()))
+                    .bookmarkedAt(article.getBookmarkedAt())
+                    .bookmarkNote(article.getBookmarkNote())
                     .build();
         }
     }
@@ -58,6 +66,9 @@ public class ArticleDto {
         private LocalDateTime collectedAt;
         private Boolean isProcessed;
         private Integer relevanceScore;
+        private boolean bookmarked;
+        private LocalDateTime bookmarkedAt;
+        private String bookmarkNote;
 
         public static DetailResponse from(Article article) {
             return DetailResponse.builder()
@@ -74,7 +85,19 @@ public class ArticleDto {
                     .collectedAt(article.getCollectedAt())
                     .isProcessed(article.getIsProcessed())
                     .relevanceScore(article.getRelevanceScore())
+                    .bookmarked(Boolean.TRUE.equals(article.getBookmarked()))
+                    .bookmarkedAt(article.getBookmarkedAt())
+                    .bookmarkNote(article.getBookmarkNote())
                     .build();
         }
+    }
+
+    // 북마크 토글/메모 갱신 요청
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class BookmarkRequest {
+        private Boolean bookmarked; // true=저장, false=해제
+        private String note;        // 리마인드 메모 (선택)
     }
 }

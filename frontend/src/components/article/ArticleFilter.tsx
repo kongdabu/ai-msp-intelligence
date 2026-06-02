@@ -1,6 +1,6 @@
 import { useFilterStore } from '../../store/filterStore'
 import { Competitor, Category, SourceType } from '../../types'
-import { X } from 'lucide-react'
+import { X, Bookmark } from 'lucide-react'
 
 const COMPETITORS: { value: Competitor | ''; label: string }[] = [
   { value: '', label: '전체 경쟁사' },
@@ -38,7 +38,8 @@ export default function ArticleFilter() {
     articleFilter.competitor ||
     articleFilter.category ||
     articleFilter.sourceType ||
-    articleFilter.keyword
+    articleFilter.keyword ||
+    articleFilter.bookmarked
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-4">
@@ -99,6 +100,21 @@ export default function ArticleFilter() {
           value={articleFilter.keyword}
           onChange={(e) => setArticleFilter({ keyword: e.target.value })}
         />
+
+        {/* 북마크만 보기 */}
+        <button
+          type="button"
+          onClick={() => setArticleFilter({ bookmarked: !articleFilter.bookmarked })}
+          aria-pressed={articleFilter.bookmarked}
+          className={`flex items-center gap-1.5 text-sm px-3 py-2 rounded-md border transition-colors ${
+            articleFilter.bookmarked
+              ? 'bg-blue-50 border-blue-300 text-blue-600'
+              : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          <Bookmark size={14} className={articleFilter.bookmarked ? 'fill-blue-500 text-blue-500' : ''} />
+          북마크만
+        </button>
 
         {/* 초기화 */}
         {hasFilter && (

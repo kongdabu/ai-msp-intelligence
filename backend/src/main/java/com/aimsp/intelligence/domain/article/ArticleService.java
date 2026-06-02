@@ -55,7 +55,7 @@ public class ArticleService {
     public Page<ArticleDto.Response> getArticles(
             String competitor, String category, String sourceType,
             String keyword, LocalDateTime dateFrom, LocalDateTime dateTo,
-            int page, int size) {
+            Boolean bookmarked, int page, int size) {
 
         String normalizedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.toLowerCase() : null;
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "publishedAt"));
@@ -65,6 +65,7 @@ public class ArticleService {
             if (competitor != null)       predicates.add(cb.equal(root.get("competitor"), competitor));
             if (category != null)         predicates.add(cb.equal(root.get("category"), category));
             if (sourceType != null)       predicates.add(cb.equal(root.get("sourceType"), sourceType));
+            if (Boolean.TRUE.equals(bookmarked)) predicates.add(cb.isTrue(root.get("bookmarked")));
             if (normalizedKeyword != null) {
                 String pattern = "%" + normalizedKeyword + "%";
                 predicates.add(cb.or(
@@ -86,6 +87,20 @@ public class ArticleService {
         Article article = articleRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("기사를 찾을 수 없습니다: " + id));
         return ArticleDto.Response.from(article);
+    }
+
+    // 북마크 토글 및 메모 갱신 (저장 시 메모 반영, 해제 시 메모 제거)
+    @Transactional
+    public ArticleDto.Response toggleBookmark(Long id, Boolean bookmarked, String note) {
+        Article article = articleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("기사를 찾을 수 없습니다: " + id));
+
+        boolean save = Boolean.TRUE.equals(bookmarked);
+        article.setBookmarked(save);
+        article.setBookmarkedAt(save ? LocalDateTime.now() : null);
+        article.setBookmarkNote(save ? note : null);
+
+        return ArticleDto.Response.from(articleRepository.save(article));
     }
 
     // URL 중복 여부 확인 (Gemini 호출 전 선제 체크용)
