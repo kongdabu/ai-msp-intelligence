@@ -8,10 +8,27 @@ import { X, ExternalLink, RefreshCw, Bookmark } from 'lucide-react'
 
 export function ArticleDetail({ article, onClose }: { article: Article; onClose: () => void }) {
   const { mutate: toggleBookmark, isPending } = useToggleArticleBookmark()
+  const [note, setNote] = useState('')
 
+  // 패널에 표시된 기사가 바뀌면 메모 입력값 동기화
+  useEffect(() => {
+    setNote(article.bookmarkNote ?? '')
+  }, [article.id, article.bookmarkNote])
+
+  // 저장 토글: 저장 시 현재 메모 함께 반영, 해제 시 메모 제거
   const handleBookmark = () => {
     if (isPending) return
-    toggleBookmark({ id: article.id, bookmarked: !article.bookmarked, note: article.bookmarkNote ?? undefined })
+    toggleBookmark({
+      id: article.id,
+      bookmarked: !article.bookmarked,
+      note: !article.bookmarked ? note.trim() || undefined : undefined,
+    })
+  }
+
+  // 메모만 저장 (저장 상태로 전환하며 메모 갱신)
+  const handleSaveNote = () => {
+    if (isPending) return
+    toggleBookmark({ id: article.id, bookmarked: true, note: note.trim() || undefined })
   }
 
   return (
@@ -86,8 +103,46 @@ export function ArticleDetail({ article, onClose }: { article: Article; onClose:
       )}
 
       {article.summary === null && (
-        <div className="text-xs text-gray-400 italic">AI 요약이 없습니다.</div>
+        <div className="text-xs text-gray-400 italic mb-4">AI 요약이 없습니다.</div>
       )}
+
+      {/* 리마인드 메모 (저장한 기사 나중에 다시 보기용) */}
+      <div className="pt-2 border-t border-gray-100">
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
+            <Bookmark size={14} className="text-blue-500" />
+            리마인드 메모
+          </h4>
+          {article.bookmarked && article.bookmarkedAt && (
+            <span className="text-xs text-gray-400">
+              {new Date(article.bookmarkedAt).toLocaleString('ko-KR', {
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}{' '}
+              저장됨
+            </span>
+          )}
+        </div>
+        <textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          maxLength={500}
+          rows={2}
+          placeholder="이 기사에 대한 의견이나 나중에 확인할 내용을 적어두세요. (선택)"
+          className="w-full text-sm border border-gray-200 rounded-md px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+        />
+        <div className="flex justify-end mt-2">
+          <button
+            onClick={handleSaveNote}
+            disabled={isPending}
+            className="btn-primary text-xs disabled:opacity-50"
+          >
+            {isPending ? '저장 중...' : article.bookmarked ? '메모 저장' : '저장하고 메모 남기기'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
