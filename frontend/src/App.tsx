@@ -4,6 +4,7 @@ import Sidebar from './components/layout/Sidebar'
 import Header from './components/layout/Header'
 import Dashboard from './pages/Dashboard'
 import Articles from './pages/Articles'
+import SavedArticles from './pages/SavedArticles'
 import Insights from './pages/Insights'
 import Saved from './pages/Saved'
 import Competitors from './pages/Competitors'
@@ -30,6 +31,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/articles" element={<Articles />} />
+              <Route path="/saved-articles" element={<SavedArticles />} />
               <Route path="/insights" element={<Insights />} />
               <Route path="/saved" element={<Saved />} />
               <Route path="/competitors" element={<Competitors />} />

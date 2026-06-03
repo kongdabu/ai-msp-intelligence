@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.lang.NonNull;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,7 +39,7 @@ public class SourceService {
 
     // 소스 활성/비활성 토글
     @Transactional
-    public SourceDto.Response toggleSource(Long id) {
+    public SourceDto.Response toggleSource(@NonNull Long id) {
         Source source = sourceRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("소스를 찾을 수 없습니다: " + id));
         source.setActive(!source.getActive());
@@ -62,7 +63,7 @@ public class SourceService {
 
     // 마지막 크롤링 시간 업데이트
     @Transactional
-    public void updateLastCrawled(Long id) {
+    public void updateLastCrawled(@NonNull Long id) {
         sourceRepository.findById(id).ifPresent(source -> {
             source.setLastCrawledAt(java.time.LocalDateTime.now());
             source.setCrawlCount(source.getCrawlCount() + 1);
@@ -72,7 +73,7 @@ public class SourceService {
 
     // 에러 카운트 증가
     @Transactional
-    public void incrementErrorCount(Long id) {
+    public void incrementErrorCount(@NonNull Long id) {
         sourceRepository.findById(id).ifPresent(source -> {
             source.setErrorCount(source.getErrorCount() + 1);
             sourceRepository.save(source);

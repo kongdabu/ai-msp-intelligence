@@ -41,12 +41,14 @@ public class InsightController {
 
     // 인사이트 상세 조회
     @GetMapping("/{id}")
+    @SuppressWarnings("null")
     public ResponseEntity<InsightDto.DetailResponse> getInsight(@PathVariable Long id) {
         return ResponseEntity.ok(insightService.getInsight(id));
     }
 
     // 인사이트 저장(북마크) 토글 / 메모 갱신
     @PutMapping("/{id}/bookmark")
+    @SuppressWarnings("null")
     public ResponseEntity<InsightDto.Response> toggleBookmark(
             @PathVariable Long id,
             @RequestBody InsightDto.BookmarkRequest request) {

@@ -1,6 +1,5 @@
 package com.aimsp.intelligence.domain.article;
 
-import com.aimsp.intelligence.ai.SummaryGenerator;
 import com.aimsp.intelligence.dto.ArticleDto;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +11,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.lang.NonNull;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 public class ArticleService {
 
     private final ArticleRepository articleRepository;
-    private final SummaryGenerator summaryGenerator;
 
     // 기사 목록 조회 - DB LIMIT 적용 (경쟁사 분석 페이지용)
     // findAll(spec, sort) 대신 PageRequest를 사용해 DB 레벨에서 LIMIT 처리
@@ -80,9 +79,32 @@ public class ArticleService {
         return articleRepository.findAll(spec, pageable).map(ArticleDto.Response::from);
     }
 
+    // 저장(북마크)된 기사 목록 — 최근 저장 순
+    @Transactional(readOnly = true)
+    public Page<ArticleDto.Response> getBookmarkedArticles(int page, int size) {
+        Specification<Article> spec = (root, query, cb) -> cb.isTrue(root.get("bookmarked"));
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "bookmarkedAt"));
+        return articleRepository.findAll(spec, pageable).map(ArticleDto.Response::from);
+    }
+
+    // 북마크 토글 및 메모 갱신
+    @Transactional
+    public ArticleDto.Response toggleBookmark(@NonNull Long id, Boolean bookmarked, String note) {
+        Article article = articleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("기사를 찾을 수 없습니다: " + id));
+
+        boolean save = Boolean.TRUE.equals(bookmarked);
+        article.setBookmarked(save);
+        article.setBookmarkedAt(save ? LocalDateTime.now() : null);
+        // 저장 시에만 메모 반영, 해제 시 메모 제거
+        article.setBookmarkNote(save ? note : null);
+
+        return ArticleDto.Response.from(articleRepository.save(article));
+    }
+
     // 기사 상세 조회
     @Transactional(readOnly = true)
-    public ArticleDto.Response getArticle(Long id) {
+    public ArticleDto.Response getArticle(@NonNull Long id) {
         Article article = articleRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("기사를 찾을 수 없습니다: " + id));
         return ArticleDto.Response.from(article);
@@ -142,7 +164,7 @@ public class ArticleService {
 
     // 처리 완료 표시
     @Transactional
-    public void markAsProcessed(Long id) {
+    public void markAsProcessed(@NonNull Long id) {
         articleRepository.findById(id).ifPresent(article -> {
             article.setIsProcessed(true);
             articleRepository.save(article);

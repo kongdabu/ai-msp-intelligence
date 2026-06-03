@@ -55,6 +55,7 @@ public class CrawlerOrchestrator {
         }
     }
 
+    @SuppressWarnings("null")
     public int crawlAll() {
         if (!geminiApiClient.isAvailable()) {
             throw new AiApiUnavailableException();

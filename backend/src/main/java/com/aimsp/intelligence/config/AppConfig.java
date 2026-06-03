@@ -3,6 +3,8 @@ package com.aimsp.intelligence.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
+import org.springframework.lang.NonNull;
+
 @Configuration
 public class AppConfig {
 
@@ -37,7 +39,8 @@ public class AppConfig {
     public long   getRateLimitMs()       { return rateLimitMs; }
     public String getNaverClientId()     { return naverClientId; }
     public String getNaverClientSecret() { return naverClientSecret; }
-    public String[] getCorsAllowedOrigins() {
+    @SuppressWarnings("null")
+    public @NonNull String[] getCorsAllowedOrigins() {
         if (corsAllowedOrigins == null || corsAllowedOrigins.isBlank()) {
             return new String[0];
         }

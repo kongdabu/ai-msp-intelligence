@@ -32,6 +32,7 @@ public class SourceController {
     }
 
     @PutMapping("/{id}/toggle")
+    @SuppressWarnings("null")
     public ResponseEntity<SourceDto.Response> toggleSource(@PathVariable Long id) {
         return ResponseEntity.ok(sourceService.toggleSource(id));
     }

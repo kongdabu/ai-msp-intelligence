@@ -61,6 +61,41 @@ export function useArticlesList(params: ArticleListParams = {}) {
   })
 }
 
+// 저장(북마크)한 기사 목록
+export function useBookmarkedArticles(params: { page?: number; size?: number } = {}) {
+  return useQuery<PageResponse<Article>>({
+    queryKey: ['articles', 'bookmarked', params],
+    queryFn: async () => {
+      const { data } = await axios.get('/api/articles/bookmarked', { params })
+      return data
+    },
+    staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
+  })
+}
+
+interface ToggleArticleBookmarkInput {
+  id: number
+  bookmarked: boolean
+  note?: string
+}
+
+// 기사 저장/해제 및 메모 갱신
+export function useToggleArticleBookmark() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, bookmarked, note }: ToggleArticleBookmarkInput) => {
+      const { data } = await axios.put(`/api/articles/${id}/bookmark`, { bookmarked, note })
+      return data as Article
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['articles'] })
+      queryClient.invalidateQueries({ queryKey: ['articles-list'] })
+      queryClient.invalidateQueries({ queryKey: ['article', variables.id] })
+    },
+  })
+}
+
 export function useArticle(id: number | null) {
   return useQuery<Article>({
     queryKey: ['article', id],

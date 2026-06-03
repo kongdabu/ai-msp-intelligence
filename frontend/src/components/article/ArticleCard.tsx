@@ -1,6 +1,8 @@
 import { Article, COMPETITOR_LABELS, COMPETITOR_COLORS, CATEGORY_LABELS } from '../../types'
+import { Bookmark } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
+import { useToggleArticleBookmark } from '../../hooks/useArticles'
 
 interface Props {
   article: Article
@@ -8,11 +10,20 @@ interface Props {
 }
 
 export default function ArticleCard({ article, onClick }: Props) {
+  const { mutate: toggleBookmark, isPending } = useToggleArticleBookmark()
+
   const timeAgo = article.publishedAt
     ? formatDistanceToNow(new Date(article.publishedAt), { addSuffix: true, locale: ko })
     : ''
 
   const competitorColor = COMPETITOR_COLORS[article.competitor] ?? '#6b7280'
+
+  // 카드 클릭(상세 열기)과 분리하기 위해 이벤트 전파 차단
+  const handleBookmark = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (isPending) return
+    toggleBookmark({ id: article.id, bookmarked: !article.bookmarked, note: article.bookmarkNote ?? undefined })
+  }
 
   return (
     <div
@@ -33,6 +44,19 @@ export default function ArticleCard({ article, onClick }: Props) {
           </span>
         )}
         <span className="badge bg-blue-50 text-blue-700">{article.sourceType}</span>
+        <button
+          type="button"
+          onClick={handleBookmark}
+          disabled={isPending}
+          aria-label={article.bookmarked ? '저장 해제' : '저장'}
+          title={article.bookmarked ? '저장 해제' : '나중에 다시 보기'}
+          className="ml-auto text-gray-300 hover:text-blue-500 transition-colors disabled:opacity-40"
+        >
+          <Bookmark
+            size={16}
+            className={article.bookmarked ? 'fill-blue-500 text-blue-500' : ''}
+          />
+        </button>
       </div>
 
       {/* 제목 */}
@@ -64,6 +88,15 @@ export default function ArticleCard({ article, onClick }: Props) {
               style={{ width: `${article.relevanceScore}%` }}
             />
           </div>
+        </div>
+      )}
+
+      {/* 리마인드 메모 (저장 시 작성) */}
+      {article.bookmarkNote && (
+        <div className="mt-2 pt-2 border-t border-gray-100">
+          <p className="text-xs text-blue-600 bg-blue-50 rounded px-2 py-1 line-clamp-2">
+            📌 {article.bookmarkNote}
+          </p>
         </div>
       )}
     </div>

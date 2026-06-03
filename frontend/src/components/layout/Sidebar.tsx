@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Newspaper, Lightbulb, Bookmark, Users, Database, Settings, Swords, X } from 'lucide-react'
+import { LayoutDashboard, Newspaper, Lightbulb, Bookmark, BookmarkCheck, Users, Database, Settings, Swords, X } from 'lucide-react'
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: '대시보드' },
   { to: '/articles', icon: Newspaper, label: '기사 수집' },
+  { to: '/saved-articles', icon: BookmarkCheck, label: '저장한 기사' },
   { to: '/insights', icon: Lightbulb, label: '인사이트' },
   { to: '/saved', icon: Bookmark, label: '저장한 인사이트' },
   { to: '/competitors', icon: Users, label: '경쟁사 분석' },

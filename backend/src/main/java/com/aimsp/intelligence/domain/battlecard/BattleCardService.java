@@ -9,6 +9,7 @@ import com.aimsp.intelligence.exception.AiApiUnavailableException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +31,7 @@ public class BattleCardService {
     private final ArticleRepository articleRepository;
     private final BattleCardGenerator battleCardGenerator;
     private final GeminiApiClient geminiApiClient;
-    private final PlatformTransactionManager transactionManager;
+    private final @NonNull PlatformTransactionManager transactionManager;
 
     // 경쟁사별 최신 배틀카드 1건씩 조회 (JOIN FETCH로 N+1 방지)
     @Transactional(readOnly = true)
