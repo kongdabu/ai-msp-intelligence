@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Sidebar from './components/layout/Sidebar'
 import Header from './components/layout/Header'
+import Toaster from './components/common/Toaster'
 import Dashboard from './pages/Dashboard'
 import Articles from './pages/Articles'
 import SavedArticles from './pages/SavedArticles'
@@ -42,6 +43,7 @@ export default function App() {
           </main>
         </div>
       </div>
+      <Toaster />
     </BrowserRouter>
   )
 }

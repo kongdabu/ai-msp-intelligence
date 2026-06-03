@@ -9,25 +9,35 @@ import { X, ExternalLink, RefreshCw, Bookmark } from 'lucide-react'
 export function ArticleDetail({ article, onClose }: { article: Article; onClose: () => void }) {
   const { mutate: toggleBookmark, isPending } = useToggleArticleBookmark()
   const [note, setNote] = useState('')
+  // 패널은 목록 스냅샷을 받으므로, 즉시 반영을 위해 북마크 상태를 로컬로 관리
+  const [bookmarked, setBookmarked] = useState(article.bookmarked)
+  const [bookmarkedAt, setBookmarkedAt] = useState<string | null | undefined>(article.bookmarkedAt)
 
-  // 패널에 표시된 기사가 바뀌면 메모 입력값 동기화
+  // 패널에 표시된 기사가 바뀌면 입력/표시 값 동기화
   useEffect(() => {
     setNote(article.bookmarkNote ?? '')
-  }, [article.id, article.bookmarkNote])
+    setBookmarked(article.bookmarked)
+    setBookmarkedAt(article.bookmarkedAt)
+  }, [article.id, article.bookmarkNote, article.bookmarked, article.bookmarkedAt])
 
   // 저장 토글: 저장 시 현재 메모 함께 반영, 해제 시 메모 제거
   const handleBookmark = () => {
     if (isPending) return
+    const next = !bookmarked
+    setBookmarked(next) // 즉시 반영
+    setBookmarkedAt(next ? new Date().toISOString() : null)
     toggleBookmark({
       id: article.id,
-      bookmarked: !article.bookmarked,
-      note: !article.bookmarked ? note.trim() || undefined : undefined,
+      bookmarked: next,
+      note: next ? note.trim() || undefined : undefined,
     })
   }
 
   // 메모만 저장 (저장 상태로 전환하며 메모 갱신)
   const handleSaveNote = () => {
     if (isPending) return
+    setBookmarked(true) // 즉시 반영
+    setBookmarkedAt((prev) => prev ?? new Date().toISOString())
     toggleBookmark({ id: article.id, bookmarked: true, note: note.trim() || undefined })
   }
 
@@ -52,11 +62,11 @@ export function ArticleDetail({ article, onClose }: { article: Article; onClose:
             type="button"
             onClick={handleBookmark}
             disabled={isPending}
-            aria-label={article.bookmarked ? '저장 해제' : '저장'}
-            title={article.bookmarked ? '저장 해제' : '나중에 다시 보기'}
+            aria-label={bookmarked ? '저장 해제' : '저장'}
+            title={bookmarked ? '저장 해제' : '나중에 다시 보기'}
             className="text-gray-300 hover:text-blue-500 transition-colors disabled:opacity-40"
           >
-            <Bookmark size={18} className={article.bookmarked ? 'fill-blue-500 text-blue-500' : ''} />
+            <Bookmark size={18} className={bookmarked ? 'fill-blue-500 text-blue-500' : ''} />
           </button>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X size={20} />
@@ -113,9 +123,9 @@ export function ArticleDetail({ article, onClose }: { article: Article; onClose:
             <Bookmark size={14} className="text-blue-500" />
             리마인드 메모
           </h4>
-          {article.bookmarked && article.bookmarkedAt && (
+          {bookmarked && bookmarkedAt && (
             <span className="text-xs text-gray-400">
-              {new Date(article.bookmarkedAt).toLocaleString('ko-KR', {
+              {new Date(bookmarkedAt).toLocaleString('ko-KR', {
                 month: 'long',
                 day: 'numeric',
                 hour: '2-digit',
@@ -139,7 +149,7 @@ export function ArticleDetail({ article, onClose }: { article: Article; onClose:
             disabled={isPending}
             className="btn-primary text-xs disabled:opacity-50"
           >
-            {isPending ? '저장 중...' : article.bookmarked ? '메모 저장' : '저장하고 메모 남기기'}
+            {isPending ? '저장 중...' : bookmarked ? '메모 저장' : '저장하고 메모 남기기'}
           </button>
         </div>
       </div>
