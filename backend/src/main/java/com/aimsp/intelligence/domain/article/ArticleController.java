@@ -56,11 +56,31 @@ public class ArticleController {
         );
     }
 
+    // 저장(북마크)된 기사 목록 조회
+    @GetMapping("/bookmarked")
+    public ResponseEntity<Page<ArticleDto.Response>> getBookmarkedArticles(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        int safePage = Math.max(page, 0);
+        return ResponseEntity.ok(articleService.getBookmarkedArticles(safePage, safeSize));
+    }
+
     // 기사 상세 조회
     @GetMapping("/{id}")
     @SuppressWarnings("null")
     public ResponseEntity<ArticleDto.Response> getArticle(@PathVariable Long id) {
         return ResponseEntity.ok(articleService.getArticle(id));
+    }
+
+    // 기사 저장(북마크) 토글 / 메모 갱신
+    @PutMapping("/{id}/bookmark")
+    @SuppressWarnings("null")
+    public ResponseEntity<ArticleDto.Response> toggleBookmark(
+            @PathVariable Long id,
+            @RequestBody ArticleDto.BookmarkRequest request) {
+        return ResponseEntity.ok(articleService.toggleBookmark(id, request.getBookmarked(), request.getNote()));
     }
 
     // 수동 크롤링 트리거 (경쟁사 뉴스 + RSS)

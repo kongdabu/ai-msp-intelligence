@@ -12,6 +12,9 @@ export interface Article {
   collectedAt: string
   isProcessed: boolean
   relevanceScore: number | null
+  bookmarked: boolean
+  bookmarkedAt?: string | null
+  bookmarkNote?: string | null
 }
 
 export interface Insight {

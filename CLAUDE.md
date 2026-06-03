@@ -75,7 +75,7 @@ ai-msp-intelligence/
 │   │   ├── application.yml
 │   │   ├── data.sql
 │   │   ├── data-prod.sql
-│   │   └── db/migration/  # V2~V4, V10(weekly_report 테이블 제거)
+│   │   └── db/migration/  # V2~V4, V10(weekly_report 제거), V13(insight 북마크), V14(article 북마크)
 │   └── Dockerfile
 │
 ├── frontend/                         # React SPA
@@ -114,8 +114,11 @@ ai-msp-intelligence/
 | `collectedAt` | LocalDateTime | 수집일시 |
 | `isProcessed` | Boolean (default: false) | 인사이트 생성 처리 여부 |
 | `relevanceScore` | Integer (0-100) | AI 관련도 점수 |
+| `bookmarked` | Boolean (default: false) | 저장(북마크) 여부 — 나중에 다시 조회 |
+| `bookmarkedAt` | LocalDateTime | 저장한 일시 (해제 시 null) |
+| `bookmarkNote` | String (500) | 리마인드용 메모 (저장 시 작성) |
 
-인덱스: `(competitor, published_at)`, `collected_at`, `published_at`, `is_processed`
+인덱스: `(competitor, published_at)`, `collected_at`, `published_at`, `is_processed`, `bookmarked`
 
 ### Insight 엔티티
 | 필드 | 타입 | 설명 |
@@ -279,7 +282,9 @@ ai-msp-intelligence/
 |---|---|---|
 | GET | `/api/articles` | 페이지네이션 목록 (params: competitor, category, sourceType, keyword, dateFrom, dateTo, page, size) |
 | GET | `/api/articles/list` | 비페이지네이션 목록 (params: competitor, category, dateFrom, dateTo, limit=50) |
+| GET | `/api/articles/bookmarked` | 저장(북마크)한 기사 목록 (최근 저장순, params: page, size) |
 | GET | `/api/articles/{id}` | 기사 상세 (originalContent 포함) |
+| PUT | `/api/articles/{id}/bookmark` | 기사 저장/해제 토글 + 메모 갱신 (body: bookmarked, note) |
 | POST | `/api/articles/crawl` | 크롤링 수동 실행 🔒 |
 | GET | `/api/articles/stats` | 통계 (todayCount, byCompetitor, categoryTrend) |
 

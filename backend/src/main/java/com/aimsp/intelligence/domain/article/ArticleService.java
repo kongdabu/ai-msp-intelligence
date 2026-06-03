@@ -79,6 +79,29 @@ public class ArticleService {
         return articleRepository.findAll(spec, pageable).map(ArticleDto.Response::from);
     }
 
+    // 저장(북마크)된 기사 목록 — 최근 저장 순
+    @Transactional(readOnly = true)
+    public Page<ArticleDto.Response> getBookmarkedArticles(int page, int size) {
+        Specification<Article> spec = (root, query, cb) -> cb.isTrue(root.get("bookmarked"));
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "bookmarkedAt"));
+        return articleRepository.findAll(spec, pageable).map(ArticleDto.Response::from);
+    }
+
+    // 북마크 토글 및 메모 갱신
+    @Transactional
+    public ArticleDto.Response toggleBookmark(@NonNull Long id, Boolean bookmarked, String note) {
+        Article article = articleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("기사를 찾을 수 없습니다: " + id));
+
+        boolean save = Boolean.TRUE.equals(bookmarked);
+        article.setBookmarked(save);
+        article.setBookmarkedAt(save ? LocalDateTime.now() : null);
+        // 저장 시에만 메모 반영, 해제 시 메모 제거
+        article.setBookmarkNote(save ? note : null);
+
+        return ArticleDto.Response.from(articleRepository.save(article));
+    }
+
     // 기사 상세 조회
     @Transactional(readOnly = true)
     public ArticleDto.Response getArticle(@NonNull Long id) {

@@ -1,12 +1,19 @@
 import { useState, useEffect } from 'react'
-import { useArticles, useTriggerCrawl } from '../hooks/useArticles'
+import { useArticles, useTriggerCrawl, useToggleArticleBookmark } from '../hooks/useArticles'
 import { useFilterStore } from '../store/filterStore'
 import ArticleFilter from '../components/article/ArticleFilter'
 import ArticleList from '../components/article/ArticleList'
 import { Article, COMPETITOR_LABELS, CATEGORY_LABELS, COMPETITOR_COLORS } from '../types'
-import { X, ExternalLink, RefreshCw } from 'lucide-react'
+import { X, ExternalLink, RefreshCw, Bookmark } from 'lucide-react'
 
-function ArticleDetail({ article, onClose }: { article: Article; onClose: () => void }) {
+export function ArticleDetail({ article, onClose }: { article: Article; onClose: () => void }) {
+  const { mutate: toggleBookmark, isPending } = useToggleArticleBookmark()
+
+  const handleBookmark = () => {
+    if (isPending) return
+    toggleBookmark({ id: article.id, bookmarked: !article.bookmarked, note: article.bookmarkNote ?? undefined })
+  }
+
   return (
     <div className="p-5">
       <div className="flex items-start justify-between mb-4">
@@ -23,9 +30,21 @@ function ArticleDetail({ article, onClose }: { article: Article; onClose: () => 
             </span>
           )}
         </div>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 ml-2 shrink-0">
-          <X size={20} />
-        </button>
+        <div className="flex items-center gap-2 ml-2 shrink-0">
+          <button
+            type="button"
+            onClick={handleBookmark}
+            disabled={isPending}
+            aria-label={article.bookmarked ? '저장 해제' : '저장'}
+            title={article.bookmarked ? '저장 해제' : '나중에 다시 보기'}
+            className="text-gray-300 hover:text-blue-500 transition-colors disabled:opacity-40"
+          >
+            <Bookmark size={18} className={article.bookmarked ? 'fill-blue-500 text-blue-500' : ''} />
+          </button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X size={20} />
+          </button>
+        </div>
       </div>
 
       <h2 className="text-base font-bold text-gray-900 mb-1">{article.title}</h2>
