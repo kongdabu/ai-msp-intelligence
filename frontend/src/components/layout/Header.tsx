@@ -2,7 +2,7 @@ import { useLocation } from 'react-router-dom'
 import { Menu } from 'lucide-react'
 
 const pageTitles: Record<string, { title: string; description: string }> = {
-  '/': { title: '대시보드', description: '경쟁사 동향 현황 요약' },
+  '/': { title: '전략 브리핑', description: '인사이트 중심 경쟁사 동향 요약' },
   '/articles': { title: '기사 수집', description: '수집된 뉴스·블로그 기사 목록' },
   '/insights': { title: 'AI 인사이트', description: 'Gemini가 분석한 전략 인사이트' },
   '/competitors': { title: '경쟁사 분석', description: '경쟁사별 상세 동향 분석' },
