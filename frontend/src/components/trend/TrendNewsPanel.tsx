@@ -52,7 +52,10 @@ export default function TrendNewsPanel({ trend, onClose }: TrendNewsPanelProps) 
                   <a href={article.url} target="_blank" rel="noopener noreferrer" className="group flex items-start gap-2 rounded-xl border border-slate-200 p-3 transition hover:border-blue-200 hover:bg-blue-50">
                     <ExternalLink size={15} className="mt-0.5 shrink-0 text-blue-500" />
                     <span>
-                      <span className="block text-sm font-medium text-slate-800 group-hover:text-blue-700">{article.title}</span>
+                      <span className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-slate-800 group-hover:text-blue-700">
+                        <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[11px] font-semibold text-blue-700">기사 #{article.id}</span>
+                        <span>{article.title}</span>
+                      </span>
                       <span className="mt-1 block text-xs text-slate-500">{article.sourceName} · {article.publishedAt ? format(new Date(article.publishedAt), 'M월 d일', { locale: ko }) : '발행일 미상'} · 관련도 {article.relevanceScore ?? '-'}</span>
                     </span>
                   </a>
