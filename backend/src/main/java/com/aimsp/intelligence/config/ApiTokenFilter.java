@@ -24,6 +24,7 @@ public class ApiTokenFilter extends OncePerRequestFilter {
     private static final Set<String> PROTECTED_PATHS = Set.of(
             "/api/articles/crawl",
             "/api/insights/generate",
+            "/api/trends/generate",
             "/api/battlecards/generate",
             "/api/sources",
             "/api/admin/config"

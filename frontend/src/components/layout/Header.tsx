@@ -6,6 +6,7 @@ const pageTitles: Record<string, { title: string; description: string }> = {
   '/articles': { title: '기사 수집', description: '수집된 뉴스·블로그 기사 목록' },
   '/insights': { title: 'AI 인사이트', description: 'Gemini가 분석한 전략 인사이트' },
   '/competitors': { title: '경쟁사 분석', description: '경쟁사별 상세 동향 분석' },
+  '/trends': { title: 'Trend News', description: '최근 30일 기사에서 식별한 Hot Trend' },
   '/sources': { title: '소스 관리', description: '크롤링 소스 설정 및 관리' },
 }
 

@@ -111,6 +111,40 @@ export interface BattleCardSourceArticle {
   relevanceScore: number | null
 }
 
+export type TrendNewsStatus = 'DRAFT' | 'PUBLISHED'
+
+export interface TrendNews {
+  id: number
+  periodStart: string
+  periodEnd: string
+  title: string
+  summary: string
+  trendScore: number | null
+  confidenceScore: number | null
+  status: TrendNewsStatus
+  keywords: string[]
+  sourceArticleCount: number
+  generatedAt: string
+}
+
+export interface TrendNewsSourceArticle {
+  id: number
+  title: string
+  url: string
+  sourceName: string
+  competitor: Competitor
+  category: Category
+  summary: string | null
+  publishedAt: string | null
+  relevanceScore: number | null
+}
+
+export interface TrendNewsDetail extends TrendNews {
+  content: string
+  actionItems: string[]
+  sourceArticles: TrendNewsSourceArticle[]
+}
+
 export const COMPETITOR_LABELS: Record<Competitor, string> = {
   LG_CNS: 'LG CNS',
   SK_AX: 'SK AX',
@@ -149,5 +183,4 @@ export const INSIGHT_TYPE_COLORS: Record<InsightType, string> = {
   TREND: 'bg-blue-100 text-blue-800',
   STRATEGY: 'bg-purple-100 text-purple-800',
 }
-
 
