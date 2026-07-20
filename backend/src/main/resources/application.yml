@@ -29,6 +29,10 @@ spring:
       mode: always
       data-locations: classpath:data.sql
 
+  # PostgreSQL 전용 마이그레이션은 운영 프로필에서만 실행한다.
+  flyway:
+    enabled: false
+
   jackson:
     serialization:
       write-dates-as-timestamps: false
@@ -84,9 +88,11 @@ spring:
       maximum-pool-size: 5
 
   flyway:
+    enabled: true
     baseline-on-migrate: true
-    baseline-version: 6
-    ignore-missing-migrations: true   # 삭제된 V5~V7 마이그레이션 파일 무시
+    # 운영 Supabase 스키마는 V14까지 반영된 상태를 기준으로 V15부터 자동 적용한다.
+    baseline-version: 14
+    ignore-missing-migrations: true   # 삭제된 과거 마이그레이션 파일은 무시
 
   jpa:
     hibernate:
