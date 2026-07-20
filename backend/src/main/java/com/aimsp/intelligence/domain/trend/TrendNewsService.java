@@ -15,7 +15,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -24,6 +30,7 @@ import java.util.stream.Collectors;
 public class TrendNewsService {
 
     private static final int PERIOD_DAYS = 30;
+    private static final Pattern ARTICLE_CITATION_PATTERN = Pattern.compile("\\[기사\\s*#(\\d+)]");
 
     private final TrendNewsRepository trendNewsRepository;
     private final ArticleRepository articleRepository;
@@ -42,7 +49,7 @@ public class TrendNewsService {
     public TrendNewsDto.DetailResponse getTrendNews(Long id) {
         TrendNews trendNews = trendNewsRepository.findByIdWithArticles(id)
                 .orElseThrow(() -> new IllegalArgumentException("Trend News를 찾을 수 없습니다: " + id));
-        return TrendNewsDto.DetailResponse.from(trendNews);
+        return TrendNewsDto.DetailResponse.from(trendNews, buildSourceArticlesForDetail(trendNews));
     }
 
     public List<TrendNewsDto.Response> generateTrendNews() {
@@ -65,5 +72,35 @@ public class TrendNewsService {
                 .collect(Collectors.toList()));
         log.info("Trend News {}건 생성 완료", saved != null ? saved.size() : 0);
         return saved != null ? saved : List.of();
+    }
+
+    // 기존 초안까지 포함해 본문의 [기사 #ID] 인용 순서대로 근거 링크를 노출한다.
+    private List<TrendNewsDto.SourceArticleResponse> buildSourceArticlesForDetail(TrendNews trendNews) {
+        Map<Long, TrendNewsArticle> linkedArticles = new LinkedHashMap<>();
+        trendNews.getSourceArticles().forEach(association -> linkedArticles.put(association.getArticle().getId(), association));
+
+        LinkedHashSet<Long> citedArticleIds = extractCitedArticleIds(trendNews.getContent());
+        Map<Long, Article> articlesById = new LinkedHashMap<>();
+        articleRepository.findAllById(citedArticleIds).forEach(article -> articlesById.put(article.getId(), article));
+
+        List<TrendNewsDto.SourceArticleResponse> result = new ArrayList<>();
+        for (Long articleId : citedArticleIds) {
+            TrendNewsArticle linked = linkedArticles.remove(articleId);
+            Article article = articlesById.get(articleId);
+            if (linked != null) {
+                result.add(TrendNewsDto.SourceArticleResponse.from(linked));
+            } else if (article != null) {
+                result.add(TrendNewsDto.SourceArticleResponse.from(article));
+            }
+        }
+        linkedArticles.values().forEach(association -> result.add(TrendNewsDto.SourceArticleResponse.from(association)));
+        return result;
+    }
+
+    private LinkedHashSet<Long> extractCitedArticleIds(String content) {
+        LinkedHashSet<Long> articleIds = new LinkedHashSet<>();
+        Matcher matcher = ARTICLE_CITATION_PATTERN.matcher(content == null ? "" : content);
+        while (matcher.find()) articleIds.add(Long.parseLong(matcher.group(1)));
+        return articleIds;
     }
 }

@@ -2,6 +2,7 @@ package com.aimsp.intelligence.dto;
 
 import com.aimsp.intelligence.domain.trend.TrendNews;
 import com.aimsp.intelligence.domain.trend.TrendNewsArticle;
+import com.aimsp.intelligence.domain.article.Article;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -71,6 +72,20 @@ public class TrendNewsDto {
                     .relevanceScore(association.getRelevanceScore())
                     .build();
         }
+
+        public static SourceArticleResponse from(Article article) {
+            return SourceArticleResponse.builder()
+                    .id(article.getId())
+                    .title(article.getTitle())
+                    .url(article.getUrl())
+                    .sourceName(article.getSourceName())
+                    .competitor(article.getCompetitor())
+                    .category(article.getCategory())
+                    .summary(article.getSummary())
+                    .publishedAt(article.getPublishedAt())
+                    .relevanceScore(null)
+                    .build();
+        }
     }
 
     @Getter
@@ -91,9 +106,12 @@ public class TrendNewsDto {
         private LocalDateTime generatedAt;
 
         public static DetailResponse from(TrendNews trendNews) {
-            List<SourceArticleResponse> sourceArticles = trendNews.getSourceArticles().stream()
+            return from(trendNews, trendNews.getSourceArticles().stream()
                     .map(SourceArticleResponse::from)
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toList()));
+        }
+
+        public static DetailResponse from(TrendNews trendNews, List<SourceArticleResponse> sourceArticles) {
             return DetailResponse.builder()
                     .id(trendNews.getId())
                     .periodStart(trendNews.getPeriodStart())

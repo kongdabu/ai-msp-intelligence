@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Component
@@ -24,6 +26,7 @@ public class TrendNewsGenerator {
     private static final int MAX_ARTICLES_FOR_TREND = 120;
     private static final int MAX_TRENDS = 3;
     private static final int MIN_SOURCE_ARTICLES = 3;
+    private static final Pattern ARTICLE_CITATION_PATTERN = Pattern.compile("\\[기사\\s*#(\\d+)]");
 
     private static final String PROMPT_TEMPLATE = """
             너는 한국 금융·공공 엔터프라이즈 시장을 담당하는 AI MSP 전략 에디터다.
@@ -38,7 +41,8 @@ public class TrendNewsGenerator {
             - 금융 규제, 공공 보안, AI Agent 기반 ITO 전환 관점을 반영한다.
             - 각 본문은 블로그 뉴스 형식으로 700~1,300자 내외로 쓴다. 문단은 '핵심 변화', '관찰된 신호', '사업 시사점' 순서로 구성한다.
             - 본문에서 근거를 언급할 때는 반드시 [기사 #ID] 형태로 표시한다.
-            - 각 트렌드는 sourceArticles에 실제 근거 기사 3~8건을 연결한다. 유사도 65점 미만 기사는 제외한다.
+            - 본문에 인용한 모든 기사 ID는 sourceArticles에 중복 없이 반드시 포함한다.
+            - 각 트렌드는 sourceArticles에 실제 근거 기사 3~12건을 연결한다. 유사도 65점 미만 기사는 제외한다.
 
             [출력 형식]
             JSON만 출력한다.
@@ -86,6 +90,7 @@ public class TrendNewsGenerator {
             int minRelevance,
             LocalDateTime periodStart,
             LocalDateTime periodEnd) {
+        String content = limit(node.path("content").asText().trim(), 5000);
         Map<Long, TrendNewsArticle> sourceArticlesById = new LinkedHashMap<>();
         for (JsonNode sourceNode : node.path("sourceArticles")) {
             int relevance = sourceNode.path("relevance").asInt(0);
@@ -96,6 +101,15 @@ public class TrendNewsGenerator {
             association.setRelevanceScore(relevance);
             sourceArticlesById.put(article.getId(), association);
         }
+        // 본문 인용과 하단 근거 목록이 반드시 일치하도록, 누락된 인용 기사를 연결한다.
+        for (Long citedArticleId : extractCitedArticleIds(content)) {
+            Article article = articleById.get(citedArticleId);
+            if (article == null || sourceArticlesById.containsKey(citedArticleId)) continue;
+            TrendNewsArticle association = new TrendNewsArticle();
+            association.setArticle(article);
+            association.setRelevanceScore(null);
+            sourceArticlesById.put(citedArticleId, association);
+        }
         List<TrendNewsArticle> sourceArticles = new ArrayList<>(sourceArticlesById.values());
         if (sourceArticles.size() < MIN_SOURCE_ARTICLES) {
             log.debug("근거 기사 부족으로 Trend News 제외: {}건", sourceArticles.size());
@@ -104,7 +118,7 @@ public class TrendNewsGenerator {
 
         String title = limit(node.path("title").asText().trim(), 200);
         String summary = limit(node.path("summary").asText().trim(), 500);
-        String content = limit(node.path("content").asText().trim(), 5000);
+        content = removeUnknownCitations(content, articleById);
         if (title.isBlank() || summary.isBlank() || content.isBlank()) return null;
 
         TrendNews trend = new TrendNews();
@@ -159,6 +173,26 @@ public class TrendNewsGenerator {
             if (!value.isBlank() && values.size() < maximum) values.add(value);
         }
         return values;
+    }
+
+    private List<Long> extractCitedArticleIds(String content) {
+        Map<Long, Boolean> citedIds = new LinkedHashMap<>();
+        Matcher matcher = ARTICLE_CITATION_PATTERN.matcher(content);
+        while (matcher.find()) {
+            citedIds.put(Long.parseLong(matcher.group(1)), true);
+        }
+        return new ArrayList<>(citedIds.keySet());
+    }
+
+    private String removeUnknownCitations(String content, Map<Long, Article> articleById) {
+        Matcher matcher = ARTICLE_CITATION_PATTERN.matcher(content);
+        StringBuffer sanitized = new StringBuffer();
+        while (matcher.find()) {
+            long articleId = Long.parseLong(matcher.group(1));
+            matcher.appendReplacement(sanitized, articleById.containsKey(articleId) ? matcher.group() : "");
+        }
+        matcher.appendTail(sanitized);
+        return sanitized.toString();
     }
 
     private int clamp(int value) {
