@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowUpRight, CheckCheck, Database, Lightbulb, Newspaper, Sparkles, Zap } from 'lucide-react'
+import { ArrowUpRight, CheckCheck, Lightbulb, Newspaper, Sparkles, Zap } from 'lucide-react'
 import { useDashboard } from '../hooks/useDashboard'
 import { useGenerateInsights, useInsight } from '../hooks/useInsights'
 import { Insight } from '../types'
@@ -55,7 +55,6 @@ export default function Dashboard() {
     { label: '오늘 수집', value: data.todayArticleCount, icon: Newspaper, tone: 'text-blue-600 bg-blue-50' },
     { label: '분석 대기', value: data.unprocessedInsightCount, icon: Lightbulb, tone: 'text-amber-600 bg-amber-50' },
     { label: '고영향 인사이트', value: data.highImpactInsightCount, icon: Zap, tone: 'text-rose-600 bg-rose-50' },
-    { label: '활성 소스', value: data.activeSourceCount, icon: Database, tone: 'text-emerald-600 bg-emerald-50' },
   ]
 
   return (

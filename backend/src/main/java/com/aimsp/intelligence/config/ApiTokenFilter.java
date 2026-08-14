@@ -26,7 +26,6 @@ public class ApiTokenFilter extends OncePerRequestFilter {
             "/api/insights/generate",
             "/api/trends/generate",
             "/api/battlecards/generate",
-            "/api/sources",
             "/api/admin/config"
     );
 
@@ -59,7 +58,7 @@ public class ApiTokenFilter extends OncePerRequestFilter {
         if ("GET".equalsIgnoreCase(method) || "OPTIONS".equalsIgnoreCase(method)) {
             return false;
         }
-        // /api/sources POST, /api/admin/config PUT 등 정확 매칭 또는 prefix
+        // 변경 API의 정확 매칭 또는 prefix
         return PROTECTED_PATHS.stream().anyMatch(path::startsWith);
     }
 }

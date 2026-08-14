@@ -8,7 +8,6 @@ import Articles from './pages/Articles'
 import SavedArticles from './pages/SavedArticles'
 import Insights from './pages/Insights'
 import Saved from './pages/Saved'
-import Sources from './pages/Sources'
 import Settings from './pages/Settings'
 import Trends from './pages/Trends'
 
@@ -34,7 +33,6 @@ export default function App() {
               <Route path="/saved-articles" element={<SavedArticles />} />
               <Route path="/insights" element={<Insights />} />
               <Route path="/saved" element={<Saved />} />
-              <Route path="/sources" element={<Sources />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/trends" element={<Trends />} />
             </Routes>

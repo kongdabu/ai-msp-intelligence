@@ -14,7 +14,6 @@ public class DashboardDto {
     private long todayArticleCount;
     private long unprocessedInsightCount;
     private long highImpactInsightCount;
-    private long activeSourceCount;
 
     // 차트 데이터
     private Map<String, Long> competitorDistribution; // 경쟁사별 기사 수

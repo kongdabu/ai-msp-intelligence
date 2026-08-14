@@ -17,7 +17,7 @@
 ```
 backend/src/main/java/com/aimsp/intelligence/
 ├── ai/           # Gemini 클라이언트와 요약·인사이트·배틀카드·트렌드 생성기
-├── crawler/      # RSS 및 Naver 뉴스 수집
+├── crawler/      # Naver 뉴스 기반 AI 생태계 수집과 백그라운드 작업 관리
 ├── config/       # Gemini, CORS, API 토큰, 스케줄 설정
 ├── domain/       # article, insight, battlecard, source, trend, config
 ├── dto/          # API 응답 DTO

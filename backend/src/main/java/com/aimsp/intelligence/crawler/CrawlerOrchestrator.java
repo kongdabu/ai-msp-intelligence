@@ -5,8 +5,6 @@ import com.aimsp.intelligence.ai.SummaryGenerator;
 import com.aimsp.intelligence.crawler.sources.AiEcosystemCrawler;
 import com.aimsp.intelligence.domain.article.Article;
 import com.aimsp.intelligence.domain.article.ArticleService;
-import com.aimsp.intelligence.domain.source.Source;
-import com.aimsp.intelligence.domain.source.SourceService;
 import com.aimsp.intelligence.exception.AiApiUnavailableException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,10 +31,8 @@ public class CrawlerOrchestrator {
     );
 
     private final ArticleService articleService;
-    private final SourceService sourceService;
     private final SummaryGenerator summaryGenerator;
     private final GeminiApiClient geminiApiClient;
-    private final RssCrawler rssCrawler;
     private final AiEcosystemCrawler aiEcosystemCrawler;
 
     private final ExecutorService crawlerPool = Executors.newFixedThreadPool(3);
@@ -64,21 +60,6 @@ public class CrawlerOrchestrator {
 
         log.info("--- AI 생태계·사업모델 뉴스 수집 시작 ---");
         totalSaved += crawlAndSave(aiEcosystemCrawler.crawl(), "AI 생태계·사업모델 뉴스");
-
-        log.info("--- 뉴스 RSS 소스 수집 시작 ---");
-        List<Source> activeSources = sourceService.getActiveSources();
-        for (Source source : activeSources) {
-            if (!"NEWS".equals(source.getType())) continue;
-            try {
-                List<Article> articles = rssCrawler.crawl(source);
-                int saved = crawlAndSave(articles, source.getName());
-                totalSaved += saved;
-                sourceService.updateLastCrawled(source.getId());
-            } catch (Exception e) {
-                log.error("RSS 소스 크롤링 실패 [{}]: {}", source.getName(), e.getMessage());
-                sourceService.incrementErrorCount(source.getId());
-            }
-        }
 
         log.info("=== 크롤링 완료: 총 {}건 저장 ===", totalSaved);
         return totalSaved;

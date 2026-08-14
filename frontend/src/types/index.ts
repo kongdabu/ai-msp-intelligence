@@ -38,23 +38,10 @@ export interface InsightDetail extends Insight {
   sourceArticles: Article[]
 }
 
-export interface Source {
-  id: number
-  name: string
-  url: string
-  type: SourceType
-  competitor: Competitor
-  active: boolean
-  lastCrawledAt: string | null
-  crawlCount: number
-  errorCount: number
-}
-
 export interface DashboardSummary {
   todayArticleCount: number
   unprocessedInsightCount: number
   highImpactInsightCount: number
-  activeSourceCount: number
   competitorDistribution: Record<Competitor, number>
   categoryTrends: CategoryTrend[]
   latestInsights: Insight[]

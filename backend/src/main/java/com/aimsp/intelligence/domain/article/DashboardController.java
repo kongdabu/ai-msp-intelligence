@@ -1,7 +1,6 @@
 package com.aimsp.intelligence.domain.article;
 
 import com.aimsp.intelligence.domain.insight.InsightService;
-import com.aimsp.intelligence.domain.source.SourceService;
 import com.aimsp.intelligence.dto.DashboardDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +20,6 @@ public class DashboardController {
 
     private final ArticleService articleService;
     private final InsightService insightService;
-    private final SourceService sourceService;
 
     @GetMapping("/summary")
     public ResponseEntity<DashboardDto> getSummary() {
@@ -30,7 +28,6 @@ public class DashboardController {
         long todayCount = (long) stats.get("todayCount");
         long unprocessedInsightCount = insightService.getUnprocessedInsightCount();
         long highImpactCount = insightService.getHighImpactCount();
-        long activeSourceCount = sourceService.getActiveSourceCount();
 
         // 경쟁사별 분포
         @SuppressWarnings("unchecked")
@@ -54,7 +51,6 @@ public class DashboardController {
                 .todayArticleCount(todayCount)
                 .unprocessedInsightCount(unprocessedInsightCount)
                 .highImpactInsightCount(highImpactCount)
-                .activeSourceCount(activeSourceCount)
                 .competitorDistribution(competitorDist)
                 .categoryTrends(trends)
                 .latestInsights(insightService.getLatestInsights())
