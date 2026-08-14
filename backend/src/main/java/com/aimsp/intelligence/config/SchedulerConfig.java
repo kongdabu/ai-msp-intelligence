@@ -24,14 +24,14 @@ public class SchedulerConfig {
      */
     @Scheduled(cron = "0 0 1 * * *", zone = "Asia/Seoul")
     public void scheduledCrawl() {
-        log.info("[스케줄] 기사 수집 시작 (KST 01:00)");
+        log.info("[배치: 기사 수집] AI 생태계·사업모델 뉴스 수집 시작 (KST 01:00)");
         try {
             int count = crawlerOrchestrator.crawlAll();
-            log.info("[스케줄] 기사 수집 완료: {}건", count);
+            log.info("[배치: 기사 수집] 완료: 신규 {}건", count);
         } catch (AiApiUnavailableException e) {
-            log.error("[스케줄] 기사 수집 중단 - Gemini API 비정상: {}", e.getMessage());
+            log.error("[배치: 기사 수집] 중단 - Gemini API 비정상: {}", e.getMessage());
         } catch (Exception e) {
-            log.error("[스케줄] 기사 수집 실패: {}", e.getMessage(), e);
+            log.error("[배치: 기사 수집] 실패: {}", e.getMessage(), e);
         }
     }
 
@@ -40,10 +40,10 @@ public class SchedulerConfig {
      */
     @Scheduled(cron = "0 0 2 * * *", zone = "Asia/Seoul")
     public void scheduledInsightGeneration() {
-        log.info("[스케줄] 인사이트 생성 시작 (KST 02:00)");
+        log.info("[배치: 인사이트] AI 생태계·사업모델 인사이트 생성 시작 (KST 02:00)");
         try {
             int count = insightService.generateInsights().size();
-            log.info("[스케줄] 인사이트 생성 완료: {}건", count);
+            log.info("[배치: 인사이트] 완료: {}건", count);
         } catch (AiApiUnavailableException e) {
             log.error("[스케줄] 인사이트 생성 중단 - Gemini API 비정상: {}", e.getMessage());
         } catch (Exception e) {

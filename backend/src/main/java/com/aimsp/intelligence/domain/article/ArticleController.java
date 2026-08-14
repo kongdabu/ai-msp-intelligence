@@ -83,14 +83,15 @@ public class ArticleController {
         return ResponseEntity.ok(articleService.toggleBookmark(id, request.getBookmarked(), request.getNote()));
     }
 
-    // 수동 크롤링 트리거 (경쟁사 뉴스 + RSS)
+    // 수동 크롤링 트리거 (AI 생태계·사업모델 뉴스 + 활성 RSS)
     @PostMapping("/crawl")
     public ResponseEntity<Map<String, Object>> triggerCrawl() {
-        log.info("수동 크롤링 시작 (경쟁사 뉴스 + RSS)");
+        log.info("[수동 수집 API] AI 생태계·사업모델 뉴스와 활성 RSS 수집 시작");
         int count = crawlerOrchestrator.crawlAll();
         Map<String, Object> result = new HashMap<>();
         result.put("crawledCount", count);
         result.put("triggeredAt", LocalDateTime.now());
+        log.info("[수동 수집 API] 수집 완료: 신규 {}건", count);
         return ResponseEntity.ok(result);
     }
 

@@ -129,8 +129,15 @@ public class GeminiApiClient {
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+                log.warn("Gemini API 호출 중단 - 재시도하지 않음 (스레드 인터럽트)");
                 return null;
             } catch (IOException e) {
+                if (Thread.currentThread().isInterrupted()
+                        || (e.getMessage() != null && e.getMessage().toLowerCase().contains("interrupted"))) {
+                    Thread.currentThread().interrupt();
+                    log.warn("Gemini API 호출 중단 - 요청 스레드가 인터럽트됨: {}", maskKey(e.getMessage()));
+                    return null;
+                }
                 log.error("Gemini API 호출 실패: {}", maskKey(e.getMessage()));
                 return null;
             }
