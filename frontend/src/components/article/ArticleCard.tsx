@@ -1,4 +1,4 @@
-import { Article, COMPETITOR_LABELS, COMPETITOR_COLORS, CATEGORY_LABELS } from '../../types'
+import { Article, CATEGORY_LABELS } from '../../types'
 import { Bookmark } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
@@ -16,8 +16,6 @@ export default function ArticleCard({ article, onClick }: Props) {
     ? formatDistanceToNow(new Date(article.publishedAt), { addSuffix: true, locale: ko })
     : ''
 
-  const competitorColor = COMPETITOR_COLORS[article.competitor] ?? '#6b7280'
-
   // 카드 클릭(상세 열기)과 분리하기 위해 이벤트 전파 차단
   const handleBookmark = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -32,12 +30,6 @@ export default function ArticleCard({ article, onClick }: Props) {
     >
       {/* 배지 영역 */}
       <div className="flex items-center gap-2 mb-2 flex-wrap">
-        <span
-          className="badge text-white text-xs"
-          style={{ backgroundColor: competitorColor }}
-        >
-          {COMPETITOR_LABELS[article.competitor] ?? article.competitor}
-        </span>
         {article.category && (
           <span className="badge bg-gray-100 text-gray-700">
             {CATEGORY_LABELS[article.category] ?? article.category}

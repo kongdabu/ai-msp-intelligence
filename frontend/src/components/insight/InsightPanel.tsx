@@ -1,4 +1,4 @@
-import { InsightDetail, INSIGHT_TYPE_LABELS, INSIGHT_TYPE_COLORS, COMPETITOR_LABELS } from '../../types'
+import { InsightDetail, INSIGHT_TYPE_LABELS, INSIGHT_TYPE_COLORS } from '../../types'
 import { X, Star, CheckSquare, Square, ExternalLink, Bookmark } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
@@ -56,9 +56,6 @@ export default function InsightPanel({ insight, onClose }: Props) {
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span className={`badge ${INSIGHT_TYPE_COLORS[insight.insightType]}`}>
                 {INSIGHT_TYPE_LABELS[insight.insightType]}
-              </span>
-              <span className="badge bg-gray-100 text-gray-700">
-                {COMPETITOR_LABELS[insight.competitor]}
               </span>
               <div className="flex items-center gap-0.5 ml-1">
                 {Array.from({ length: 5 }).map((_, i) => (

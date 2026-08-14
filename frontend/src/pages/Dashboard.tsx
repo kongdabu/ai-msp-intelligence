@@ -6,7 +6,6 @@ import { useGenerateInsights, useInsight } from '../hooks/useInsights'
 import { Insight } from '../types'
 import InsightPanel from '../components/insight/InsightPanel'
 import InsightNewsCard from '../components/dashboard/InsightNewsCard'
-import CompetitorDonut from '../components/dashboard/CompetitorDonut'
 import TrendChart from '../components/dashboard/TrendChart'
 
 const BRIEFING_DATE_FORMATTER = new Intl.DateTimeFormat('ko-KR', {
@@ -64,8 +63,8 @@ export default function Dashboard() {
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="text-sm font-semibold text-blue-600">{BRIEFING_DATE_FORMATTER.format(new Date())} 전략 브리핑</p>
-          <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">지금 놓치면 안 될 경쟁 인사이트</h2>
-          <p className="mt-2 text-sm text-slate-500">AI MSP 전략에 바로 연결되는 변화와 대응 과제를 한눈에 확인하세요.</p>
+          <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">지금 놓치면 안 될 AI 생태계 인사이트</h2>
+          <p className="mt-2 text-sm text-slate-500">Frontier AI Labs와 서비스 사업모델 변화, Agentic AI 동향을 확인하세요.</p>
         </div>
         <button
           type="button"
@@ -133,11 +132,7 @@ export default function Dashboard() {
             </div>
           ))}
         </div>
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <h3 className="text-sm font-semibold text-slate-700">경쟁사별 기사 분포</h3>
-            <div className="mt-3"><CompetitorDonut data={data.competitorDistribution ?? {}} /></div>
-          </div>
+        <div className="mt-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <h3 className="text-sm font-semibold text-slate-700">7일 카테고리 트렌드</h3>
             <div className="mt-3"><TrendChart data={data.categoryTrends ?? []} /></div>

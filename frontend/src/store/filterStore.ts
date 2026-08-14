@@ -1,8 +1,7 @@
 import { create } from 'zustand'
-import { Category, Competitor, SourceType } from '../types'
+import { Category, SourceType } from '../types'
 
 interface ArticleFilter {
-  competitor: Competitor | ''
   category: Category | ''
   sourceType: SourceType | ''
   keyword: string
@@ -17,7 +16,6 @@ interface FilterStore {
 }
 
 const defaultFilter: ArticleFilter = {
-  competitor: '',
   category: '',
   sourceType: '',
   keyword: '',

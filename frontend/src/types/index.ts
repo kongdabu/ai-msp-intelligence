@@ -82,7 +82,7 @@ export interface PageResponse<T> {
 }
 
 export type Competitor = 'LG_CNS' | 'SK_AX' | 'BESPIN' | 'PWC' | 'GENERAL'
-export type Category = 'AI_AGENT' | 'VERTICAL_AI' | 'ITO' | 'MSP' | 'CLOUD' | 'GEN_AI'
+export type Category = 'FRONTIER_LABS' | 'AI_ECOSYSTEM' | 'AI_DELIVERY_MODEL' | 'CONSULTING' | 'AGENTIC_OPERATIONS' | 'AI_AGENT' | 'VERTICAL_AI' | 'ITO' | 'MSP' | 'CLOUD' | 'GEN_AI'
 export type SourceType = 'NEWS' | 'HOMEPAGE' | 'SNS' | 'IDC' | 'PROCUREMENT' | 'JOB_POSTING'
 export type InsightType = 'OPPORTUNITY' | 'THREAT' | 'TREND' | 'STRATEGY'
 
@@ -162,6 +162,11 @@ export const COMPETITOR_COLORS: Record<Competitor, string> = {
 }
 
 export const CATEGORY_LABELS: Record<Category, string> = {
+  FRONTIER_LABS: 'Frontier AI Labs',
+  AI_ECOSYSTEM: 'AI 생태계',
+  AI_DELIVERY_MODEL: 'AI 서비스 모델',
+  CONSULTING: '컨설팅',
+  AGENTIC_OPERATIONS: 'Agentic AI·AIOps',
   AI_AGENT: 'AI Agent',
   VERTICAL_AI: 'Vertical AI',
   ITO: 'ITO',
@@ -183,4 +188,3 @@ export const INSIGHT_TYPE_COLORS: Record<InsightType, string> = {
   TREND: 'bg-blue-100 text-blue-800',
   STRATEGY: 'bg-purple-100 text-purple-800',
 }
-

@@ -1,4 +1,4 @@
-import { Insight, COMPETITOR_LABELS, INSIGHT_TYPE_LABELS, INSIGHT_TYPE_COLORS, COMPETITOR_COLORS } from '../../types'
+import { Insight, INSIGHT_TYPE_LABELS, INSIGHT_TYPE_COLORS } from '../../types'
 import { Star, Bookmark } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
@@ -32,12 +32,6 @@ export default function InsightCard({ insight, onClick }: Props) {
       <div className="flex items-center gap-2 mb-2 flex-wrap">
         <span className={`badge ${INSIGHT_TYPE_COLORS[insight.insightType]}`}>
           {INSIGHT_TYPE_LABELS[insight.insightType]}
-        </span>
-        <span
-          className="badge text-white text-xs"
-          style={{ backgroundColor: COMPETITOR_COLORS[insight.competitor] ?? '#6b7280' }}
-        >
-          {COMPETITOR_LABELS[insight.competitor] ?? insight.competitor}
         </span>
         <button
           type="button"

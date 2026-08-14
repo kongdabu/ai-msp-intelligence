@@ -2,8 +2,6 @@ import { Bookmark, ChevronRight, CircleAlert, Sparkles, Star } from 'lucide-reac
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import {
-  COMPETITOR_COLORS,
-  COMPETITOR_LABELS,
   Insight,
   INSIGHT_TYPE_COLORS,
   INSIGHT_TYPE_LABELS,
@@ -79,7 +77,7 @@ export default function InsightNewsCard({ insight, featured = false, onSelect }:
             aria-label={`${insight.title} 상세 보기`}
           >
             <p className="mb-3 text-xs font-medium text-cyan-200">
-              {COMPETITOR_LABELS[insight.competitor]} · {timeAgo}
+              {timeAgo}
             </p>
             <h2 className="max-w-3xl text-xl font-bold leading-snug tracking-tight sm:text-2xl">{insight.title}</h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 line-clamp-2">{insight.content}</p>
@@ -105,13 +103,11 @@ export default function InsightNewsCard({ insight, featured = false, onSelect }:
 
   return (
     <article className="group relative flex min-h-[238px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/70">
-      <div className="absolute inset-x-0 top-0 h-1" style={{ backgroundColor: COMPETITOR_COLORS[insight.competitor] }} />
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-wrap items-center gap-1.5 pr-2">
           <span className={`badge ${INSIGHT_TYPE_COLORS[insight.insightType]}`}>
             {INSIGHT_TYPE_LABELS[insight.insightType]}
           </span>
-          <span className="text-xs font-medium text-slate-500">{COMPETITOR_LABELS[insight.competitor]}</span>
         </div>
         <button
           type="button"

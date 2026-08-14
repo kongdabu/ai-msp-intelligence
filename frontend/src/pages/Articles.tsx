@@ -3,7 +3,7 @@ import { useArticles, useTriggerCrawl, useToggleArticleBookmark } from '../hooks
 import { useFilterStore } from '../store/filterStore'
 import ArticleFilter from '../components/article/ArticleFilter'
 import ArticleList from '../components/article/ArticleList'
-import { Article, COMPETITOR_LABELS, CATEGORY_LABELS, COMPETITOR_COLORS } from '../types'
+import { Article, CATEGORY_LABELS } from '../types'
 import { X, ExternalLink, RefreshCw, Bookmark } from 'lucide-react'
 
 export function ArticleDetail({ article, onClose }: { article: Article; onClose: () => void }) {
@@ -45,12 +45,6 @@ export function ArticleDetail({ article, onClose }: { article: Article; onClose:
     <div className="p-5">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-wrap">
-          <span
-            className="badge text-white"
-            style={{ backgroundColor: COMPETITOR_COLORS[article.competitor] ?? '#6b7280' }}
-          >
-            {COMPETITOR_LABELS[article.competitor]}
-          </span>
           {article.category && (
             <span className="badge bg-gray-100 text-gray-700">
               {CATEGORY_LABELS[article.category]}

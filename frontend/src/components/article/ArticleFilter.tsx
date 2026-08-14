@@ -1,24 +1,14 @@
 import { useFilterStore } from '../../store/filterStore'
-import { Competitor, Category, SourceType } from '../../types'
+import { Category, SourceType } from '../../types'
 import { X } from 'lucide-react'
 
-const COMPETITORS: { value: Competitor | ''; label: string }[] = [
-  { value: '', label: '전체 경쟁사' },
-  { value: 'LG_CNS', label: 'LG CNS' },
-  { value: 'SK_AX', label: 'SK AX' },
-  { value: 'BESPIN', label: '베스핀글로벌' },
-  { value: 'PWC', label: 'PwC' },
-  { value: 'GENERAL', label: '일반' },
-]
-
 const CATEGORIES: { value: Category | ''; label: string }[] = [
-  { value: '', label: '전체 카테고리' },
-  { value: 'AI_AGENT', label: 'AI Agent' },
-  { value: 'VERTICAL_AI', label: 'Vertical AI' },
-  { value: 'ITO', label: 'ITO' },
-  { value: 'MSP', label: 'MSP' },
-  { value: 'CLOUD', label: 'Cloud' },
-  { value: 'GEN_AI', label: 'Gen AI' },
+  { value: '', label: '전체 관심 주제' },
+  { value: 'FRONTIER_LABS', label: 'Frontier AI Labs' },
+  { value: 'AI_ECOSYSTEM', label: 'AI 생태계' },
+  { value: 'AI_DELIVERY_MODEL', label: 'AI 서비스 모델' },
+  { value: 'CONSULTING', label: '컨설팅' },
+  { value: 'AGENTIC_OPERATIONS', label: 'Agentic AI·AIOps' },
 ]
 
 const SOURCE_TYPES: { value: SourceType | ''; label: string }[] = [
@@ -35,7 +25,6 @@ export default function ArticleFilter() {
   const { articleFilter, setArticleFilter, resetArticleFilter } = useFilterStore()
 
   const hasFilter =
-    articleFilter.competitor ||
     articleFilter.category ||
     articleFilter.sourceType ||
     articleFilter.keyword
@@ -43,18 +32,7 @@ export default function ArticleFilter() {
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-4">
       <div className="flex flex-wrap gap-3 items-center">
-        {/* 경쟁사 */}
-        <select
-          className="border border-gray-300 rounded-md text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={articleFilter.competitor}
-          onChange={(e) => setArticleFilter({ competitor: e.target.value as Competitor | '' })}
-        >
-          {COMPETITORS.map(({ value, label }) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </select>
-
-        {/* 카테고리 */}
+        {/* 관심 주제 */}
         <select
           className="border border-gray-300 rounded-md text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={articleFilter.category}

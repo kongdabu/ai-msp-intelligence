@@ -2,11 +2,7 @@ package com.aimsp.intelligence.crawler;
 
 import com.aimsp.intelligence.ai.GeminiApiClient;
 import com.aimsp.intelligence.ai.SummaryGenerator;
-import com.aimsp.intelligence.crawler.sources.BespinCrawler;
-import com.aimsp.intelligence.crawler.sources.LgCnsCrawler;
-import com.aimsp.intelligence.crawler.sources.PwcCrawler;
-import com.aimsp.intelligence.crawler.sources.SkAxCrawler;
-import com.aimsp.intelligence.crawler.sources.ZdnetKoreaCrawler;
+import com.aimsp.intelligence.crawler.sources.AiEcosystemCrawler;
 import com.aimsp.intelligence.domain.article.Article;
 import com.aimsp.intelligence.domain.article.ArticleService;
 import com.aimsp.intelligence.domain.source.Source;
@@ -34,11 +30,7 @@ public class CrawlerOrchestrator {
     private final SummaryGenerator summaryGenerator;
     private final GeminiApiClient geminiApiClient;
     private final RssCrawler rssCrawler;
-    private final LgCnsCrawler lgCnsCrawler;
-    private final SkAxCrawler skAxCrawler;
-    private final BespinCrawler bespinCrawler;
-    private final PwcCrawler pwcCrawler;
-    private final ZdnetKoreaCrawler zdnetKoreaCrawler;
+    private final AiEcosystemCrawler aiEcosystemCrawler;
 
     private final ExecutorService crawlerPool = Executors.newFixedThreadPool(3);
 
@@ -63,23 +55,8 @@ public class CrawlerOrchestrator {
 
         int totalSaved = 0;
 
-        log.info("--- 경쟁사 뉴스 수집 시작 (병렬) ---");
-        CompletableFuture<List<Article>> lgFuture     = CompletableFuture.supplyAsync(lgCnsCrawler::crawl, crawlerPool);
-        CompletableFuture<List<Article>> skFuture     = CompletableFuture.supplyAsync(skAxCrawler::crawl, crawlerPool);
-        CompletableFuture<List<Article>> bespinFuture = CompletableFuture.supplyAsync(bespinCrawler::crawl, crawlerPool);
-        CompletableFuture<List<Article>> pwcFuture    = CompletableFuture.supplyAsync(pwcCrawler::crawl, crawlerPool);
-        CompletableFuture<List<Article>> zdnetFuture  = CompletableFuture.supplyAsync(zdnetKoreaCrawler::crawl, crawlerPool);
-
-        CompletableFuture.allOf(lgFuture, skFuture, bespinFuture, pwcFuture, zdnetFuture).join();
-
-        List<Article> competitorArticles = new ArrayList<>();
-        competitorArticles.addAll(safeGet(lgFuture,     "LG_CNS"));
-        competitorArticles.addAll(safeGet(skFuture,     "SK_AX"));
-        competitorArticles.addAll(safeGet(bespinFuture, "BESPIN"));
-        competitorArticles.addAll(safeGet(pwcFuture,    "PWC"));
-        competitorArticles.addAll(safeGet(zdnetFuture,  "GENERAL"));
-
-        totalSaved += crawlAndSave(competitorArticles, "경쟁사 뉴스");
+        log.info("--- AI 생태계·사업모델 뉴스 수집 시작 ---");
+        totalSaved += crawlAndSave(aiEcosystemCrawler.crawl(), "AI 생태계·사업모델 뉴스");
 
         log.info("--- 뉴스 RSS 소스 수집 시작 ---");
         List<Source> activeSources = sourceService.getActiveSources();
@@ -122,9 +99,6 @@ public class CrawlerOrchestrator {
                         }
                         article.setSummary(result.summary());
                         article.setRelevanceScore(result.relevanceScore());
-                        if ("GENERAL".equals(article.getCompetitor())) {
-                            article.setCompetitor(result.detectedCompetitor());
-                        }
                         if (article.getCategory() == null) {
                             article.setCategory(result.detectedCategory());
                         }

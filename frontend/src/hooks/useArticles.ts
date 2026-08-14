@@ -4,7 +4,6 @@ import { Article, PageResponse } from '../types'
 import { useToastStore } from '../store/toastStore'
 
 interface ArticleParams {
-  competitor?: string
   category?: string
   sourceType?: string
   keyword?: string
@@ -21,7 +20,6 @@ export function useArticles(params: ArticleParams = {}) {
       const { data } = await axios.get('/api/articles', {
         params: {
           ...params,
-          competitor: params.competitor || undefined,
           category: params.category || undefined,
           sourceType: params.sourceType || undefined,
           keyword: params.keyword || undefined,
@@ -35,7 +33,6 @@ export function useArticles(params: ArticleParams = {}) {
 }
 
 interface ArticleListParams {
-  competitor?: string
   category?: string
   dateFrom?: string
   dateTo?: string
@@ -48,7 +45,6 @@ export function useArticlesList(params: ArticleListParams = {}) {
     queryFn: async () => {
       const { data } = await axios.get('/api/articles/list', {
         params: {
-          competitor: params.competitor || undefined,
           category: params.category || undefined,
           dateFrom: params.dateFrom || undefined,
           dateTo: params.dateTo || undefined,
@@ -181,4 +177,3 @@ export function useTriggerCrawl(options?: TriggerCrawlOptions) {
     },
   })
 }
-

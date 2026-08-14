@@ -8,10 +8,8 @@ import Articles from './pages/Articles'
 import SavedArticles from './pages/SavedArticles'
 import Insights from './pages/Insights'
 import Saved from './pages/Saved'
-import Competitors from './pages/Competitors'
 import Sources from './pages/Sources'
 import Settings from './pages/Settings'
-import Battlecards from './pages/Battlecards'
 import Trends from './pages/Trends'
 
 export default function App() {
@@ -36,10 +34,8 @@ export default function App() {
               <Route path="/saved-articles" element={<SavedArticles />} />
               <Route path="/insights" element={<Insights />} />
               <Route path="/saved" element={<Saved />} />
-              <Route path="/competitors" element={<Competitors />} />
               <Route path="/sources" element={<Sources />} />
               <Route path="/settings" element={<Settings />} />
-              <Route path="/battlecards" element={<Battlecards />} />
               <Route path="/trends" element={<Trends />} />
             </Routes>
           </main>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { Source, COMPETITOR_LABELS, Competitor, SourceType } from '../types'
+import { Source, SourceType } from '../types'
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { Plus, CheckCircle, XCircle } from 'lucide-react'
@@ -84,15 +84,6 @@ export default function Sources() {
                 <option key={t} value={t}>{t}</option>
               ))}
             </select>
-            <select
-              className="border border-gray-300 rounded-md text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={form.competitor}
-              onChange={(e) => setForm({ ...form, competitor: e.target.value })}
-            >
-              {(['GENERAL', 'LG_CNS', 'SK_AX', 'BESPIN', 'PWC'] as (Competitor | 'GENERAL')[]).map((c) => (
-                <option key={c} value={c}>{COMPETITOR_LABELS[c as Competitor] ?? c}</option>
-              ))}
-            </select>
           </div>
           <div className="flex gap-2 mt-3">
             <button
@@ -122,7 +113,6 @@ export default function Sources() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">소스명</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">URL</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">타입</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">경쟁사</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">마지막 수집</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">수집/오류</th>
                 <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500">상태</th>
@@ -141,9 +131,6 @@ export default function Sources() {
                     <span className={`badge ${SOURCE_TYPE_COLORS[source.type] ?? 'bg-gray-100 text-gray-700'}`}>
                       {source.type}
                     </span>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">
-                    {COMPETITOR_LABELS[source.competitor as Competitor] ?? source.competitor}
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
                     {source.lastCrawledAt

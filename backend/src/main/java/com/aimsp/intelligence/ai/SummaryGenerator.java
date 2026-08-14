@@ -16,22 +16,21 @@ public class SummaryGenerator {
     private final ObjectMapper objectMapper;
 
     private static final String SUMMARY_PROMPT_TEMPLATE = """
-            너는 AI MSP(Managed Service Provider) 사업 전략 분석가다.
-            다음 IT 서비스 업계 기사를 분석하여 한국어로 요약해줘.
+            너는 AI 생태계와 서비스 사업모델을 분석하는 전략 분석가다.
+            다음 기사를 분석하여 한국어로 요약해줘.
 
             [요약 규칙]
             - 핵심 사실 위주, 3줄 이내
-            - AI·AI Agent·ITO·MSP 관점에서 중요한 내용 우선
-            - 경쟁사(LG CNS, SK AX, 베스핀글로벌, PwC)가 언급되면 반드시 포함
+            - Frontier AI Labs, 파트너십, FDE·RDE·ODE, 컨설팅, Agentic AI·AIOps 관점에서 중요한 내용 우선
             - 200자 이내 (한국어 기준)
-            - 관련도 점수: 0~100 (AI MSP 사업과의 연관성)
+            - 관련도 점수: 0~100 (AI 생태계·서비스 사업모델과의 연관성)
 
             [출력 형식 - JSON only]
             {
               "summary": "요약 내용",
               "relevanceScore": 75,
-              "detectedCompetitor": "LG_CNS|SK_AX|BESPIN|PWC|GENERAL",
-              "detectedCategory": "AI_AGENT|VERTICAL_AI|ITO|MSP|CLOUD|GEN_AI"
+              "detectedCompetitor": "GENERAL",
+              "detectedCategory": "FRONTIER_LABS|AI_ECOSYSTEM|AI_DELIVERY_MODEL|CONSULTING|AGENTIC_OPERATIONS"
             }
 
             기사 제목: %s
