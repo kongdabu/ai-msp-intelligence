@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -24,6 +25,12 @@ import java.util.concurrent.TimeUnit;
 @Component
 @RequiredArgsConstructor
 public class CrawlerOrchestrator {
+
+    private static final List<String> TARGET_KEYWORDS = List.of(
+            "frontier ai", "openai", "anthropic", "gemini", "aws", "microsoft", "엔비디아", "nvidia",
+            "accenture", "딜로이트", "deloitte", "pwc", "fde", "rde", "ode", "partnership", "파트너십",
+            "agentic ai", "agentic", "aiops", "ai ops", "forward deployed", "resident deployed"
+    );
 
     private final ArticleService articleService;
     private final SourceService sourceService;
@@ -80,8 +87,13 @@ public class CrawlerOrchestrator {
     private int crawlAndSave(List<Article> articles, String sourceName) {
         int saved = 0;
         int skipped = 0;
+        int preFiltered = 0;
         for (Article article : articles) {
             try {
+                if (!matchesTargetKeyword(article)) {
+                    preFiltered++;
+                    continue;
+                }
                 if (articleService.existsByUrl(article.getUrl())) {
                     skipped++;
                     continue;
@@ -113,8 +125,15 @@ public class CrawlerOrchestrator {
                 log.error("기사 저장 실패 [{}]: {}", article.getTitle(), e.getMessage());
             }
         }
-        log.info("[{}] 신규 {}건 저장, 중복 {}건 스킵", sourceName, saved, skipped);
+        log.info("[{}] 신규 {}건 저장, 사전 필터 {}건·중복 {}건 제외", sourceName, saved, preFiltered, skipped);
         return saved;
+    }
+
+    private boolean matchesTargetKeyword(Article article) {
+        String text = ((article.getTitle() == null ? "" : article.getTitle()) + " "
+                + (article.getOriginalContent() == null ? "" : article.getOriginalContent()))
+                .toLowerCase(Locale.ROOT);
+        return TARGET_KEYWORDS.stream().anyMatch(text::contains);
     }
 
     private List<Article> safeGet(CompletableFuture<List<Article>> future, String name) {

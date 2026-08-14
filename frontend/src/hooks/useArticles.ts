@@ -157,8 +157,16 @@ export function useArticle(id: number | null) {
   })
 }
 
+export interface CrawlJobStatus {
+  status: 'IDLE' | 'RUNNING' | 'COMPLETED' | 'FAILED'
+  startedAt: string | null
+  completedAt: string | null
+  savedCount: number | null
+  message: string | null
+}
+
 interface TriggerCrawlOptions {
-  onSuccess?: (data: { crawledCount: number; triggeredAt: string }) => void
+  onSuccess?: (data: CrawlJobStatus) => void
 }
 
 export function useTriggerCrawl(options?: TriggerCrawlOptions) {
@@ -166,7 +174,7 @@ export function useTriggerCrawl(options?: TriggerCrawlOptions) {
   return useMutation({
     mutationFn: async () => {
       const { data } = await axios.post('/api/articles/crawl')
-      return data as { crawledCount: number; triggeredAt: string }
+      return data as CrawlJobStatus
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['articles'] })
@@ -175,5 +183,16 @@ export function useTriggerCrawl(options?: TriggerCrawlOptions) {
       queryClient.invalidateQueries({ queryKey: ['sources'] })
       options?.onSuccess?.(data)
     },
+  })
+}
+
+export function useCrawlStatus() {
+  return useQuery<CrawlJobStatus>({
+    queryKey: ['crawl-status'],
+    queryFn: async () => {
+      const { data } = await axios.get('/api/articles/crawl/status')
+      return data as CrawlJobStatus
+    },
+    refetchInterval: (query) => query.state.data?.status === 'RUNNING' ? 5000 : false,
   })
 }

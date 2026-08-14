@@ -29,6 +29,9 @@ public class AppConfig {
     @Value("${app.naver.client-secret:}")
     private String naverClientSecret;
 
+    @Value("${app.crawl.naver-result-limit:10}")
+    private int naverResultLimit;
+
     @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:80,http://frontend:80}")
     private String corsAllowedOrigins;
 
@@ -39,6 +42,7 @@ public class AppConfig {
     public long   getRateLimitMs()       { return rateLimitMs; }
     public String getNaverClientId()     { return naverClientId; }
     public String getNaverClientSecret() { return naverClientSecret; }
+    public int getNaverResultLimit()     { return naverResultLimit; }
     @SuppressWarnings("null")
     public @NonNull String[] getCorsAllowedOrigins() {
         if (corsAllowedOrigins == null || corsAllowedOrigins.isBlank()) {

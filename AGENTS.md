@@ -33,7 +33,7 @@ frontend/src/
 
 ## 핵심 동작
 
-- 기사 수집: OpenAI·Anthropic·Gemini·AWS·Microsoft·엔비디아, Accenture·딜로이트·PwC, FDE·RDE·ODE·파트너십, Agentic AI·AIOps 관련 신규 기사를 수집하고 Gemini로 관심 주제를 분류한다.
+- 기사 수집: OpenAI·Anthropic·Gemini·AWS·Microsoft·엔비디아, Accenture·딜로이트·PwC, FDE·RDE·ODE·파트너십, Agentic AI·AIOps 관련 신규 기사를 수집하고 Gemini로 관심 주제를 분류한다. 수동 수집은 백그라운드 작업으로 실행하며 상태 API로 진행 상황을 조회한다.
 - 인사이트: 미처리 기사를 기반으로 전략 인사이트와 근거 기사를 연결한다.
 - 트렌드 뉴스: 시장 트렌드 기사와 AI 분석 결과를 제공한다.
 - 자동 스케줄(Asia/Seoul): 기사 수집 매일 01:00, 인사이트 생성 매일 02:00, 배틀카드 생성 매주 월요일 03:00.
@@ -53,6 +53,7 @@ frontend/src/
 | `GEMINI_API_KEY` | Gemini API 키 | 필수 |
 | `GEMINI_MODEL` | Gemini 모델 ID | `gemini-3.5-flash-lite` |
 | `GEMINI_RATE_LIMIT_MS` | Gemini API 최소 호출 간격(밀리초) | `10000` |
+| `CRAWL_NAVER_RESULT_LIMIT` | 검색어당 Naver 뉴스 최대 수집 건수 | `10` |
 | `NAVER_CLIENT_ID` / `NAVER_CLIENT_SECRET` | Naver 검색 API 인증 정보 | 선택 |
 | `DB_URL` / `DB_USERNAME` / `DB_PASSWORD` | 운영 PostgreSQL 연결 정보 | 운영 필수 |
 | `SPRING_PROFILES_ACTIVE` | `prod`이면 PostgreSQL 설정 사용 | 기본 프로필(H2) |

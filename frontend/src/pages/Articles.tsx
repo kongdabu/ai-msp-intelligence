@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useArticles, useTriggerCrawl, useToggleArticleBookmark } from '../hooks/useArticles'
+import { useArticles, useCrawlStatus, useTriggerCrawl, useToggleArticleBookmark } from '../hooks/useArticles'
 import { useFilterStore } from '../store/filterStore'
 import ArticleFilter from '../components/article/ArticleFilter'
 import ArticleList from '../components/article/ArticleList'
@@ -160,8 +160,9 @@ export default function Articles() {
   useEffect(() => { setPage(0) }, [articleFilter])
 
   const { data, isLoading } = useArticles({ ...articleFilter, page, size: 18 })
+  const { data: crawlStatus } = useCrawlStatus()
   const { mutate: crawl, isPending: isCrawling } = useTriggerCrawl({
-    onSuccess: (d) => setCrawlMsg(`신규 ${d.crawledCount}건 수집 완료`),
+    onSuccess: () => setCrawlMsg('백그라운드 수집을 시작했습니다.'),
   })
 
   return (
@@ -173,11 +174,11 @@ export default function Articles() {
         </div>
         <button
           onClick={() => crawl()}
-          disabled={isCrawling}
+          disabled={isCrawling || crawlStatus?.status === 'RUNNING'}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
         >
           <RefreshCw size={14} className={isCrawling ? 'animate-spin' : ''} />
-          {isCrawling ? '수집 중...' : '지금 수집'}
+          {isCrawling || crawlStatus?.status === 'RUNNING' ? '수집 진행 중...' : '지금 수집'}
         </button>
       </div>
 
@@ -185,6 +186,17 @@ export default function Articles() {
         <div className="bg-green-50 border border-green-200 text-green-800 text-sm rounded-lg px-4 py-3 flex justify-between">
           ✅ {crawlMsg}
           <button onClick={() => setCrawlMsg(null)} className="text-green-600">✕</button>
+        </div>
+      )}
+
+      {crawlStatus?.status === 'COMPLETED' && crawlStatus.savedCount != null && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-800 text-sm rounded-lg px-4 py-3">
+          백그라운드 수집 완료: 신규 {crawlStatus.savedCount}건
+        </div>
+      )}
+      {crawlStatus?.status === 'FAILED' && (
+        <div className="bg-red-50 border border-red-200 text-red-800 text-sm rounded-lg px-4 py-3">
+          {crawlStatus.message ?? '수집 작업에 실패했습니다.'}
         </div>
       )}
 

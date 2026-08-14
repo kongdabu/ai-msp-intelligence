@@ -42,7 +42,7 @@ public class NaverNewsClient {
 
         HttpUrl url = HttpUrl.parse(NEWS_URL).newBuilder()
                 .addQueryParameter("query", query)
-                .addQueryParameter("display", "20")
+                .addQueryParameter("display", String.valueOf(appConfig.getNaverResultLimit()))
                 .addQueryParameter("sort", "date")
                 .build();
 
