@@ -19,15 +19,18 @@ public class RadarService {
     private final RadarPlayerRepository radarPlayerRepository;
     private final RadarSignalRepository radarSignalRepository;
     private final RadarWeeklyBriefRepository radarWeeklyBriefRepository;
+    private final RadarSourceVerifier radarSourceVerifier;
 
     @Transactional(readOnly = true)
     public RadarDto.OverviewResponse getOverview() {
-        List<RadarSignal> recentSignals = radarSignalRepository.findTop12ByOrderByOccurredAtDescCapturedAtDesc();
+        List<RadarSignal> recentSignals = radarSignalRepository
+                .findTop12ByStatusNotOrderByOccurredAtDescCapturedAtDesc(RadarSourceVerificationService.SOURCE_UNAVAILABLE);
         List<RadarDto.LensResponse> lenses = RadarCatalog.LENSES.stream()
                 .map(lens -> new RadarDto.LensResponse(lens.code(), lens.label(), lens.description(),
                         recentSignals.stream().filter(signal -> signal.getLenses().contains(lens.code())).count()))
                 .toList();
-        long highImpactSignalCount = radarSignalRepository.countByImpactScoreGreaterThanEqual(80);
+        long highImpactSignalCount = radarSignalRepository
+                .countByStatusNotAndImpactScoreGreaterThanEqual(RadarSourceVerificationService.SOURCE_UNAVAILABLE, 80);
 
         return new RadarDto.OverviewResponse(
                 Math.toIntExact(radarPlayerRepository.count()),
@@ -44,7 +47,8 @@ public class RadarService {
 
     @Transactional(readOnly = true)
     public List<RadarDto.SignalResponse> getSignals() {
-        return radarSignalRepository.findTop12ByOrderByOccurredAtDescCapturedAtDesc().stream()
+        return radarSignalRepository
+                .findTop12ByStatusNotOrderByOccurredAtDescCapturedAtDesc(RadarSourceVerificationService.SOURCE_UNAVAILABLE).stream()
                 .map(RadarDto.SignalResponse::from).toList();
     }
 
@@ -54,6 +58,10 @@ public class RadarService {
             throw new IllegalArgumentException("이미 등록된 출처 URL입니다.");
         }
         validateLenses(request.lenses());
+        RadarSourceVerifier.SourceCheckResult sourceCheck = radarSourceVerifier.check(request.sourceUrl());
+        if (sourceCheck.status() == RadarSourceVerifier.CheckStatus.UNAVAILABLE) {
+            throw new IllegalArgumentException("원문 URL을 확인할 수 없어 Radar Signal로 등록하지 않았습니다.");
+        }
 
         Map<String, RadarPlayer> playersByName = radarPlayerRepository.findAll().stream()
                 .collect(Collectors.toMap(RadarPlayer::getName, Function.identity()));
@@ -78,6 +86,9 @@ public class RadarService {
         signal.setImpactScore(request.impactScore());
         signal.setLenses(new LinkedHashSet<>(request.lenses()));
         signal.setPlayers(players);
+        if (sourceCheck.status() == RadarSourceVerifier.CheckStatus.AVAILABLE) {
+            signal.setSourceVerifiedAt(now);
+        }
 
         RadarAssessment assessment = new RadarAssessment();
         assessment.setSignal(signal);
@@ -100,7 +111,9 @@ public class RadarService {
         LocalDateTime periodEnd = LocalDateTime.now();
         LocalDateTime periodStart = periodEnd.minusDays(7);
         List<RadarSignal> signals = radarSignalRepository
-                .findByOccurredAtBetweenOrderByImpactScoreDescOccurredAtDesc(periodStart, periodEnd);
+                .findByOccurredAtBetweenOrderByImpactScoreDescOccurredAtDesc(periodStart, periodEnd).stream()
+                .filter(signal -> !RadarSourceVerificationService.SOURCE_UNAVAILABLE.equals(signal.getStatus()))
+                .toList();
         if (signals.isEmpty()) {
             throw new IllegalArgumentException("최근 7일간 주간 브리핑을 만들 검증 신호가 없습니다.");
         }

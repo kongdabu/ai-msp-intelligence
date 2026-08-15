@@ -8,11 +8,13 @@ import java.time.LocalDateTime;
 
 public interface RadarSignalRepository extends JpaRepository<RadarSignal, Long> {
 
-    List<RadarSignal> findTop12ByOrderByOccurredAtDescCapturedAtDesc();
+    List<RadarSignal> findTop12ByStatusNotOrderByOccurredAtDescCapturedAtDesc(String status);
 
-    long countByImpactScoreGreaterThanEqual(int impactScore);
+    long countByStatusNotAndImpactScoreGreaterThanEqual(String status, int impactScore);
 
     Optional<RadarSignal> findBySourceUrl(String sourceUrl);
 
     List<RadarSignal> findByOccurredAtBetweenOrderByImpactScoreDescOccurredAtDesc(LocalDateTime start, LocalDateTime end);
+
+    List<RadarSignal> findTop20ByStatusNotOrderByCapturedAtDesc(String status);
 }

@@ -63,6 +63,8 @@ public class RadarSignal {
     @Column(nullable = false, length = 20)
     private String status = "NEW";
 
+    private LocalDateTime sourceVerifiedAt;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "radar_signal_lens", joinColumns = @JoinColumn(name = "signal_id"))
     @Column(name = "lens", length = 40)
