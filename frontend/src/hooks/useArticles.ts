@@ -5,7 +5,6 @@ import { useToastStore } from '../store/toastStore'
 
 interface ArticleParams {
   category?: string
-  sourceType?: string
   keyword?: string
   dateFrom?: string
   dateTo?: string
@@ -21,7 +20,6 @@ export function useArticles(params: ArticleParams = {}) {
         params: {
           ...params,
           category: params.category || undefined,
-          sourceType: params.sourceType || undefined,
           keyword: params.keyword || undefined,
           dateFrom: params.dateFrom ? `${params.dateFrom}T00:00:00` : undefined,
           dateTo: params.dateTo ? `${params.dateTo}T23:59:59` : undefined,

@@ -1,5 +1,5 @@
 import { useFilterStore } from '../../store/filterStore'
-import { Category, SourceType } from '../../types'
+import { Category } from '../../types'
 import { X } from 'lucide-react'
 
 const CATEGORIES: { value: Category | ''; label: string }[] = [
@@ -11,22 +11,13 @@ const CATEGORIES: { value: Category | ''; label: string }[] = [
   { value: 'AGENTIC_OPERATIONS', label: 'Agentic AI·AIOps' },
 ]
 
-const SOURCE_TYPES: { value: SourceType | ''; label: string }[] = [
-  { value: '', label: '전체 소스' },
-  { value: 'NEWS', label: '뉴스' },
-  { value: 'HOMEPAGE', label: '홈페이지' },
-  { value: 'SNS', label: 'SNS' },
-  { value: 'IDC', label: 'IDC 리포트' },
-  { value: 'PROCUREMENT', label: '나라장터 공고' },
-  { value: 'JOB_POSTING', label: '채용공고' },
-]
-
 export default function ArticleFilter() {
   const { articleFilter, setArticleFilter, resetArticleFilter } = useFilterStore()
 
   const hasFilter =
     articleFilter.category ||
-    articleFilter.sourceType ||
+    articleFilter.dateFrom ||
+    articleFilter.dateTo ||
     articleFilter.keyword
 
   return (
@@ -39,17 +30,6 @@ export default function ArticleFilter() {
           onChange={(e) => setArticleFilter({ category: e.target.value as Category | '' })}
         >
           {CATEGORIES.map(({ value, label }) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </select>
-
-        {/* 소스 타입 */}
-        <select
-          className="border border-gray-300 rounded-md text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={articleFilter.sourceType}
-          onChange={(e) => setArticleFilter({ sourceType: e.target.value as SourceType | '' })}
-        >
-          {SOURCE_TYPES.map(({ value, label }) => (
             <option key={value} value={value}>{label}</option>
           ))}
         </select>

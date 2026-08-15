@@ -1,9 +1,8 @@
 import { create } from 'zustand'
-import { Category, SourceType } from '../types'
+import { Category } from '../types'
 
 interface ArticleFilter {
   category: Category | ''
-  sourceType: SourceType | ''
   keyword: string
   dateFrom: string
   dateTo: string
@@ -17,7 +16,6 @@ interface FilterStore {
 
 const defaultFilter: ArticleFilter = {
   category: '',
-  sourceType: '',
   keyword: '',
   dateFrom: '',
   dateTo: '',
