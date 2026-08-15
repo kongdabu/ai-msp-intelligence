@@ -36,6 +36,7 @@ public final class RadarCatalog {
             new PlayerSeed("Salesforce", "CSP_PLATFORM", "미국", "https://www.salesforce.com", 2),
             new PlayerSeed("ServiceNow", "CSP_PLATFORM", "미국", "https://www.servicenow.com", 2),
             new PlayerSeed("Accenture", "CONSULTING", "아일랜드", "https://www.accenture.com", 1),
+            new PlayerSeed("Bain & Company", "CONSULTING", "미국", "https://www.bain.com", 1),
             new PlayerSeed("McKinsey", "CONSULTING", "미국", "https://www.mckinsey.com", 2),
             new PlayerSeed("BCG", "CONSULTING", "미국", "https://www.bcg.com", 2),
             new PlayerSeed("Deloitte", "CONSULTING", "영국", "https://www.deloitte.com", 1),

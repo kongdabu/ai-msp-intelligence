@@ -1,6 +1,7 @@
 package com.aimsp.intelligence.domain.article;
 
 import com.aimsp.intelligence.dto.ArticleDto;
+import com.aimsp.intelligence.dto.PageResponseDto;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,7 +52,7 @@ public class ArticleService {
     // 기사 목록 조회 (필터 적용)
     // Specification 사용 - null 조건은 쿼리에서 제외하여 PostgreSQL 타입 추론 오류 방지
     @Transactional(readOnly = true)
-    public Page<ArticleDto.Response> getArticles(
+    public PageResponseDto<ArticleDto.Response> getArticles(
             String competitor, String category, String sourceType,
             String keyword, LocalDateTime dateFrom, LocalDateTime dateTo,
             int page, int size) {
@@ -76,15 +77,15 @@ public class ArticleService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        return articleRepository.findAll(spec, pageable).map(ArticleDto.Response::from);
+        return PageResponseDto.from(articleRepository.findAll(spec, pageable).map(ArticleDto.Response::from));
     }
 
     // 저장(북마크)된 기사 목록 — 최근 저장 순
     @Transactional(readOnly = true)
-    public Page<ArticleDto.Response> getBookmarkedArticles(int page, int size) {
+    public PageResponseDto<ArticleDto.Response> getBookmarkedArticles(int page, int size) {
         Specification<Article> spec = (root, query, cb) -> cb.isTrue(root.get("bookmarked"));
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "bookmarkedAt"));
-        return articleRepository.findAll(spec, pageable).map(ArticleDto.Response::from);
+        return PageResponseDto.from(articleRepository.findAll(spec, pageable).map(ArticleDto.Response::from));
     }
 
     // 북마크 토글 및 메모 갱신

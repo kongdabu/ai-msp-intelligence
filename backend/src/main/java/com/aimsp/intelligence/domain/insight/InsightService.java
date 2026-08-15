@@ -7,6 +7,7 @@ import com.aimsp.intelligence.domain.article.Article;
 import com.aimsp.intelligence.domain.article.ArticleService;
 import com.aimsp.intelligence.exception.AiApiUnavailableException;
 import com.aimsp.intelligence.dto.InsightDto;
+import com.aimsp.intelligence.dto.PageResponseDto;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,15 +41,16 @@ public class InsightService {
     // 인사이트 목록 조회
     // Specification 사용 - null 조건은 쿼리에서 제외하여 PostgreSQL 타입 추론 오류 방지
     @Transactional(readOnly = true)
-    public Page<InsightDto.Response> getInsights(String insightType, String competitor, int page, int size) {
+    public PageResponseDto<InsightDto.Response> getInsights(String insightType, String competitor, int page, int size) {
         Specification<Insight> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (insightType != null) predicates.add(cb.equal(root.get("insightType"), insightType));
             if (competitor != null)  predicates.add(cb.equal(root.get("competitor"), competitor));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
-        return insightRepository.findAll(spec, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "generatedAt")))
-                .map(InsightDto.Response::from);
+        return PageResponseDto.from(insightRepository.findAll(spec,
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "generatedAt")))
+                .map(InsightDto.Response::from));
     }
 
     // 인사이트 상세 조회
@@ -61,10 +63,11 @@ public class InsightService {
 
     // 저장(북마크)된 인사이트 목록 — 최근 저장 순
     @Transactional(readOnly = true)
-    public Page<InsightDto.Response> getBookmarkedInsights(int page, int size) {
+    public PageResponseDto<InsightDto.Response> getBookmarkedInsights(int page, int size) {
         Specification<Insight> spec = (root, query, cb) -> cb.isTrue(root.get("bookmarked"));
-        return insightRepository.findAll(spec, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "bookmarkedAt")))
-                .map(InsightDto.Response::from);
+        return PageResponseDto.from(insightRepository.findAll(spec,
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "bookmarkedAt")))
+                .map(InsightDto.Response::from));
     }
 
     // 북마크 토글 및 메모 갱신

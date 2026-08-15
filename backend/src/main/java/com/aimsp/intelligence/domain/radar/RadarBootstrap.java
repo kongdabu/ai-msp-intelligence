@@ -16,10 +16,10 @@ public class RadarBootstrap {
     @PostConstruct
     @Transactional
     public void initializeWatchlist() {
-        if (radarPlayerRepository.count() > 0) return;
-
         LocalDateTime now = LocalDateTime.now();
-        radarPlayerRepository.saveAll(RadarCatalog.WATCHLIST.stream().map(seed -> {
+        radarPlayerRepository.saveAll(RadarCatalog.WATCHLIST.stream()
+                .filter(seed -> !radarPlayerRepository.existsByName(seed.name()))
+                .map(seed -> {
             RadarPlayer player = new RadarPlayer();
             player.setName(seed.name());
             player.setLayer(seed.layer());

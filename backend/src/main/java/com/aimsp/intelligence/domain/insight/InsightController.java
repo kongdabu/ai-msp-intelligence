@@ -2,9 +2,9 @@ package com.aimsp.intelligence.domain.insight;
 
 import com.aimsp.intelligence.config.TaskExecutionLogger;
 import com.aimsp.intelligence.dto.InsightDto;
+import com.aimsp.intelligence.dto.PageResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,7 +20,7 @@ public class InsightController {
 
     // 인사이트 목록 조회
     @GetMapping
-    public ResponseEntity<Page<InsightDto.Response>> getInsights(
+    public ResponseEntity<PageResponseDto<InsightDto.Response>> getInsights(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String competitor,
             @RequestParam(defaultValue = "0") int page,
@@ -33,7 +33,7 @@ public class InsightController {
 
     // 저장(북마크)된 인사이트 목록 조회
     @GetMapping("/bookmarked")
-    public ResponseEntity<Page<InsightDto.Response>> getBookmarkedInsights(
+    public ResponseEntity<PageResponseDto<InsightDto.Response>> getBookmarkedInsights(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 

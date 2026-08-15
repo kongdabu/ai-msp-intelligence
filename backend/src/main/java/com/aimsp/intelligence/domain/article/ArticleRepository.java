@@ -39,6 +39,8 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
     // Trend News 생성용: 수집일 기준 기간 내 기사 전체 조회
     List<Article> findByCollectedAtBetweenOrderByCollectedAtDesc(LocalDateTime start, LocalDateTime end);
 
+    List<Article> findTop200ByOrderByCollectedAtDesc();
+
     Page<Article> findByCompetitorOrderByPublishedAtDesc(String competitor, Pageable pageable);
 
     List<Article> findTop5ByOrderByPublishedAtDesc();

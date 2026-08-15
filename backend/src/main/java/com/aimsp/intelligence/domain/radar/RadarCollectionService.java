@@ -8,7 +8,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -27,11 +30,7 @@ public class RadarCollectionService {
         LocalDateTime startedAt = LocalDateTime.now();
         int collectedArticleCount = crawlerOrchestrator.crawlAll();
         List<RadarPlayer> watchlist = radarPlayerRepository.findByActiveTrueOrderByLayerAscWatchPriorityAscNameAsc();
-        List<Article> candidates = articleRepository.findByCollectedAtBetweenOrderByCollectedAtDesc(startedAt, LocalDateTime.now())
-                .stream()
-                .filter(article -> radarSignalRepository.findBySourceUrl(article.getUrl()).isEmpty())
-                .limit(MAX_ANALYSIS_PER_RUN)
-                .toList();
+        List<Article> candidates = buildCandidates(startedAt, watchlist);
 
         int savedSignalCount = 0;
         for (Article article : candidates) {
@@ -55,6 +54,30 @@ public class RadarCollectionService {
             }
         }
         return new CollectionResult(collectedArticleCount, candidates.size(), savedSignalCount);
+    }
+
+    private List<Article> buildCandidates(LocalDateTime startedAt, List<RadarPlayer> watchlist) {
+        Map<String, Article> candidatesByUrl = new LinkedHashMap<>();
+        articleRepository.findByCollectedAtBetweenOrderByCollectedAtDesc(startedAt, LocalDateTime.now())
+                .forEach(article -> candidatesByUrl.put(article.getUrl(), article));
+        // Watch List에 새 사업자가 추가되면 기존에 수집한 해당 사업자의 원문도 재분석한다.
+        articleRepository.findTop200ByOrderByCollectedAtDesc().stream()
+                .filter(article -> isWatchlistSource(article, watchlist))
+                .forEach(article -> candidatesByUrl.putIfAbsent(article.getUrl(), article));
+
+        return candidatesByUrl.values().stream()
+                .filter(article -> radarSignalRepository.findBySourceUrl(article.getUrl()).isEmpty())
+                .limit(MAX_ANALYSIS_PER_RUN)
+                .toList();
+    }
+
+    private boolean isWatchlistSource(Article article, List<RadarPlayer> watchlist) {
+        String source = ((article.getSourceName() == null ? "" : article.getSourceName()) + " "
+                + (article.getUrl() == null ? "" : article.getUrl())).toLowerCase(Locale.ROOT);
+        return watchlist.stream()
+                .map(RadarPlayer::getName)
+                .map(name -> name.toLowerCase(Locale.ROOT).split("\\s+")[0])
+                .anyMatch(source::contains);
     }
 
     private String sourceTier(Article article) {

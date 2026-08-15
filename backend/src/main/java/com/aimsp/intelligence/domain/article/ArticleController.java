@@ -3,9 +3,9 @@ package com.aimsp.intelligence.domain.article;
 import com.aimsp.intelligence.crawler.CrawlJobService;
 import com.aimsp.intelligence.config.TaskExecutionLogger;
 import com.aimsp.intelligence.dto.ArticleDto;
+import com.aimsp.intelligence.dto.PageResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,7 +39,7 @@ public class ArticleController {
 
     // 기사 목록 조회
     @GetMapping
-    public ResponseEntity<Page<ArticleDto.Response>> getArticles(
+    public ResponseEntity<PageResponseDto<ArticleDto.Response>> getArticles(
             @RequestParam(required = false) String competitor,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String sourceType,
@@ -58,7 +58,7 @@ public class ArticleController {
 
     // 저장(북마크)된 기사 목록 조회
     @GetMapping("/bookmarked")
-    public ResponseEntity<Page<ArticleDto.Response>> getBookmarkedArticles(
+    public ResponseEntity<PageResponseDto<ArticleDto.Response>> getBookmarkedArticles(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 

@@ -7,4 +7,6 @@ import java.util.List;
 public interface RadarPlayerRepository extends JpaRepository<RadarPlayer, Long> {
 
     List<RadarPlayer> findByActiveTrueOrderByLayerAscWatchPriorityAscNameAsc();
+
+    boolean existsByName(String name);
 }
