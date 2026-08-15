@@ -102,7 +102,6 @@ spring:
     defer-datasource-initialization: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         default_batch_fetch_size: 20
 
   sql:
