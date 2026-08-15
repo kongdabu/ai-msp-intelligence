@@ -45,6 +45,14 @@ export default function Radar() {
     if (collectionStatus?.status === 'COMPLETED') void refetch()
   }, [collectionStatus?.completedAt, collectionStatus?.status, refetch])
 
+  // 로딩 상태가 바뀌어도 Hook 호출 순서가 달라지지 않도록 데이터 유무와 무관하게 먼저 계산한다.
+  const selectedLensInfo = data?.lenses.find((lens) => lens.code === selectedLens)
+  const visibleSignals = useMemo(
+    () => (data?.recentSignals ?? []).filter((signal) =>
+      (!selectedLens || signal.lenses.includes(selectedLens)) && (!highImpactOnly || signal.impactScore >= 80)),
+    [data?.recentSignals, highImpactOnly, selectedLens],
+  )
+
   if (isLoading) return <RadarSkeleton />
   if (isError || !data) {
     return <div className="p-6 text-sm text-slate-600">Radar 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</div>
@@ -63,11 +71,6 @@ export default function Radar() {
     { label: '고영향 신호', value: data.highImpactSignalCount, icon: CircleAlert, tone: 'text-rose-700 bg-rose-50', active: highImpactOnly, onClick: () => { setHighImpactOnly((current) => !current); scrollToSection('evidence-queue') } },
   ]
   const isCollecting = isStartingCollection || collectionStatus?.status === 'RUNNING'
-  const selectedLensInfo = data.lenses.find((lens) => lens.code === selectedLens)
-  const visibleSignals = useMemo(
-    () => data.recentSignals.filter((signal) => (!selectedLens || signal.lenses.includes(selectedLens)) && (!highImpactOnly || signal.impactScore >= 80)),
-    [data.recentSignals, highImpactOnly, selectedLens],
-  )
   const visibleLayers = selectedLayer ? [selectedLayer] : layerOrder
   const collectionDescription = collectionStatus?.status === 'RUNNING'
     ? '원문 수집과 Signal 분석을 진행 중입니다. 최대 12건을 검증합니다.'
