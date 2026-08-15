@@ -1,12 +1,15 @@
 package com.aimsp.intelligence.domain.battlecard;
 
+import com.aimsp.intelligence.config.TaskExecutionLogger;
 import com.aimsp.intelligence.dto.BattleCardDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/battlecards")
 @RequiredArgsConstructor
@@ -36,6 +39,7 @@ public class BattleCardController {
     // 수동 배틀카드 생성
     @PostMapping("/generate")
     public ResponseEntity<List<BattleCardDto.Response>> generateBattleCards() {
+        TaskExecutionLogger.logStart(log, "API 실행: 배틀카드 생성");
         return ResponseEntity.ok(battleCardService.generateBattleCards());
     }
 }

@@ -97,7 +97,6 @@ public class InsightService {
         if (!geminiApiClient.isAvailable()) {
             throw new AiApiUnavailableException();
         }
-        log.info("수동 인사이트 생성 시작");
         return generateFromRecentArticles();
     }
 

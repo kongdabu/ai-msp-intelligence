@@ -58,7 +58,6 @@ public class CrawlerOrchestrator {
 
         int totalSaved = 0;
 
-        log.info("--- AI 생태계·사업모델 뉴스 수집 시작 ---");
         totalSaved += crawlAndSave(aiEcosystemCrawler.crawl(), "AI 생태계·사업모델 뉴스");
 
         log.info("=== 크롤링 완료: 총 {}건 저장 ===", totalSaved);

@@ -24,7 +24,7 @@ public class SchedulerConfig {
      */
     @Scheduled(cron = "0 0 1 * * *", zone = "Asia/Seoul")
     public void scheduledCrawl() {
-        log.info("[배치: 기사 수집] AI 생태계·사업모델 뉴스 수집 시작 (KST 01:00)");
+        TaskExecutionLogger.logStart(log, "정기 배치: 기사 수집");
         try {
             int count = crawlerOrchestrator.crawlAll();
             log.info("[배치: 기사 수집] 완료: 신규 {}건", count);
@@ -40,7 +40,7 @@ public class SchedulerConfig {
      */
     @Scheduled(cron = "0 0 2 * * *", zone = "Asia/Seoul")
     public void scheduledInsightGeneration() {
-        log.info("[배치: 인사이트] AI 생태계·사업모델 인사이트 생성 시작 (KST 02:00)");
+        TaskExecutionLogger.logStart(log, "정기 배치: 인사이트 생성");
         try {
             int count = insightService.generateInsights().size();
             log.info("[배치: 인사이트] 완료: {}건", count);
@@ -56,7 +56,7 @@ public class SchedulerConfig {
      */
     @Scheduled(cron = "0 0 3 * * MON", zone = "Asia/Seoul")
     public void scheduledBattleCardGeneration() {
-        log.info("[스케줄] 배틀카드 생성 시작 (월요일 KST 03:00)");
+        TaskExecutionLogger.logStart(log, "정기 배치: 배틀카드 생성");
         try {
             int count = battleCardService.generateBattleCards().size();
             log.info("[스케줄] 배틀카드 생성 완료: {}건", count);

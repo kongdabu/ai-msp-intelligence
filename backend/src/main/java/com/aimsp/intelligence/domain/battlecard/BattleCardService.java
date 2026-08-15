@@ -67,8 +67,6 @@ public class BattleCardService {
         if (!geminiApiClient.isAvailable()) {
             throw new AiApiUnavailableException();
         }
-        log.info("[배틀카드] 생성 시작 — {}개 경쟁사", COMPETITORS.size());
-
         List<BattleCardDto.Response> result = new ArrayList<>();
         for (String competitor : COMPETITORS) {
             try {

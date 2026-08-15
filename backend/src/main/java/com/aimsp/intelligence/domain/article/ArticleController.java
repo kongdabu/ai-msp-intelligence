@@ -1,6 +1,7 @@
 package com.aimsp.intelligence.domain.article;
 
 import com.aimsp.intelligence.crawler.CrawlJobService;
+import com.aimsp.intelligence.config.TaskExecutionLogger;
 import com.aimsp.intelligence.dto.ArticleDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -85,7 +86,7 @@ public class ArticleController {
     // 수동 크롤링 트리거 (AI 생태계·사업모델 뉴스 + 활성 RSS)
     @PostMapping("/crawl")
     public ResponseEntity<CrawlJobService.JobStatus> triggerCrawl() {
-        log.info("[수동 수집 API] AI 생태계·사업모델 뉴스와 활성 RSS 수집 시작");
+        TaskExecutionLogger.logStart(log, "API 실행: 기사 수집 요청");
         CrawlJobService.JobStatus status = crawlJobService.start();
         return ResponseEntity.accepted().body(status);
     }

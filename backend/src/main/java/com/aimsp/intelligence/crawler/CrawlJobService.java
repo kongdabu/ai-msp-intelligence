@@ -1,5 +1,6 @@
 package com.aimsp.intelligence.crawler;
 
+import com.aimsp.intelligence.config.TaskExecutionLogger;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,7 @@ public class CrawlJobService {
         latestStatus = new JobStatus("RUNNING", startedAt, null, null, null);
         executor.submit(() -> {
             try {
-                log.info("[백그라운드 수집] 시작: AI 생태계·사업모델 기사 수집");
+                TaskExecutionLogger.logStart(log, "백그라운드 작업: 기사 수집");
                 int savedCount = crawlerOrchestrator.crawlAll();
                 latestStatus = new JobStatus("COMPLETED", startedAt, LocalDateTime.now(), savedCount, null);
                 log.info("[백그라운드 수집] 완료: 신규 {}건", savedCount);

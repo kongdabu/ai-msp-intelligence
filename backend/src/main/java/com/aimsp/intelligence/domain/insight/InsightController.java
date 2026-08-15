@@ -1,13 +1,16 @@
 package com.aimsp.intelligence.domain.insight;
 
+import com.aimsp.intelligence.config.TaskExecutionLogger;
 import com.aimsp.intelligence.dto.InsightDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/insights")
 @RequiredArgsConstructor
@@ -58,6 +61,7 @@ public class InsightController {
     // 수동 인사이트 생성
     @PostMapping("/generate")
     public ResponseEntity<List<InsightDto.Response>> generateInsights() {
+        TaskExecutionLogger.logStart(log, "API 실행: 인사이트 생성");
         return ResponseEntity.ok(insightService.generateInsights());
     }
 
