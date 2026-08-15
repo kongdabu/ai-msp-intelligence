@@ -34,6 +34,7 @@ public class CrawlerOrchestrator {
     private final SummaryGenerator summaryGenerator;
     private final GeminiApiClient geminiApiClient;
     private final AiEcosystemCrawler aiEcosystemCrawler;
+    private final OfficialSiteCrawler officialSiteCrawler;
 
     private final ExecutorService crawlerPool = Executors.newFixedThreadPool(3);
 
@@ -58,6 +59,7 @@ public class CrawlerOrchestrator {
 
         int totalSaved = 0;
 
+        totalSaved += crawlAndSave(officialSiteCrawler.crawl(), "공식 사이트");
         totalSaved += crawlAndSave(aiEcosystemCrawler.crawl(), "AI 생태계·사업모델 뉴스");
 
         log.info("=== 크롤링 완료: 총 {}건 저장 ===", totalSaved);
@@ -70,7 +72,7 @@ public class CrawlerOrchestrator {
         int preFiltered = 0;
         for (Article article : articles) {
             try {
-                if (!matchesTargetKeyword(article)) {
+                if (!"HOMEPAGE".equals(article.getSourceType()) && !matchesTargetKeyword(article)) {
                     preFiltered++;
                     continue;
                 }

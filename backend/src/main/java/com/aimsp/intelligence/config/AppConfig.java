@@ -32,6 +32,15 @@ public class AppConfig {
     @Value("${app.crawl.naver-result-limit:10}")
     private int naverResultLimit;
 
+    @Value("${app.crawl.official-site.enabled:true}")
+    private boolean officialSiteCrawlEnabled;
+
+    @Value("${app.crawl.official-site.result-limit:5}")
+    private int officialSiteResultLimit;
+
+    @Value("${app.crawl.official-site.request-delay-ms:1000}")
+    private long officialSiteRequestDelayMs;
+
     @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:80,http://frontend:80}")
     private String corsAllowedOrigins;
 
@@ -43,6 +52,9 @@ public class AppConfig {
     public String getNaverClientId()     { return naverClientId; }
     public String getNaverClientSecret() { return naverClientSecret; }
     public int getNaverResultLimit()     { return naverResultLimit; }
+    public boolean isOfficialSiteCrawlEnabled() { return officialSiteCrawlEnabled; }
+    public int getOfficialSiteResultLimit() { return Math.max(1, officialSiteResultLimit); }
+    public long getOfficialSiteRequestDelayMs() { return Math.max(0, officialSiteRequestDelayMs); }
     @SuppressWarnings("null")
     public @NonNull String[] getCorsAllowedOrigins() {
         if (corsAllowedOrigins == null || corsAllowedOrigins.isBlank()) {

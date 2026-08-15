@@ -53,6 +53,10 @@ app:
     client-secret: ${NAVER_CLIENT_SECRET:}
   crawl:
     naver-result-limit: ${CRAWL_NAVER_RESULT_LIMIT:10}
+    official-site:
+      enabled: ${CRAWL_OFFICIAL_SITE_ENABLED:true}
+      result-limit: ${CRAWL_OFFICIAL_SITE_RESULT_LIMIT:5}
+      request-delay-ms: ${CRAWL_OFFICIAL_SITE_REQUEST_DELAY_MS:1000}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:80,http://frontend:80,https://ai-msp-intelligence.vercel.app}
   api:
