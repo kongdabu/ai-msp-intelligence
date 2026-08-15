@@ -24,13 +24,15 @@ public class SummaryGenerator {
             - Frontier AI Labs, 파트너십, FDE·RDE·ODE, 컨설팅, Agentic AI·AIOps, AI 가격 정책·과금 모델, AI 인력 양성 관점에서 중요한 내용 우선
             - 200자 이내 (한국어 기준)
             - 관련도 점수: 0~100 (AI 생태계·서비스 사업모델과의 연관성)
+            - AI_PRICING: 사용량·좌석·성과 기반 과금, 가격 모델, 수익화, 비용·가치 측정에 관한 기사
+            - AI_TALENT: AI 인력 양성, 채용, 재교육, 업스킬링·리스킬링에 관한 기사
 
             [출력 형식 - JSON only]
             {
               "summary": "요약 내용",
               "relevanceScore": 75,
               "detectedCompetitor": "GENERAL",
-              "detectedCategory": "FRONTIER_LABS|AI_ECOSYSTEM|AI_DELIVERY_MODEL|CONSULTING|AGENTIC_OPERATIONS"
+              "detectedCategory": "FRONTIER_LABS|AI_ECOSYSTEM|AI_DELIVERY_MODEL|CONSULTING|AGENTIC_OPERATIONS|AI_AGENT|AI_PRICING|AI_TALENT"
             }
 
             기사 제목: %s

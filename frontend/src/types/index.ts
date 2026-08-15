@@ -148,7 +148,7 @@ export interface RadarCollectionStatus {
 }
 
 export type Competitor = 'LG_CNS' | 'SK_AX' | 'BESPIN' | 'PWC' | 'GENERAL'
-export type Category = 'FRONTIER_LABS' | 'AI_ECOSYSTEM' | 'AI_DELIVERY_MODEL' | 'CONSULTING' | 'AGENTIC_OPERATIONS' | 'AI_AGENT' | 'VERTICAL_AI' | 'ITO' | 'MSP' | 'CLOUD' | 'GEN_AI'
+export type Category = 'FRONTIER_LABS' | 'AI_ECOSYSTEM' | 'AI_DELIVERY_MODEL' | 'CONSULTING' | 'AGENTIC_OPERATIONS' | 'AI_AGENT' | 'AI_PRICING' | 'AI_TALENT' | 'VERTICAL_AI' | 'ITO' | 'MSP' | 'CLOUD' | 'GEN_AI'
 export type SourceType = 'NEWS' | 'HOMEPAGE' | 'SNS' | 'IDC' | 'PROCUREMENT' | 'JOB_POSTING'
 export type InsightType = 'OPPORTUNITY' | 'THREAT' | 'TREND' | 'STRATEGY'
 export type RadarLensCode = 'AI_AGENT' | 'FRONTIER_LABS' | 'PARTNERSHIP' | 'DEPLOYMENT_MODEL' | 'AI_PRICING' | 'AGENTIC_OPERATIONS'
@@ -244,6 +244,8 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   CONSULTING: '컨설팅',
   AGENTIC_OPERATIONS: 'Agentic AI·AIOps',
   AI_AGENT: 'AI Agent',
+  AI_PRICING: 'AI Pricing',
+  AI_TALENT: 'AI 인력 양성',
   VERTICAL_AI: 'Vertical AI',
   ITO: 'ITO',
   MSP: 'MSP',

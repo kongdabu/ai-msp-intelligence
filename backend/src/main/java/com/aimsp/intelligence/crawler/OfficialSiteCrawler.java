@@ -157,18 +157,31 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
                 return List.of();
             }
 
-            Document listDocument = fetch(site.listUrl());
-            List<String> articleUrls = findArticleUrls(listDocument, site);
-            if (articleUrls.isEmpty()) {
-                articleUrls = findArticleUrlsFromFeeds(listDocument, site);
-                if (!articleUrls.isEmpty()) {
-                    log.info("[{}] 목록 링크가 없어 RSS/Atom 피드에서 기사 후보 {}건 탐색", site.sourceName(), articleUrls.size());
-                }
+            Document listDocument = null;
+            try {
+                listDocument = fetch(site.listUrl());
+            } catch (IOException e) {
+                // 목록 페이지가 동적 렌더링·차단된 경우에도 RSS·사이트맵 수집은 계속 시도한다.
+                log.warn("[{}] 목록 페이지 조회 실패, 보조 발견 경로 계속 진행: {}", site.sourceName(), e.getMessage());
             }
-            if (articleUrls.isEmpty()) {
-                articleUrls = findArticleUrlsFromSitemap(site);
-                log.info("[{}] 목록·피드 링크가 없어 사이트맵에서 기사 후보 {}건 탐색", site.sourceName(), articleUrls.size());
+
+            Set<String> articleUrls = new LinkedHashSet<>();
+            if (listDocument != null) articleUrls.addAll(findArticleUrls(listDocument, site));
+
+            // 목록 페이지는 일부 최신 항목만 노출할 수 있으므로 RSS/Atom 후보를 항상 병합한다.
+            List<String> feedArticleUrls = findArticleUrlsFromFeeds(listDocument, site);
+            if (!feedArticleUrls.isEmpty()) {
+                articleUrls.addAll(feedArticleUrls);
+                log.info("[{}] RSS/Atom 피드 기사 후보 {}건 병합", site.sourceName(), feedArticleUrls.size());
             }
+
+            // RSS를 제공하지 않거나 발행 이력이 누락된 소스도 있으므로 최근 사이트맵 후보를 항상 병합한다.
+            List<String> sitemapArticleUrls = findArticleUrlsFromSitemap(site);
+            if (!sitemapArticleUrls.isEmpty()) {
+                articleUrls.addAll(sitemapArticleUrls);
+                log.info("[{}] 사이트맵 기사 후보 {}건 병합", site.sourceName(), sitemapArticleUrls.size());
+            }
+
             List<Article> articles = new ArrayList<>();
             for (String articleUrl : articleUrls) {
                 fetchDelay();
@@ -228,12 +241,14 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
 
     private List<String> findArticleUrlsFromFeeds(Document listDocument, SiteDefinition site) {
         Set<String> feedUrls = new LinkedHashSet<>();
-        listDocument.select("link[href]").stream()
-                .filter(link -> link.attr("type").toLowerCase(Locale.ROOT).contains("rss")
-                        || link.attr("type").toLowerCase(Locale.ROOT).contains("atom"))
-                .map(link -> link.absUrl("href"))
-                .flatMap(url -> canonicalizeUrl(url).stream())
-                .forEach(feedUrls::add);
+        if (listDocument != null) {
+            listDocument.select("link[href]").stream()
+                    .filter(link -> link.attr("type").toLowerCase(Locale.ROOT).contains("rss")
+                            || link.attr("type").toLowerCase(Locale.ROOT).contains("atom"))
+                    .map(link -> link.absUrl("href"))
+                    .flatMap(url -> canonicalizeUrl(url).stream())
+                    .forEach(feedUrls::add);
+        }
         try {
             URI listUri = new URI(site.listUrl());
             String origin = listUri.getScheme() + "://" + listUri.getHost();

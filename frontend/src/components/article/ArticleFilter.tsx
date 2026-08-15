@@ -9,6 +9,14 @@ const CATEGORIES: { value: Category | ''; label: string }[] = [
   { value: 'AI_DELIVERY_MODEL', label: 'AI 서비스 모델' },
   { value: 'CONSULTING', label: '컨설팅' },
   { value: 'AGENTIC_OPERATIONS', label: 'Agentic AI·AIOps' },
+  { value: 'AI_AGENT', label: 'AI Agent' },
+  { value: 'AI_PRICING', label: 'AI Pricing' },
+  { value: 'AI_TALENT', label: 'AI 인력 양성' },
+  { value: 'VERTICAL_AI', label: 'Vertical AI' },
+  { value: 'ITO', label: 'ITO' },
+  { value: 'MSP', label: 'MSP' },
+  { value: 'CLOUD', label: 'Cloud' },
+  { value: 'GEN_AI', label: 'Gen AI' },
 ]
 
 export default function ArticleFilter() {
