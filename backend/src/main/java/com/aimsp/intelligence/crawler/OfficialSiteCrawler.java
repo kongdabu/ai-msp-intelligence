@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -19,6 +20,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -41,6 +43,7 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
     private static final int REQUEST_TIMEOUT_MS = 15_000;
     private static final int MAX_CONTENT_LENGTH = 5_000;
     private static final int MIN_CONTENT_LENGTH = 300;
+    private static final int MAX_SITEMAP_DEPTH = 2;
     private static final ZoneId SEOUL_ZONE_ID = ZoneId.of("Asia/Seoul");
     private static final Set<String> TOPIC_KEYWORDS = Set.of(
             "ai", "artificial intelligence", "generative", "agent", "llm", "copilot",
@@ -156,6 +159,16 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
 
             Document listDocument = fetch(site.listUrl());
             List<String> articleUrls = findArticleUrls(listDocument, site);
+            if (articleUrls.isEmpty()) {
+                articleUrls = findArticleUrlsFromFeeds(listDocument, site);
+                if (!articleUrls.isEmpty()) {
+                    log.info("[{}] 목록 링크가 없어 RSS/Atom 피드에서 기사 후보 {}건 탐색", site.sourceName(), articleUrls.size());
+                }
+            }
+            if (articleUrls.isEmpty()) {
+                articleUrls = findArticleUrlsFromSitemap(site);
+                log.info("[{}] 목록·피드 링크가 없어 사이트맵에서 기사 후보 {}건 탐색", site.sourceName(), articleUrls.size());
+            }
             List<Article> articles = new ArrayList<>();
             for (String articleUrl : articleUrls) {
                 fetchDelay();
@@ -190,6 +203,124 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
                     && !normalizePath(path).equals(normalizePath(new URI(site.listUrl()).getPath()));
         } catch (URISyntaxException e) {
             return false;
+        }
+    }
+
+    private List<String> findArticleUrlsFromSitemap(SiteDefinition site) {
+        try {
+            URI listUri = new URI(site.listUrl());
+            String origin = listUri.getScheme() + "://" + listUri.getHost();
+            RobotsPolicy robotsPolicy = robotsPolicies.computeIfAbsent(origin, this::loadRobotsPolicy);
+            return robotsPolicy.sitemapUrls().stream()
+                    .flatMap(sitemapUrl -> readSitemapEntries(sitemapUrl, 0, new LinkedHashSet<>()).stream())
+                    .filter(entry -> entry.lastModified().isPresent())
+                    .filter(entry -> entry.lastModified().get()
+                            .isAfter(LocalDateTime.now().minusDays(appConfig.getOfficialSiteMaxAgeDays())))
+                    .map(SitemapEntry::url)
+                    .filter(url -> isArticleUrl(url, site))
+                    .filter(url -> isTopicRelevant(url, ""))
+                    .distinct()
+                    .collect(Collectors.toList());
+        } catch (URISyntaxException e) {
+            return List.of();
+        }
+    }
+
+    private List<String> findArticleUrlsFromFeeds(Document listDocument, SiteDefinition site) {
+        Set<String> feedUrls = new LinkedHashSet<>();
+        listDocument.select("link[href]").stream()
+                .filter(link -> link.attr("type").toLowerCase(Locale.ROOT).contains("rss")
+                        || link.attr("type").toLowerCase(Locale.ROOT).contains("atom"))
+                .map(link -> link.absUrl("href"))
+                .flatMap(url -> canonicalizeUrl(url).stream())
+                .forEach(feedUrls::add);
+        try {
+            URI listUri = new URI(site.listUrl());
+            String origin = listUri.getScheme() + "://" + listUri.getHost();
+            feedUrls.add(origin + "/rss-feed/");
+            feedUrls.add(origin + "/feed/");
+            feedUrls.add(origin + "/rss.xml");
+        } catch (URISyntaxException ignored) {
+            return List.of();
+        }
+
+        return feedUrls.stream()
+                .flatMap(feedUrl -> readFeedEntries(feedUrl).stream())
+                .filter(entry -> entry.publishedAt().isPresent())
+                .filter(entry -> entry.publishedAt().get()
+                        .isAfter(LocalDateTime.now().minusDays(appConfig.getOfficialSiteMaxAgeDays())))
+                .filter(entry -> isTopicRelevant(entry.title(), entry.summary() + " " + entry.url()))
+                .map(FeedEntry::url)
+                .flatMap(url -> canonicalizeUrl(url).stream())
+                .filter(url -> isArticleUrl(url, site))
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    private List<FeedEntry> readFeedEntries(String feedUrl) {
+        if (!isAllowedByRobots(feedUrl)) {
+            return List.of();
+        }
+        try {
+            Document feed = fetchXml(feedUrl);
+            return feed.select("item, entry").stream()
+                    .map(this::toFeedEntry)
+                    .flatMap(Optional::stream)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.debug("피드 조회 제외 [{}]: {}", feedUrl, e.getMessage());
+            return List.of();
+        }
+    }
+
+    private Optional<FeedEntry> toFeedEntry(Element element) {
+        Element linkElement = element.selectFirst("link[href]");
+        String url = linkElement == null ? "" : linkElement.absUrl("href");
+        if (url.isBlank()) {
+            Element textLinkElement = element.selectFirst("link");
+            url = textLinkElement == null ? "" : textLinkElement.text();
+        }
+        if (url.isBlank()) {
+            return Optional.empty();
+        }
+        String title = textOf(element, "title");
+        String summary = textOf(element, "description, summary, content");
+        Optional<LocalDateTime> publishedAt = parseDate(textOf(element, "pubDate, published, updated"));
+        return Optional.of(new FeedEntry(url, title, summary, publishedAt));
+    }
+
+    private String textOf(Element parent, String selector) {
+        Element element = parent.selectFirst(selector);
+        return element == null ? "" : element.text();
+    }
+
+    private List<SitemapEntry> readSitemapEntries(String sitemapUrl, int depth, Set<String> visitedSitemaps) {
+        if (depth >= MAX_SITEMAP_DEPTH || !visitedSitemaps.add(sitemapUrl) || !isAllowedByRobots(sitemapUrl)) {
+            return List.of();
+        }
+        try {
+            Document sitemap = fetchXml(sitemapUrl);
+            List<String> childSitemaps = sitemap.select("sitemap > loc").stream()
+                    .map(Element::text)
+                    .flatMap(url -> canonicalizeUrl(url).stream())
+                    .collect(Collectors.toList());
+            if (!childSitemaps.isEmpty()) {
+                return childSitemaps.stream()
+                        .flatMap(childUrl -> readSitemapEntries(childUrl, depth + 1, visitedSitemaps).stream())
+                        .collect(Collectors.toList());
+            }
+            return sitemap.select("url").stream()
+                    .map(element -> new SitemapEntry(
+                            element.selectFirst("loc") == null ? "" : element.selectFirst("loc").text(),
+                            element.selectFirst("lastmod") == null
+                                    ? Optional.empty()
+                                    : parseDate(element.selectFirst("lastmod").text())
+                    ))
+                    .filter(entry -> !entry.url().isBlank())
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.warn("사이트맵 조회 실패 [{}]: {}", sitemapUrl, e.getMessage());
+            return List.of();
         }
     }
 
@@ -238,6 +369,15 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
                 .get();
     }
 
+    private Document fetchXml(String url) throws IOException {
+        return Jsoup.connect(url)
+                .userAgent(USER_AGENT)
+                .timeout(REQUEST_TIMEOUT_MS)
+                .ignoreContentType(true)
+                .parser(Parser.xmlParser())
+                .get();
+    }
+
     private String extractContent(Document document) {
         Element mainContent = document.selectFirst("article");
         if (mainContent == null) {
@@ -274,12 +414,17 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
                 return Optional.of(ZonedDateTime.parse(value).withZoneSameInstant(SEOUL_ZONE_ID).toLocalDateTime());
             } catch (Exception ignoredAgain) {
                 try {
-                    return Optional.of(LocalDateTime.parse(value, DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-                } catch (Exception ignoredFinal) {
+                    return Optional.of(ZonedDateTime.parse(value, DateTimeFormatter.RFC_1123_DATE_TIME)
+                            .withZoneSameInstant(SEOUL_ZONE_ID).toLocalDateTime());
+                } catch (Exception ignoredRfc1123) {
                     try {
-                        return Optional.of(LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE).atStartOfDay());
-                    } catch (Exception ignoredDateOnly) {
-                        return Optional.empty();
+                        return Optional.of(LocalDateTime.parse(value, DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                    } catch (Exception ignoredFinal) {
+                        try {
+                            return Optional.of(LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE).atStartOfDay());
+                        } catch (Exception ignoredDateOnly) {
+                            return Optional.empty();
+                        }
                     }
                 }
             }
@@ -317,7 +462,7 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
                     .timeout(REQUEST_TIMEOUT_MS)
                     .ignoreContentType(true)
                     .get();
-            return RobotsPolicy.from(robotsDocument.wholeText());
+            return RobotsPolicy.from(robotsDocument.wholeText(), origin);
         } catch (Exception e) {
             log.warn("robots.txt를 확인할 수 없어 해당 사이트 수집을 건너뜁니다: {}", origin);
             return RobotsPolicy.disallowAll();
@@ -363,10 +508,17 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
     ) {
     }
 
-    private record RobotsPolicy(List<RobotsRule> rules) {
+    private record SitemapEntry(String url, Optional<LocalDateTime> lastModified) {
+    }
 
-        static RobotsPolicy from(String content) {
+    private record FeedEntry(String url, String title, String summary, Optional<LocalDateTime> publishedAt) {
+    }
+
+    private record RobotsPolicy(List<RobotsRule> rules, List<String> sitemapUrls) {
+
+        static RobotsPolicy from(String content, String origin) {
             List<RobotsRule> rules = new ArrayList<>();
+            List<String> sitemapUrls = new ArrayList<>();
             boolean appliesToAllAgents = false;
             boolean groupHasRules = false;
             for (String line : content.lines().map(String::trim).toList()) {
@@ -379,7 +531,13 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
                 }
                 String directive = parts[0].trim().toLowerCase(Locale.ROOT);
                 String value = parts[1].trim();
-                if ("user-agent".equals(directive)) {
+                if ("sitemap".equals(directive) && !value.isBlank()) {
+                    try {
+                        sitemapUrls.add(URI.create(origin).resolve(value).toString());
+                    } catch (IllegalArgumentException ignored) {
+                        // 잘못된 사이트맵 URL은 제외하고 다음 항목을 계속 처리한다.
+                    }
+                } else if ("user-agent".equals(directive)) {
                     if (groupHasRules) {
                         appliesToAllAgents = false;
                         groupHasRules = false;
@@ -392,11 +550,11 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
                     }
                 }
             }
-            return new RobotsPolicy(rules);
+            return new RobotsPolicy(rules, sitemapUrls);
         }
 
         static RobotsPolicy disallowAll() {
-            return new RobotsPolicy(List.of(new RobotsRule("/", false)));
+            return new RobotsPolicy(List.of(new RobotsRule("/", false)), List.of());
         }
 
         boolean isAllowed(String path) {
