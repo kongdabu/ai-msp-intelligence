@@ -35,8 +35,9 @@ dependencies {
     // Database
     runtimeOnly 'com.h2database:h2'
     runtimeOnly 'org.postgresql:postgresql'
-    implementation 'org.flywaydb:flyway-core'
-    implementation 'org.flywaydb:flyway-database-postgresql'
+    // PostgreSQL 17 지원을 위해 Spring Boot 관리 버전(10.10.0)보다 높은 버전을 사용한다.
+    implementation 'org.flywaydb:flyway-core:10.20.0'
+    implementation 'org.flywaydb:flyway-database-postgresql:10.20.0'
 
 
     // Crawling
