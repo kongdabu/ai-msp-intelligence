@@ -68,10 +68,89 @@ export interface PageResponse<T> {
   number: number
 }
 
+export interface RadarLens {
+  code: RadarLensCode
+  label: string
+  description: string
+  signalCount: number
+}
+
+export interface RadarPlayer {
+  id: number
+  name: string
+  layer: RadarPlayerLayer
+  country: string
+  website: string | null
+  watchPriority: number
+}
+
+export interface RadarAssessment {
+  whatChanged: string
+  industryStructureImpact: string
+  mspOpportunity: string | null
+  mspThreat: string | null
+  structuralRisk: string | null
+  recommendedAction: string
+  deliveryModel: string | null
+  pricingModel: string | null
+}
+
+export interface RadarSignal {
+  id: number
+  title: string
+  fact: string
+  sourceUrl: string
+  sourceTier: string
+  signalType: string
+  occurredAt: string
+  capturedAt: string
+  confidenceScore: number
+  impactScore: number
+  status: string
+  lenses: RadarLensCode[]
+  players: string[]
+  assessment: RadarAssessment | null
+}
+
+export interface RadarWeeklyBrief {
+  id: number
+  periodStart: string
+  periodEnd: string
+  title: string
+  executiveSummary: string
+  playerMoves: string
+  partnershipChanges: string
+  deliveryModelChanges: string
+  pricingChanges: string
+  agenticOperationsChanges: string
+  koreaImpact: string
+  generatedAt: string
+}
+
+export interface RadarOverview {
+  playerCount: number
+  signalCount: number
+  highImpactSignalCount: number
+  lenses: RadarLens[]
+  players: RadarPlayer[]
+  recentSignals: RadarSignal[]
+  weeklyBriefs: RadarWeeklyBrief[]
+}
+
 export type Competitor = 'LG_CNS' | 'SK_AX' | 'BESPIN' | 'PWC' | 'GENERAL'
 export type Category = 'FRONTIER_LABS' | 'AI_ECOSYSTEM' | 'AI_DELIVERY_MODEL' | 'CONSULTING' | 'AGENTIC_OPERATIONS' | 'AI_AGENT' | 'VERTICAL_AI' | 'ITO' | 'MSP' | 'CLOUD' | 'GEN_AI'
 export type SourceType = 'NEWS' | 'HOMEPAGE' | 'SNS' | 'IDC' | 'PROCUREMENT' | 'JOB_POSTING'
 export type InsightType = 'OPPORTUNITY' | 'THREAT' | 'TREND' | 'STRATEGY'
+export type RadarLensCode = 'AI_AGENT' | 'FRONTIER_LABS' | 'PARTNERSHIP' | 'DEPLOYMENT_MODEL' | 'AI_PRICING' | 'AGENTIC_OPERATIONS'
+export type RadarPlayerLayer = 'FRONTIER_LAB' | 'CSP_PLATFORM' | 'CONSULTING' | 'GLOBAL_SI_MSP' | 'KOREA_SI_MSP'
+
+export const RADAR_LAYER_LABELS: Record<RadarPlayerLayer, string> = {
+  FRONTIER_LAB: 'Frontier Labs',
+  CSP_PLATFORM: 'CSP·플랫폼',
+  CONSULTING: '컨설팅',
+  GLOBAL_SI_MSP: '글로벌 SI·MSP',
+  KOREA_SI_MSP: '국내 SI·MSP',
+}
 
 export interface BattleCard {
   id: number

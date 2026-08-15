@@ -10,6 +10,7 @@ import Insights from './pages/Insights'
 import Saved from './pages/Saved'
 import Settings from './pages/Settings'
 import Trends from './pages/Trends'
+import Radar from './pages/Radar'
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -28,7 +29,9 @@ export default function App() {
           <Header onMenuClick={() => setSidebarOpen(true)} />
           <main className="flex-1 overflow-auto">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/" element={<Radar />} />
+              <Route path="/legacy/dashboard" element={<Dashboard />} />
+              <Route path="/radar" element={<Radar />} />
               <Route path="/articles" element={<Articles />} />
               <Route path="/saved-articles" element={<SavedArticles />} />
               <Route path="/insights" element={<Insights />} />

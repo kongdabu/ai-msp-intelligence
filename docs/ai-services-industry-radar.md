@@ -1,0 +1,42 @@
+# AI Services Industry Radar
+
+## 목적
+
+이 기능은 AI 뉴스의 건수를 보여주는 화면이 아니다. 신뢰할 수 있는 원문에서 확인한 변화 신호를 산업 구조와 한국 AI MSP의 실행 과제로 연결한다.
+
+흐름은 다음과 같다.
+
+`원문 근거 → Signal → 6개 Lens → 사업 구조 영향 → 주간 브리핑`
+
+## 데이터 기준
+
+`RadarPlayer`는 감시 대상 사업자다. Frontier Lab, CSP·플랫폼, 컨설팅, 글로벌 SI·MSP, 국내 SI·MSP의 다섯 계층으로 관리한다. 초기 Watch List는 35개 사업자이며, 수집 건수가 아니라 사업 구조에 미치는 중요도를 기준으로 우선순위를 부여한다.
+
+`RadarSignal`은 하나의 검증된 변화다. 출처 URL은 중복 등록할 수 없으며 다음 내용을 모두 가져야 한다.
+
+- 사실 요약과 발생 일시
+- 출처 등급, 신뢰도, 영향도
+- 관련 플레이어와 6개 Lens 중 하나 이상
+- 무엇이 바뀌었는지, 산업 구조 영향, 기회·위협·리스크, 권고 행동
+
+## 6개 Lens
+
+| 코드 | 관점 |
+| --- | --- |
+| `AI_AGENT` | 에이전트 제품·플랫폼과 자율 업무 실행 구조 |
+| `FRONTIER_LABS` | 모델 경쟁력과 생태계 지배력 |
+| `PARTNERSHIP` | 모델사·클라우드·SI의 결합 및 판매 구조 |
+| `DEPLOYMENT_MODEL` | FDE·RDE·ODE 등 현장 투입형 AI 딜리버리 |
+| `AI_PRICING` | 인력 투입형에서 사용량·성과형으로의 전환 |
+| `AGENTIC_OPERATIONS` | AIOps·운영 자동화와 관리형 서비스 재편 |
+
+## API
+
+- `GET /api/radar/overview`: Watch List, 최근 신호, 6개 Lens, 주간 브리핑을 한 번에 조회한다.
+- `GET /api/radar/signals`: 최근 검증 신호를 조회한다.
+- `POST /api/radar/signals`: 검증된 신호를 등록한다. `API_SECRET_TOKEN`을 설정한 환경에서는 `X-API-Token`이 필요하다.
+- `POST /api/radar/weekly-briefs/generate`: 최근 7일 신호를 근거로 주간 브리핑을 만든다. 신호가 없으면 만들지 않는다.
+
+## 운영 원칙
+
+출처의 수나 수집 건수로 품질을 판단하지 않는다. 원문 근거, 관련 플레이어, 6개 Lens 분류, 구조적 영향과 권고 행동이 모두 있는 신호만 주간 브리핑에 포함한다. 자동 수집기를 연결할 때도 이 등록 규칙을 통과한 항목만 저장한다.

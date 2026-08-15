@@ -26,7 +26,9 @@ public class ApiTokenFilter extends OncePerRequestFilter {
             "/api/insights/generate",
             "/api/trends/generate",
             "/api/battlecards/generate",
-            "/api/admin/config"
+            "/api/admin/config",
+            "/api/radar/signals",
+            "/api/radar/weekly-briefs/generate"
     );
 
     @Override

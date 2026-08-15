@@ -2,7 +2,9 @@ import { useLocation } from 'react-router-dom'
 import { Menu } from 'lucide-react'
 
 const pageTitles: Record<string, { title: string; description: string }> = {
-  '/': { title: '전략 브리핑', description: 'AI 생태계와 사업모델 동향 요약' },
+  '/': { title: 'AI Services Industry Radar', description: '신호·사업 구조·한국 시장 영향을 연결한 전략 레이더' },
+  '/radar': { title: 'AI Services Industry Radar', description: '신호·사업 구조·한국 시장 영향을 연결한 전략 레이더' },
+  '/legacy/dashboard': { title: '기존 대시보드', description: '기존 AI 생태계와 사업모델 동향 요약' },
   '/articles': { title: '기사 수집', description: '수집된 뉴스·블로그 기사 목록' },
   '/insights': { title: 'AI 인사이트', description: 'Gemini가 분석한 전략 인사이트' },
   '/trends': { title: 'Trend News', description: '최근 30일 기사에서 식별한 Hot Trend' },

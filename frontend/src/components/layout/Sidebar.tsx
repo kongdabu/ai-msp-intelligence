@@ -1,8 +1,9 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Newspaper, Lightbulb, Bookmark, BookmarkCheck, Settings, X, Flame } from 'lucide-react'
+import { LayoutDashboard, Newspaper, Lightbulb, Bookmark, BookmarkCheck, Settings, X, Flame, Radar } from 'lucide-react'
 
 const navItems = [
-  { to: '/', icon: LayoutDashboard, label: '대시보드' },
+  { to: '/', icon: Radar, label: 'Industry Radar' },
+  { to: '/legacy/dashboard', icon: LayoutDashboard, label: '기존 대시보드' },
   { to: '/articles', icon: Newspaper, label: '기사 수집' },
   { to: '/saved-articles', icon: BookmarkCheck, label: '저장한 기사' },
   { to: '/insights', icon: Lightbulb, label: '인사이트' },
@@ -29,7 +30,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         <div>
           <div className="text-sm text-blue-400 font-semibold tracking-wide">AI MSP</div>
           <div className="text-white font-bold text-lg leading-tight">Intelligence</div>
-          <div className="text-xs text-gray-400 mt-0.5">AI 생태계 동향 모니터링</div>
+          <div className="text-xs text-gray-400 mt-0.5">AI 서비스 산업 레이더</div>
         </div>
         <button
           className="md:hidden text-gray-400 hover:text-white mt-1"
