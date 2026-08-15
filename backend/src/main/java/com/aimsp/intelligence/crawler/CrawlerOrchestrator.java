@@ -3,6 +3,7 @@ package com.aimsp.intelligence.crawler;
 import com.aimsp.intelligence.ai.GeminiApiClient;
 import com.aimsp.intelligence.ai.SummaryGenerator;
 import com.aimsp.intelligence.crawler.sources.AiEcosystemCrawler;
+import com.aimsp.intelligence.config.AppConfig;
 import com.aimsp.intelligence.domain.article.Article;
 import com.aimsp.intelligence.domain.article.ArticleService;
 import com.aimsp.intelligence.exception.AiApiUnavailableException;
@@ -27,7 +28,10 @@ public class CrawlerOrchestrator {
     private static final List<String> TARGET_KEYWORDS = List.of(
             "frontier ai", "openai", "anthropic", "gemini", "aws", "microsoft", "엔비디아", "nvidia",
             "accenture", "딜로이트", "deloitte", "pwc", "fde", "rde", "ode", "partnership", "파트너십",
-            "agentic ai", "agentic", "aiops", "ai ops", "forward deployed", "resident deployed"
+            "agentic ai", "agentic", "aiops", "ai ops", "forward deployed", "resident deployed",
+            "ai pricing model", "ai pricing", "usage-based pricing", "outcome-based pricing", "value-based pricing", "ai monetization",
+            "ai 인력 양성", "ai 인재", "ai 교육", "ai 리스킬링", "ai workforce", "ai talent", "ai training", "ai upskilling", "ai reskilling",
+            "ai 価格モデル", "ai 人材育成", "ai リスキリング", "生成ai 人材育成"
     );
 
     private final ArticleService articleService;
@@ -35,6 +39,7 @@ public class CrawlerOrchestrator {
     private final GeminiApiClient geminiApiClient;
     private final AiEcosystemCrawler aiEcosystemCrawler;
     private final OfficialSiteCrawler officialSiteCrawler;
+    private final AppConfig appConfig;
 
     private final ExecutorService crawlerPool = Executors.newFixedThreadPool(3);
 
@@ -59,20 +64,20 @@ public class CrawlerOrchestrator {
 
         int totalSaved = 0;
 
-        totalSaved += crawlAndSave(officialSiteCrawler.crawl(), "공식 사이트");
-        totalSaved += crawlAndSave(aiEcosystemCrawler.crawl(), "AI 생태계·사업모델 뉴스");
+        totalSaved += crawlAndSave(officialSiteCrawler.crawl(), "공식 사이트", true);
+        totalSaved += crawlAndSave(aiEcosystemCrawler.crawl(), "AI 생태계·사업모델 뉴스", false);
 
         log.info("=== 크롤링 완료: 총 {}건 저장 ===", totalSaved);
         return totalSaved;
     }
 
-    private int crawlAndSave(List<Article> articles, String sourceName) {
+    private int crawlAndSave(List<Article> articles, String sourceName, boolean officialSource) {
         int saved = 0;
         int skipped = 0;
         int preFiltered = 0;
         for (Article article : articles) {
             try {
-                if (!"HOMEPAGE".equals(article.getSourceType()) && !matchesTargetKeyword(article)) {
+                if (!officialSource && !matchesTargetKeyword(article)) {
                     preFiltered++;
                     continue;
                 }
@@ -85,8 +90,15 @@ public class CrawlerOrchestrator {
                     SummaryGenerator.SummaryResult result = summaryGenerator.generateSummary(
                             article.getTitle(), article.getOriginalContent()
                     );
+                    if (result == null && officialSource) {
+                        skipped++;
+                        continue;
+                    }
                     if (result != null) {
-                        if (result.relevanceScore() < 50) {
+                        int minimumRelevanceScore = officialSource
+                                ? appConfig.getOfficialSiteMinimumRelevanceScore()
+                                : 50;
+                        if (result.relevanceScore() < minimumRelevanceScore) {
                             log.debug("관련도 미달 기사 제외 [score={}]: {}", result.relevanceScore(), article.getTitle());
                             skipped++;
                             continue;
@@ -97,6 +109,9 @@ public class CrawlerOrchestrator {
                             article.setCategory(result.detectedCategory());
                         }
                     }
+                } else if (officialSource) {
+                    skipped++;
+                    continue;
                 }
 
                 Article savedArticle = articleService.saveIfNotExists(article);

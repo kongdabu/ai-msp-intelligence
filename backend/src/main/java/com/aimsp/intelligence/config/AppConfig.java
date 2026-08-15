@@ -35,8 +35,11 @@ public class AppConfig {
     @Value("${app.crawl.official-site.enabled:true}")
     private boolean officialSiteCrawlEnabled;
 
-    @Value("${app.crawl.official-site.result-limit:5}")
-    private int officialSiteResultLimit;
+    @Value("${app.crawl.official-site.max-age-days:180}")
+    private int officialSiteMaxAgeDays;
+
+    @Value("${app.crawl.official-site.minimum-relevance-score:65}")
+    private int officialSiteMinimumRelevanceScore;
 
     @Value("${app.crawl.official-site.request-delay-ms:1000}")
     private long officialSiteRequestDelayMs;
@@ -53,7 +56,10 @@ public class AppConfig {
     public String getNaverClientSecret() { return naverClientSecret; }
     public int getNaverResultLimit()     { return naverResultLimit; }
     public boolean isOfficialSiteCrawlEnabled() { return officialSiteCrawlEnabled; }
-    public int getOfficialSiteResultLimit() { return Math.max(1, officialSiteResultLimit); }
+    public int getOfficialSiteMaxAgeDays() { return Math.max(1, officialSiteMaxAgeDays); }
+    public int getOfficialSiteMinimumRelevanceScore() {
+        return Math.min(100, Math.max(0, officialSiteMinimumRelevanceScore));
+    }
     public long getOfficialSiteRequestDelayMs() { return Math.max(0, officialSiteRequestDelayMs); }
     @SuppressWarnings("null")
     public @NonNull String[] getCorsAllowedOrigins() {

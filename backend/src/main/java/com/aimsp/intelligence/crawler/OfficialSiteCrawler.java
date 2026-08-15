@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -39,11 +40,14 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
     private static final String USER_AGENT = "AI-MSP-Intelligence/1.0 (+https://ai-msp-intelligence.vercel.app)";
     private static final int REQUEST_TIMEOUT_MS = 15_000;
     private static final int MAX_CONTENT_LENGTH = 5_000;
+    private static final int MIN_CONTENT_LENGTH = 300;
     private static final ZoneId SEOUL_ZONE_ID = ZoneId.of("Asia/Seoul");
     private static final Set<String> TOPIC_KEYWORDS = Set.of(
-            "ai", "artificial intelligence", "generative", "agent", "model", "llm", "copilot",
+            "ai", "artificial intelligence", "generative", "agent", "llm", "copilot",
+            "ai pricing", "ai monetization", "ai workforce", "ai talent", "ai training", "ai upskilling", "ai reskilling",
             "인공지능", "생성형", "에이전트", "파운데이션 모델", "aiops",
-            "生成ai", "人工知能", "エージェント", "基盤モデル", "大規模言語モデル"
+            "ai 가격", "ai 과금", "ai 인력", "ai 인재", "ai 교육", "리스킬링",
+            "生成ai", "人工知能", "エージェント", "基盤モデル", "大規模言語モデル", "ai 価格モデル", "ai 人材育成", "ai リスキリング"
     );
 
     private final AppConfig appConfig;
@@ -65,6 +69,41 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
                     "GENERAL"
             ),
             new SiteDefinition(
+                    "BCG Publications",
+                    "https://www.bcg.com/publications",
+                    "www.bcg.com",
+                    "/publications/",
+                    "GENERAL"
+            ),
+            new SiteDefinition(
+                    "Accenture Insights",
+                    "https://www.accenture.com/us-en/insights",
+                    "www.accenture.com",
+                    "/us-en/insights/",
+                    "GENERAL"
+            ),
+            new SiteDefinition(
+                    "OpenAI News",
+                    "https://openai.com/news/",
+                    "openai.com",
+                    "/index/",
+                    "GENERAL"
+            ),
+            new SiteDefinition(
+                    "Google DeepMind Blog",
+                    "https://deepmind.google/discover/blog/",
+                    "deepmind.google",
+                    "/discover/blog/",
+                    "GENERAL"
+            ),
+            new SiteDefinition(
+                    "NVIDIA AI Blog",
+                    "https://blogs.nvidia.com/blog/category/ai/",
+                    "blogs.nvidia.com",
+                    "/blog/",
+                    "GENERAL"
+            ),
+            new SiteDefinition(
                     "LG CNS Newsroom",
                     "https://www.lgcns.com/kr/newsroom/press",
                     "www.lgcns.com",
@@ -76,6 +115,20 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
                     "https://www.nttdata.com/jp/ja/news/",
                     "www.nttdata.com",
                     "/jp/ja/",
+                    "GENERAL"
+            ),
+            new SiteDefinition(
+                    "NEC Press Releases",
+                    "https://jpn.nec.com/press/",
+                    "jpn.nec.com",
+                    "/press/",
+                    "GENERAL"
+            ),
+            new SiteDefinition(
+                    "Hitachi News Releases",
+                    "https://www.hitachi.com/en/press/",
+                    "www.hitachi.com",
+                    "/en/press/",
                     "GENERAL"
             )
     );
@@ -105,9 +158,6 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
             List<String> articleUrls = findArticleUrls(listDocument, site);
             List<Article> articles = new ArrayList<>();
             for (String articleUrl : articleUrls) {
-                if (articles.size() >= appConfig.getOfficialSiteResultLimit()) {
-                    break;
-                }
                 fetchDelay();
                 parseArticle(articleUrl, site).ifPresent(articles::add);
             }
@@ -121,12 +171,12 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
 
     private List<String> findArticleUrls(Document document, SiteDefinition site) {
         return document.select("a[href]").stream()
+                .filter(element -> isTopicRelevant(element.text(), element.attr("href")))
                 .map(element -> element.absUrl("href"))
                 .map(this::canonicalizeUrl)
                 .flatMap(Optional::stream)
                 .filter(url -> isArticleUrl(url, site))
                 .distinct()
-                .limit(Math.min(appConfig.getOfficialSiteResultLimit() * 5L, 30L))
                 .collect(Collectors.toList());
     }
 
@@ -156,7 +206,11 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
                 title = document.title();
             }
             String content = extractContent(document);
-            if (!isTopicRelevant(title, content)) {
+            if (content.length() < MIN_CONTENT_LENGTH || !isTopicRelevant(title, content)) {
+                return Optional.empty();
+            }
+            Optional<LocalDateTime> publishedAt = extractPublishedAt(document);
+            if (publishedAt.isEmpty() || publishedAt.get().isBefore(LocalDateTime.now().minusDays(appConfig.getOfficialSiteMaxAgeDays()))) {
                 return Optional.empty();
             }
 
@@ -167,7 +221,7 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
             article.setSourceName(site.sourceName());
             article.setSourceType("HOMEPAGE");
             article.setCompetitor(site.competitor());
-            article.setPublishedAt(extractPublishedAt(document).orElseGet(LocalDateTime::now));
+            article.setPublishedAt(publishedAt.get());
             return Optional.of(article);
         } catch (Exception e) {
             log.warn("공식 사이트 상세 페이지 처리 실패 [{}]: {}", articleUrl, e.getMessage());
@@ -222,7 +276,11 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
                 try {
                     return Optional.of(LocalDateTime.parse(value, DateTimeFormatter.ISO_LOCAL_DATE_TIME));
                 } catch (Exception ignoredFinal) {
-                    return Optional.empty();
+                    try {
+                        return Optional.of(LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE).atStartOfDay());
+                    } catch (Exception ignoredDateOnly) {
+                        return Optional.empty();
+                    }
                 }
             }
         }
@@ -230,7 +288,15 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
 
     private boolean isTopicRelevant(String title, String content) {
         String text = (title + " " + content).toLowerCase(Locale.ROOT);
-        return TOPIC_KEYWORDS.stream().anyMatch(keyword -> text.contains(keyword.toLowerCase(Locale.ROOT)));
+        return TOPIC_KEYWORDS.stream().anyMatch(keyword -> containsTopicKeyword(text, keyword));
+    }
+
+    private boolean containsTopicKeyword(String text, String keyword) {
+        String normalizedKeyword = keyword.toLowerCase(Locale.ROOT);
+        if ("ai".equals(normalizedKeyword) || "llm".equals(normalizedKeyword)) {
+            return text.matches("(?s).*(?<![a-z])" + normalizedKeyword + "(?![a-z]).*");
+        }
+        return text.contains(normalizedKeyword);
     }
 
     private boolean isAllowedByRobots(String pageUrl) {

@@ -18,7 +18,8 @@ import java.util.Map;
 public class AiEcosystemCrawler {
     private static final List<String> QUERIES = List.of(
             "Frontier AI Labs", "OpenAI", "Anthropic", "Gemini AI", "AWS AI", "Microsoft AI", "엔비디아 AI",
-            "Accenture AI", "딜로이트 AI", "PwC AI", "AI FDE", "AI RDE", "AI ODE", "AI Partnership", "Agentic AI", "AIOps"
+            "Accenture AI", "딜로이트 AI", "PwC AI", "AI FDE", "AI RDE", "AI ODE", "AI Partnership", "Agentic AI", "AIOps",
+            "AI Pricing Model", "AI monetization", "AI 인력 양성", "AI 人材育成", "AI リスキリング"
     );
     private final NaverNewsClient naverNewsClient;
 

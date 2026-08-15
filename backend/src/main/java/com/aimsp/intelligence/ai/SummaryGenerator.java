@@ -21,7 +21,7 @@ public class SummaryGenerator {
 
             [요약 규칙]
             - 핵심 사실 위주, 3줄 이내
-            - Frontier AI Labs, 파트너십, FDE·RDE·ODE, 컨설팅, Agentic AI·AIOps 관점에서 중요한 내용 우선
+            - Frontier AI Labs, 파트너십, FDE·RDE·ODE, 컨설팅, Agentic AI·AIOps, AI 가격 정책·과금 모델, AI 인력 양성 관점에서 중요한 내용 우선
             - 200자 이내 (한국어 기준)
             - 관련도 점수: 0~100 (AI 생태계·서비스 사업모델과의 연관성)
 
