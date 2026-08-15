@@ -35,8 +35,10 @@
 - `GET /api/radar/overview`: Watch List, 최근 신호, 6개 Lens, 주간 브리핑을 한 번에 조회한다.
 - `GET /api/radar/signals`: 최근 검증 신호를 조회한다.
 - `POST /api/radar/signals`: 검증된 신호를 등록한다. `API_SECRET_TOKEN`을 설정한 환경에서는 `X-API-Token`이 필요하다.
+- `POST /api/radar/collect`: 공식 사이트·활성 수집 소스에서 새 원문을 수집하고, Gemini로 Radar Signal 적합성을 검증한 뒤 자동 등록한다. 작업은 백그라운드로 실행된다.
+- `GET /api/radar/collect/status`: Radar 수집 작업의 진행 상태와 수집·분석·등록 건수를 조회한다.
 - `POST /api/radar/weekly-briefs/generate`: 최근 7일 신호를 근거로 주간 브리핑을 만든다. 신호가 없으면 만들지 않는다.
 
 ## 운영 원칙
 
-출처의 수나 수집 건수로 품질을 판단하지 않는다. 원문 근거, 관련 플레이어, 6개 Lens 분류, 구조적 영향과 권고 행동이 모두 있는 신호만 주간 브리핑에 포함한다. 자동 수집기를 연결할 때도 이 등록 규칙을 통과한 항목만 저장한다.
+출처의 수나 수집 건수로 품질을 판단하지 않는다. 자동 수집기는 새 원문을 최대 12건까지 분석하며, 원문 근거, 관련 플레이어, 6개 Lens 분류, 구조적 영향과 권고 행동이 모두 있는 신호만 저장하고 주간 브리핑에 포함한다.

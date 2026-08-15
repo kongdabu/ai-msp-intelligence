@@ -137,6 +137,16 @@ export interface RadarOverview {
   weeklyBriefs: RadarWeeklyBrief[]
 }
 
+export interface RadarCollectionStatus {
+  status: 'IDLE' | 'RUNNING' | 'COMPLETED' | 'FAILED'
+  startedAt: string | null
+  completedAt: string | null
+  collectedArticleCount: number | null
+  analyzedArticleCount: number | null
+  savedSignalCount: number | null
+  message: string | null
+}
+
 export type Competitor = 'LG_CNS' | 'SK_AX' | 'BESPIN' | 'PWC' | 'GENERAL'
 export type Category = 'FRONTIER_LABS' | 'AI_ECOSYSTEM' | 'AI_DELIVERY_MODEL' | 'CONSULTING' | 'AGENTIC_OPERATIONS' | 'AI_AGENT' | 'VERTICAL_AI' | 'ITO' | 'MSP' | 'CLOUD' | 'GEN_AI'
 export type SourceType = 'NEWS' | 'HOMEPAGE' | 'SNS' | 'IDC' | 'PROCUREMENT' | 'JOB_POSTING'

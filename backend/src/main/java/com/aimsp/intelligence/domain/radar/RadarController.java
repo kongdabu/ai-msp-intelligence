@@ -18,6 +18,7 @@ import java.util.List;
 public class RadarController {
 
     private final RadarService radarService;
+    private final RadarCollectionJobService radarCollectionJobService;
 
     @GetMapping("/overview")
     public ResponseEntity<RadarDto.OverviewResponse> getOverview() {
@@ -37,5 +38,15 @@ public class RadarController {
     @PostMapping("/weekly-briefs/generate")
     public ResponseEntity<RadarDto.WeeklyBriefResponse> generateWeeklyBrief() {
         return ResponseEntity.ok(radarService.generateWeeklyBrief());
+    }
+
+    @PostMapping("/collect")
+    public ResponseEntity<RadarCollectionJobService.JobStatus> collectRadarSignals() {
+        return ResponseEntity.accepted().body(radarCollectionJobService.start());
+    }
+
+    @GetMapping("/collect/status")
+    public ResponseEntity<RadarCollectionJobService.JobStatus> getCollectionStatus() {
+        return ResponseEntity.ok(radarCollectionJobService.getStatus());
     }
 }

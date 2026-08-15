@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { RadarOverview, RadarSignal } from '../types'
+import { RadarCollectionStatus, RadarOverview, RadarSignal } from '../types'
 
 export function useRadarOverview() {
   return useQuery<RadarOverview>({
@@ -19,6 +19,31 @@ export function useRadarSignals() {
     queryFn: async () => {
       const { data } = await axios.get('/api/radar/signals')
       return data
+    },
+  })
+}
+
+export function useRadarCollectionStatus() {
+  return useQuery<RadarCollectionStatus>({
+    queryKey: ['radar', 'collection-status'],
+    queryFn: async () => {
+      const { data } = await axios.get('/api/radar/collect/status')
+      return data
+    },
+    refetchInterval: (query) => query.state.data?.status === 'RUNNING' ? 3000 : false,
+  })
+}
+
+export function useStartRadarCollection() {
+  const queryClient = useQueryClient()
+  return useMutation<RadarCollectionStatus>({
+    mutationFn: async () => {
+      const { data } = await axios.post('/api/radar/collect')
+      return data
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['radar', 'collection-status'] })
+      void queryClient.invalidateQueries({ queryKey: ['radar', 'overview'] })
     },
   })
 }

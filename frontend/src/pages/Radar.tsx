@@ -1,5 +1,6 @@
-import { Activity, ArrowUpRight, Building2, CircleAlert, Layers3, Radar as RadarIcon, Users } from 'lucide-react'
-import { useRadarOverview } from '../hooks/useRadar'
+import { Activity, ArrowUpRight, Building2, CircleAlert, Layers3, Radar as RadarIcon, RefreshCw, Users } from 'lucide-react'
+import { useEffect } from 'react'
+import { useRadarCollectionStatus, useRadarOverview, useStartRadarCollection } from '../hooks/useRadar'
 import { RADAR_LAYER_LABELS, RadarPlayer, RadarPlayerLayer } from '../types'
 
 const layerOrder: RadarPlayerLayer[] = ['FRONTIER_LAB', 'CSP_PLATFORM', 'CONSULTING', 'GLOBAL_SI_MSP', 'KOREA_SI_MSP']
@@ -33,7 +34,13 @@ function WatchlistGroup({ layer, players }: { layer: RadarPlayerLayer; players: 
 }
 
 export default function Radar() {
-  const { data, isLoading, isError } = useRadarOverview()
+  const { data, isLoading, isError, refetch } = useRadarOverview()
+  const { data: collectionStatus } = useRadarCollectionStatus()
+  const { mutate: startCollection, isPending: isStartingCollection } = useStartRadarCollection()
+
+  useEffect(() => {
+    if (collectionStatus?.status === 'COMPLETED') void refetch()
+  }, [collectionStatus?.completedAt, collectionStatus?.status, refetch])
 
   if (isLoading) return <RadarSkeleton />
   if (isError || !data) {
@@ -51,6 +58,14 @@ export default function Radar() {
     { label: '정규화된 신호', value: data.signalCount, icon: Activity, tone: 'text-violet-700 bg-violet-50' },
     { label: '고영향 신호', value: data.highImpactSignalCount, icon: CircleAlert, tone: 'text-rose-700 bg-rose-50' },
   ]
+  const isCollecting = isStartingCollection || collectionStatus?.status === 'RUNNING'
+  const collectionDescription = collectionStatus?.status === 'RUNNING'
+    ? '원문 수집과 Signal 분석을 진행 중입니다. 최대 12건을 검증합니다.'
+    : collectionStatus?.status === 'COMPLETED'
+      ? `최근 실행: 원문 ${collectionStatus.collectedArticleCount ?? 0}건 수집 · ${collectionStatus.analyzedArticleCount ?? 0}건 분석 · Signal ${collectionStatus.savedSignalCount ?? 0}건 등록`
+      : collectionStatus?.status === 'FAILED'
+        ? '최근 수집 작업이 실패했습니다. 다시 실행해 주세요.'
+        : '공식 사이트와 활성 수집 소스의 새 원문을 분석해 Signal로 등록합니다.'
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 p-4 sm:p-6 lg:p-8">
@@ -61,9 +76,13 @@ export default function Radar() {
             <h2 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">신호를 사업 구조와 실행 과제로 전환합니다</h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">단순 뉴스 목록이 아닌 AI Agent, 파트너십, 현장 딜리버리, 가격, 운영 모델의 변화를 추적하고 한국 AI MSP 관점의 영향을 판단합니다.</p>
           </div>
-          <div className="shrink-0 rounded-2xl border border-slate-700 bg-slate-900/70 px-4 py-3 text-sm text-slate-300">
+          <div className="shrink-0 rounded-2xl border border-slate-700 bg-slate-900/70 p-3 text-sm text-slate-300 sm:max-w-xs">
             <div className="font-semibold text-white">Signal → Structure → Impact</div>
-            <div className="mt-1 text-xs">주간 브리핑 중심 운영</div>
+            <p className="mt-1 text-xs leading-5">{collectionDescription}</p>
+            <button type="button" onClick={() => startCollection()} disabled={isCollecting} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-500 px-3 py-2 text-sm font-bold text-white transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-60">
+              <RefreshCw size={15} className={isCollecting ? 'animate-spin' : ''} />
+              {isCollecting ? 'Radar 수집 중...' : '지금 수집하기'}
+            </button>
           </div>
         </div>
       </section>
