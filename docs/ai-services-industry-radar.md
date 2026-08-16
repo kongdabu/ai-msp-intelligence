@@ -27,16 +27,19 @@
 | `FRONTIER_LABS` | 모델 경쟁력과 생태계 지배력 |
 | `PARTNERSHIP` | 모델사·클라우드·SI의 결합 및 판매 구조 |
 | `DEPLOYMENT_MODEL` | FDE·RDE·ODE 등 현장 투입형 AI 딜리버리 |
-| `AI_PRICING` | 인력 투입형에서 사용량·성과형으로의 전환 |
+| `AI_PRICING` | 인력 투입형에서 사용량·성과형으로의 전환, 토큰 단가 인하 및 비용 체계 개편 |
 | `AGENTIC_OPERATIONS` | AIOps·운영 자동화와 관리형 서비스 재편 |
 
 ## API
 
 - `GET /api/radar/overview`: Watch List, 최근 신호, 6개 Lens, 주간 브리핑을 한 번에 조회한다.
-- `GET /api/radar/signals`: 최근 검증 신호를 조회한다.
+- `GET /api/radar/signals`: 최근 검증 신호를 조회한다. (params: lens, minimumImpactScore, page, size)
 - `POST /api/radar/signals`: 검증된 신호를 등록한다. `API_SECRET_TOKEN`을 설정한 환경에서는 `X-API-Token`이 필요하다.
+- `GET /api/radar/players`: Watch List 감시 대상 사업자 목록을 조회한다.
+- `PUT /api/radar/players/{id}`: Watch List 사업자의 활성 여부, 우선순위, 웹사이트를 수정한다.
 - `POST /api/radar/collect`: 공식 사이트·활성 수집 소스에서 새 원문을 수집하고, Gemini로 Radar Signal 적합성을 검증한 뒤 자동 등록한다. 작업은 백그라운드로 실행된다.
 - `GET /api/radar/collect/status`: Radar 수집 작업의 진행 상태와 수집·분석·등록 건수를 조회한다.
+- `POST /api/radar/collect/cancel`: 실행 중인 Radar 수집 작업을 취소한다.
 - `POST /api/radar/weekly-briefs/generate`: 최근 7일 신호를 근거로 주간 브리핑을 만든다. 신호가 없으면 만들지 않는다.
 
 ## 운영 원칙
