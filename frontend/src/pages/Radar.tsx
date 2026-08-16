@@ -1,7 +1,7 @@
-import { Activity, ChevronLeft, ChevronRight, CircleAlert, ExternalLink, Layers3, Radar as RadarIcon, RefreshCw, Users } from 'lucide-react'
+import { Activity, ChevronLeft, ChevronRight, CircleAlert, ExternalLink, Layers3, Radar as RadarIcon, RefreshCw, Square, Users } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useRadarCollectionStatus, useRadarOverview, useRadarSignals, useStartRadarCollection } from '../hooks/useRadar'
+import { useCancelRadarCollection, useRadarCollectionStatus, useRadarOverview, useRadarSignals, useStartRadarCollection } from '../hooks/useRadar'
 import { RadarLensCode, RadarSignal } from '../types'
 
 function RadarSkeleton() {
@@ -16,6 +16,7 @@ export default function Radar() {
   const { data: overview, isLoading, isError, refetch } = useRadarOverview()
   const { data: collectionStatus } = useRadarCollectionStatus()
   const { mutate: startCollection, isPending: isStartingCollection } = useStartRadarCollection()
+  const { mutate: cancelCollection, isPending: isCancellingCollection } = useCancelRadarCollection()
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedLensParam = searchParams.get('lens')
   const selectedLens = overview?.lenses.some((lens) => lens.code === selectedLensParam)
@@ -37,7 +38,7 @@ export default function Radar() {
   if (isError || !overview) return <div className="p-6 text-sm text-slate-600">Radar 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</div>
 
   const selectedLensInfo = overview.lenses.find((lens) => lens.code === selectedLens)
-  const isCollecting = isStartingCollection || collectionStatus?.status === 'RUNNING'
+  const isCollecting = isStartingCollection || collectionStatus?.status === 'RUNNING' || collectionStatus?.status === 'CANCELLING'
   const updateFilters = (updates: Record<string, string | null>) => {
     const next = new URLSearchParams(searchParams)
     Object.entries(updates).forEach(([key, value]) => value ? next.set(key, value) : next.delete(key))
@@ -53,13 +54,16 @@ export default function Radar() {
   }
   const collectionDescription = collectionStatus?.status === 'COMPLETED'
     ? `최근 실행: 원문 ${collectionStatus.collectedArticleCount ?? 0}건 · Signal ${collectionStatus.savedSignalCount ?? 0}건 등록`
-    : collectionStatus?.status === 'RUNNING' ? '원문 수집과 Signal 분석을 진행 중입니다.' : '공식 원문을 검증해 사업 구조 Signal로 등록합니다.'
+    : collectionStatus?.status === 'RUNNING' ? '원문 수집과 Signal 분석을 진행 중입니다.'
+      : collectionStatus?.status === 'CANCELLING' ? '현재 작업을 안전하게 중지하고 있습니다.'
+        : collectionStatus?.status === 'CANCELLED' ? '최근 Radar 수집 작업이 취소되었습니다.'
+          : '공식 원문을 검증해 사업 구조 Signal로 등록합니다.'
 
   return <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
     <section className="overflow-hidden rounded-3xl bg-slate-950 px-6 py-7 text-white sm:px-8">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div><div className="inline-flex items-center gap-2 text-sm font-semibold text-blue-300"><RadarIcon size={17} /> AI Services Industry Radar</div><h2 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">신호를 사업 구조와 실행 과제로 전환합니다</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">좌측에서 산업 관점을 선택하면 우측에서 검증된 Signal과 한국 AI MSP 관점의 영향을 바로 확인할 수 있습니다.</p></div>
-        <div className="shrink-0 rounded-2xl border border-slate-700 bg-slate-900/70 p-3 text-sm text-slate-300 sm:max-w-xs"><div className="font-semibold text-white">Signal → Structure → Impact</div><p className="mt-1 text-xs leading-5">{collectionDescription}</p><button type="button" onClick={() => startCollection()} disabled={isCollecting} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-500 px-3 py-2 text-sm font-bold text-white transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-60"><RefreshCw size={15} className={isCollecting ? 'animate-spin' : ''} />{isCollecting ? 'Radar 수집 중...' : '지금 수집하기'}</button></div>
+        <div className="shrink-0 rounded-2xl border border-slate-700 bg-slate-900/70 p-3 text-sm text-slate-300 sm:max-w-xs"><div className="font-semibold text-white">Signal → Structure → Impact</div><p className="mt-1 text-xs leading-5">{collectionDescription}</p>{isCollecting ? <button type="button" onClick={() => cancelCollection()} disabled={isCancellingCollection || collectionStatus?.status === 'CANCELLING'} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60"><Square size={14} />{collectionStatus?.status === 'CANCELLING' ? '취소 요청 중...' : '작업 취소'}</button> : <button type="button" onClick={() => startCollection()} disabled={isStartingCollection} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-500 px-3 py-2 text-sm font-bold text-white transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-60"><RefreshCw size={15} className={isStartingCollection ? 'animate-spin' : ''} />지금 수집하기</button>}</div>
       </div>
     </section>
 

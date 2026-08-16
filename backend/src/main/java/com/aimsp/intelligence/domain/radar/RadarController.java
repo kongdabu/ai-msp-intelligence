@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 import java.util.List;
 
@@ -67,5 +68,10 @@ public class RadarController {
     @GetMapping("/collect/status")
     public ResponseEntity<RadarCollectionJobService.JobStatus> getCollectionStatus() {
         return ResponseEntity.ok(radarCollectionJobService.getStatus());
+    }
+
+    @DeleteMapping("/collect")
+    public ResponseEntity<RadarCollectionJobService.JobStatus> cancelRadarCollection() {
+        return ResponseEntity.ok(radarCollectionJobService.cancel());
     }
 }

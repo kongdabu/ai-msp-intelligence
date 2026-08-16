@@ -45,4 +45,6 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
 
     List<Article> findTop5ByOrderByPublishedAtDesc();
 
+    List<Article> findTop5ByAnalysisStatusOrderByCollectedAtAsc(String analysisStatus);
+
 }

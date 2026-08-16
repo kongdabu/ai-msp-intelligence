@@ -1,6 +1,7 @@
 package com.aimsp.intelligence.config;
 
 import com.aimsp.intelligence.domain.battlecard.BattleCardService;
+import com.aimsp.intelligence.domain.article.ArticleAnalysisRetryService;
 import com.aimsp.intelligence.domain.insight.InsightService;
 import com.aimsp.intelligence.domain.radar.RadarCollectionService;
 import com.aimsp.intelligence.exception.AiApiUnavailableException;
@@ -19,6 +20,7 @@ public class SchedulerConfig {
     private final RadarCollectionService radarCollectionService;
     private final InsightService insightService;
     private final BattleCardService battleCardService;
+    private final ArticleAnalysisRetryService articleAnalysisRetryService;
     /**
      * 기사·Radar Signal 수집 - 매일 KST 01:00 (UTC 16:00)
      */
@@ -49,6 +51,18 @@ public class SchedulerConfig {
             log.error("[스케줄] 인사이트 생성 중단 - Gemini API 비정상: {}", e.getMessage());
         } catch (Exception e) {
             log.error("[스케줄] 인사이트 생성 실패: {}", e.getMessage(), e);
+        }
+    }
+
+    /** Gemini 호출 제한으로 보류된 원문 재분석 - 하루 8회, 매 3시간 30분 */
+    @Scheduled(cron = "0 30 1,4,7,10,13,16,19,22 * * *", zone = "Asia/Seoul")
+    public void scheduledPendingArticleAnalysis() {
+        TaskExecutionLogger.logStart(log, "정기 배치: 보류 기사 AI 재분석");
+        try {
+            int count = articleAnalysisRetryService.retryPendingArticles();
+            log.info("[배치: 보류 기사 재분석] 완료: {}건", count);
+        } catch (Exception e) {
+            log.error("[배치: 보류 기사 재분석] 실패: {}", e.getMessage(), e);
         }
     }
 

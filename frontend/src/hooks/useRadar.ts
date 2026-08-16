@@ -68,7 +68,7 @@ export function useRadarCollectionStatus() {
       const { data } = await axios.get('/api/radar/collect/status')
       return data
     },
-    refetchInterval: (query) => query.state.data?.status === 'RUNNING' ? 3000 : false,
+    refetchInterval: (query) => ['RUNNING', 'CANCELLING'].includes(query.state.data?.status ?? '') ? 3000 : false,
   })
 }
 
@@ -77,6 +77,20 @@ export function useStartRadarCollection() {
   return useMutation<RadarCollectionStatus>({
     mutationFn: async () => {
       const { data } = await axios.post('/api/radar/collect')
+      return data
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['radar', 'collection-status'] })
+      void queryClient.invalidateQueries({ queryKey: ['radar', 'overview'] })
+    },
+  })
+}
+
+export function useCancelRadarCollection() {
+  const queryClient = useQueryClient()
+  return useMutation<RadarCollectionStatus, Error>({
+    mutationFn: async () => {
+      const { data } = await axios.delete('/api/radar/collect')
       return data
     },
     onSuccess: () => {

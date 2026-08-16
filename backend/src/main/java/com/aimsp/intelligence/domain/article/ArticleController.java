@@ -96,6 +96,12 @@ public class ArticleController {
         return ResponseEntity.ok(crawlJobService.getStatus());
     }
 
+    @DeleteMapping("/crawl")
+    public ResponseEntity<CrawlJobService.JobStatus> cancelCrawl() {
+        TaskExecutionLogger.logStart(log, "API 실행: 기사 수집 취소 요청");
+        return ResponseEntity.ok(crawlJobService.cancel());
+    }
+
     // 통계 조회
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getStats() {

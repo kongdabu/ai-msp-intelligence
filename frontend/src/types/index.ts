@@ -153,7 +153,7 @@ export interface PageResponse<T> {
 }
 
 export interface RadarCollectionStatus {
-  status: 'IDLE' | 'RUNNING' | 'COMPLETED' | 'FAILED'
+  status: 'IDLE' | 'RUNNING' | 'CANCELLING' | 'CANCELLED' | 'COMPLETED' | 'FAILED'
   startedAt: string | null
   completedAt: string | null
   collectedArticleCount: number | null

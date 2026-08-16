@@ -26,6 +26,7 @@ public class GeminiApiClient {
     private static final int MAX_RETRIES = 3;
     private static final long DEFAULT_RETRY_DELAY_MS = 30000; // 30초
     private final AtomicLong lastCallTime = new AtomicLong(0);
+    private final AtomicLong cooldownUntil = new AtomicLong(0);
 
     private final OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
@@ -53,18 +54,16 @@ public class GeminiApiClient {
         }
     }
 
+    /** 429·503 응답이 안내한 공용 대기 시간이 남아 있는지 확인한다. */
+    public boolean isCoolingDown() {
+        return System.currentTimeMillis() < cooldownUntil.get();
+    }
+
     /**
      * Gemini API 호출 - 단일 텍스트 프롬프트
      * responseMimeType: application/json 으로 JSON 응답 강제
      */
     public String call(String prompt) {
-        try {
-            applyRateLimit();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return null;
-        }
-
         String requestBody = buildRequestBody(prompt);
         if (requestBody == null) return null;
 
@@ -73,6 +72,7 @@ public class GeminiApiClient {
 
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
+                waitForPermit();
                 Request request = new Request.Builder()
                         .url(apiUrl)
                         .post(RequestBody.create(requestBody, JSON))
@@ -84,9 +84,8 @@ public class GeminiApiClient {
                     if (response.code() == 429) {
                         long retryDelayMs = parseRetryDelay(response);
                         log.warn("Gemini API Rate Limit(429) - {}ms 후 재시도 ({}/{})", retryDelayMs, attempt, MAX_RETRIES);
+                        extendCooldown(retryDelayMs);
                         if (attempt < MAX_RETRIES) {
-                            Thread.sleep(retryDelayMs);
-                            lastCallTime.set(System.currentTimeMillis()); // 재시도 후 간격 초기화
                             continue;
                         }
                         throw new AiApiUnavailableException();
@@ -94,7 +93,8 @@ public class GeminiApiClient {
                     if (response.code() == 503) {
                         long waitMs = 30000L * attempt; // 지수 백오프: 1차 30초, 2차 60초, 3차 90초
                         log.warn("Gemini API 일시적 과부하(503) - {}초 후 재시도 ({}/{})", waitMs / 1000, attempt, MAX_RETRIES);
-                        if (attempt < MAX_RETRIES) { Thread.sleep(waitMs); continue; }
+                        extendCooldown(waitMs);
+                        if (attempt < MAX_RETRIES) continue;
                         throw new AiApiUnavailableException();
                     }
                     if (response.code() >= 500) {
@@ -145,16 +145,21 @@ public class GeminiApiClient {
         return null;
     }
 
-    private synchronized void applyRateLimit() throws InterruptedException {
+    private synchronized void waitForPermit() throws InterruptedException {
         long now = System.currentTimeMillis();
-        long elapsed = now - lastCallTime.get();
-        long minInterval = appConfig.getRateLimitMs();
-        if (lastCallTime.get() > 0 && elapsed < minInterval) {
-            long waitMs = minInterval - elapsed;
-            log.debug("Rate limit 대기: {}ms", waitMs);
+        long rateLimitAt = lastCallTime.get() + appConfig.getRateLimitMs();
+        long permittedAt = Math.max(rateLimitAt, cooldownUntil.get());
+        if (now < permittedAt) {
+            long waitMs = permittedAt - now;
+            log.info("Gemini API 공용 대기 적용: {}ms", waitMs);
             Thread.sleep(waitMs);
         }
         lastCallTime.set(System.currentTimeMillis());
+    }
+
+    private void extendCooldown(long delayMs) {
+        long nextAllowedAt = System.currentTimeMillis() + Math.max(delayMs, appConfig.getRateLimitMs());
+        cooldownUntil.accumulateAndGet(nextAllowedAt, Math::max);
     }
 
     private String buildRequestBody(String prompt) {

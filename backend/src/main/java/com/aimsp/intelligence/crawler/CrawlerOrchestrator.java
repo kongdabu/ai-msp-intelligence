@@ -1,11 +1,11 @@
 package com.aimsp.intelligence.crawler;
 
 import com.aimsp.intelligence.ai.GeminiApiClient;
-import com.aimsp.intelligence.ai.SummaryGenerator;
 import com.aimsp.intelligence.crawler.sources.AiEcosystemCrawler;
-import com.aimsp.intelligence.config.AppConfig;
 import com.aimsp.intelligence.domain.article.Article;
+import com.aimsp.intelligence.domain.article.ArticleAnalysisService;
 import com.aimsp.intelligence.domain.article.ArticleService;
+import com.aimsp.intelligence.exception.AiApiUnavailableException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 
 @Slf4j
 @Component
@@ -29,11 +30,10 @@ public class CrawlerOrchestrator {
     );
 
     private final ArticleService articleService;
-    private final SummaryGenerator summaryGenerator;
+    private final ArticleAnalysisService articleAnalysisService;
     private final GeminiApiClient geminiApiClient;
     private final AiEcosystemCrawler aiEcosystemCrawler;
     private final OfficialSiteCrawler officialSiteCrawler;
-    private final AppConfig appConfig;
 
     @SuppressWarnings("null")
     public int crawlAll() {
@@ -43,7 +43,8 @@ public class CrawlerOrchestrator {
         int totalSaved = 0;
 
         totalSaved += crawlAndSave(officialSiteCrawler.crawl(), "공식 사이트", true, aiAvailable);
-        totalSaved += crawlAndSave(aiEcosystemCrawler.crawl(), "AI 생태계·사업모델 뉴스", false, aiAvailable);
+        totalSaved += crawlAndSave(aiEcosystemCrawler.crawl(), "AI 생태계·사업모델 뉴스", false,
+                aiAvailable && !geminiApiClient.isCoolingDown());
 
         log.info("=== 크롤링 완료: 총 {}건 저장 ===", totalSaved);
         return totalSaved;
@@ -55,6 +56,7 @@ public class CrawlerOrchestrator {
         int preFiltered = 0;
         for (Article article : articles) {
             try {
+                if (Thread.currentThread().isInterrupted()) throw new CancellationException("수집 작업이 취소되었습니다.");
                 if (!officialSource && !matchesTargetKeyword(article)) {
                     preFiltered++;
                     continue;
@@ -65,27 +67,16 @@ public class CrawlerOrchestrator {
                 }
 
                 if (aiAvailable && article.getOriginalContent() != null && !article.getOriginalContent().isBlank()) {
-                    SummaryGenerator.SummaryResult result = summaryGenerator.generateSummary(
-                            article.getTitle(), article.getOriginalContent()
-                    );
-                    if (result == null && officialSource) {
-                        skipped++;
-                        continue;
-                    }
-                    if (result != null) {
-                        int minimumRelevanceScore = officialSource
-                                ? appConfig.getOfficialSiteMinimumRelevanceScore()
-                                : 50;
-                        if (result.relevanceScore() < minimumRelevanceScore) {
-                            log.debug("관련도 미달 기사 제외 [score={}]: {}", result.relevanceScore(), article.getTitle());
+                    try {
+                        if (articleAnalysisService.analyze(article) == ArticleAnalysisService.AnalysisOutcome.REJECTED) {
                             skipped++;
                             continue;
                         }
-                        article.setSummary(result.summary());
-                        article.setRelevanceScore(result.relevanceScore());
-                        if (article.getCategory() == null) {
-                            article.setCategory(result.detectedCategory());
-                        }
+                    } catch (AiApiUnavailableException e) {
+                        // 원문은 보존하고 별도 재분석 배치가 처리한다.
+                        article.setAnalysisStatus(ArticleAnalysisService.PENDING);
+                        aiAvailable = false;
+                        log.warn("Gemini 제한으로 원문만 저장하고 재분석 대기 처리: {}", article.getTitle());
                     }
                 } else if (officialSource && (article.getOriginalContent() == null || article.getOriginalContent().isBlank())) {
                     skipped++;
@@ -94,6 +85,8 @@ public class CrawlerOrchestrator {
 
                 Article savedArticle = articleService.saveIfNotExists(article);
                 if (savedArticle != null) saved++;
+            } catch (CancellationException e) {
+                throw e;
             } catch (Exception e) {
                 log.error("기사 저장 실패 [{}]: {}", article.getTitle(), e.getMessage());
             }

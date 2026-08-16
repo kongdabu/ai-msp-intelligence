@@ -62,6 +62,9 @@ public class Article {
     private Boolean isProcessed = false;
     private Integer relevanceScore; // 0-100
 
+    @Column(nullable = false, length = 20)
+    private String analysisStatus = "PENDING"; // PENDING|COMPLETED|REJECTED
+
     @Column(nullable = false)
     private Boolean bookmarked = false; // 저장(북마크) 여부 — 나중에 다시 조회
 

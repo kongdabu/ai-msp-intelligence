@@ -156,7 +156,7 @@ export function useArticle(id: number | null) {
 }
 
 export interface CrawlJobStatus {
-  status: 'IDLE' | 'RUNNING' | 'COMPLETED' | 'FAILED'
+  status: 'IDLE' | 'RUNNING' | 'CANCELLING' | 'CANCELLED' | 'COMPLETED' | 'FAILED'
   startedAt: string | null
   completedAt: string | null
   savedCount: number | null
@@ -191,6 +191,21 @@ export function useCrawlStatus() {
       const { data } = await axios.get('/api/articles/crawl/status')
       return data as CrawlJobStatus
     },
-    refetchInterval: (query) => query.state.data?.status === 'RUNNING' ? 5000 : false,
+    refetchInterval: (query) => ['RUNNING', 'CANCELLING'].includes(query.state.data?.status ?? '') ? 5000 : false,
+  })
+}
+
+export function useCancelCrawl() {
+  const queryClient = useQueryClient()
+  return useMutation<CrawlJobStatus, Error>({
+    mutationFn: async () => {
+      const { data } = await axios.delete('/api/articles/crawl')
+      return data
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['crawl-status'] })
+      void queryClient.invalidateQueries({ queryKey: ['articles'] })
+      void queryClient.invalidateQueries({ queryKey: ['articles-list'] })
+    },
   })
 }

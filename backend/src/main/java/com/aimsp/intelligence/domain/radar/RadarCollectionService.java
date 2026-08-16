@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +37,7 @@ public class RadarCollectionService {
 
         int savedSignalCount = 0;
         for (Article article : candidates) {
+            if (Thread.currentThread().isInterrupted()) throw new CancellationException("Radar 수집 작업이 취소되었습니다.");
             RadarSignalAnalyzer.AnalysisResult analysis = radarSignalAnalyzer.analyze(article, watchlist);
             if (analysis == null || analysis.fact().isBlank() || analysis.whatChanged().isBlank()
                     || analysis.industryStructureImpact().isBlank() || analysis.recommendedAction().isBlank()) {

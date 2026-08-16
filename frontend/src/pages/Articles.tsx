@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
-import { useArticles, useCrawlStatus, useTriggerCrawl, useToggleArticleBookmark } from '../hooks/useArticles'
+import { useArticles, useCancelCrawl, useCrawlStatus, useTriggerCrawl, useToggleArticleBookmark } from '../hooks/useArticles'
 import { useFilterStore } from '../store/filterStore'
 import ArticleFilter from '../components/article/ArticleFilter'
 import ArticleList from '../components/article/ArticleList'
 import { Article, CATEGORY_LABELS } from '../types'
-import { X, ExternalLink, RefreshCw, Bookmark } from 'lucide-react'
+import { X, ExternalLink, RefreshCw, Bookmark, Square } from 'lucide-react'
 
 export function ArticleDetail({ article, onClose }: { article: Article; onClose: () => void }) {
   const { mutate: toggleBookmark, isPending } = useToggleArticleBookmark()
@@ -164,6 +164,8 @@ export default function Articles() {
   const { mutate: crawl, isPending: isCrawling } = useTriggerCrawl({
     onSuccess: () => setCrawlMsg('백그라운드 수집을 시작했습니다.'),
   })
+  const { mutate: cancelCrawl, isPending: isCancellingCrawl } = useCancelCrawl()
+  const isCrawlRunning = isCrawling || crawlStatus?.status === 'RUNNING' || crawlStatus?.status === 'CANCELLING'
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
@@ -172,14 +174,7 @@ export default function Articles() {
         <div className="text-sm text-gray-500">
           {data && <>총 <span className="font-semibold text-gray-900">{data.totalElements.toLocaleString()}</span>건</>}
         </div>
-        <button
-          onClick={() => crawl()}
-          disabled={isCrawling || crawlStatus?.status === 'RUNNING'}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-        >
-          <RefreshCw size={14} className={isCrawling ? 'animate-spin' : ''} />
-          {isCrawling || crawlStatus?.status === 'RUNNING' ? '수집 진행 중...' : '지금 수집'}
-        </button>
+        {isCrawlRunning ? <button onClick={() => cancelCrawl()} disabled={isCancellingCrawl || crawlStatus?.status === 'CANCELLING'} className="flex items-center gap-2 px-4 py-2 bg-rose-600 text-white text-sm font-medium rounded-lg hover:bg-rose-700 disabled:opacity-50 transition-colors"><Square size={13} />{crawlStatus?.status === 'CANCELLING' ? '취소 요청 중...' : '작업 취소'}</button> : <button onClick={() => crawl()} disabled={isCrawling} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"><RefreshCw size={14} className={isCrawling ? 'animate-spin' : ''} />지금 수집</button>}
       </div>
 
       {crawlMsg && (
@@ -197,6 +192,11 @@ export default function Articles() {
       {crawlStatus?.status === 'FAILED' && (
         <div className="bg-red-50 border border-red-200 text-red-800 text-sm rounded-lg px-4 py-3">
           {crawlStatus.message ?? '수집 작업에 실패했습니다.'}
+        </div>
+      )}
+      {crawlStatus?.status === 'CANCELLED' && (
+        <div className="bg-slate-100 border border-slate-200 text-slate-700 text-sm rounded-lg px-4 py-3">
+          {crawlStatus.message ?? '수집 작업을 취소했습니다.'}
         </div>
       )}
 
