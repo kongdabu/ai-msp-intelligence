@@ -171,7 +171,7 @@ public class ArticleService {
     // 미처리 기사 목록
     @Transactional(readOnly = true)
     public List<Article> getUnprocessedArticles() {
-        return articleRepository.findByIsProcessedFalseAndAnalysisStatusOrderByCollectedAtDesc(false, "COMPLETED");
+        return articleRepository.findByIsProcessedFalseAndAnalysisStatusOrderByCollectedAtDesc("COMPLETED");
     }
 
     // 처리 완료 표시
