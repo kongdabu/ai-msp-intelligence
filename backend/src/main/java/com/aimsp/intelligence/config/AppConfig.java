@@ -44,6 +44,9 @@ public class AppConfig {
     @Value("${app.crawl.official-site.request-delay-ms:1000}")
     private long officialSiteRequestDelayMs;
 
+    @Value("${app.crawl.official-site.max-candidates-per-source:50}")
+    private int officialSiteMaxCandidatesPerSource;
+
     @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:80,http://frontend:80}")
     private String corsAllowedOrigins;
 
@@ -61,6 +64,7 @@ public class AppConfig {
         return Math.min(100, Math.max(0, officialSiteMinimumRelevanceScore));
     }
     public long getOfficialSiteRequestDelayMs() { return Math.max(0, officialSiteRequestDelayMs); }
+    public int getOfficialSiteMaxCandidatesPerSource() { return Math.min(200, Math.max(1, officialSiteMaxCandidatesPerSource)); }
     @SuppressWarnings("null")
     public @NonNull String[] getCorsAllowedOrigins() {
         if (corsAllowedOrigins == null || corsAllowedOrigins.isBlank()) {

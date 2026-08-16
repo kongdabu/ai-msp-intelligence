@@ -37,7 +37,7 @@ public class ArticleService {
         Specification<Article> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (competitor != null) predicates.add(cb.equal(root.get("competitor"), competitor));
-            if (category != null)   predicates.add(cb.equal(root.get("category"), category));
+            addCategoryPredicate(category, root, cb, predicates);
             if (dateFrom != null)   predicates.add(cb.greaterThanOrEqualTo(root.get("publishedAt"), dateFrom));
             if (dateTo != null)     predicates.add(cb.lessThanOrEqualTo(root.get("publishedAt"), dateTo));
             return cb.and(predicates.toArray(new Predicate[0]));
@@ -63,7 +63,7 @@ public class ArticleService {
         Specification<Article> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (competitor != null)       predicates.add(cb.equal(root.get("competitor"), competitor));
-            if (category != null)         predicates.add(cb.equal(root.get("category"), category));
+            addCategoryPredicate(category, root, cb, predicates);
             if (sourceType != null)       predicates.add(cb.equal(root.get("sourceType"), sourceType));
             if (normalizedKeyword != null) {
                 String pattern = "%" + normalizedKeyword + "%";
@@ -78,6 +78,17 @@ public class ArticleService {
         };
 
         return PageResponseDto.from(articleRepository.findAll(spec, pageable).map(ArticleDto.Response::from));
+    }
+
+    /** 과거 복합 분류(A|B)와 현행 단일 분류 모두에서 같은 관심 주제를 조회한다. */
+    private void addCategoryPredicate(String category, jakarta.persistence.criteria.Root<Article> root,
+                                      jakarta.persistence.criteria.CriteriaBuilder cb, List<Predicate> predicates) {
+        if (category == null || category.isBlank()) return;
+        String pattern = "%|" + category + "|%";
+        predicates.add(cb.or(
+                cb.equal(root.<String>get("category"), category),
+                cb.like(cb.concat(cb.concat("|", root.<String>get("category")), "|"), pattern)
+        ));
     }
 
     // 저장(북마크)된 기사 목록 — 최근 저장 순

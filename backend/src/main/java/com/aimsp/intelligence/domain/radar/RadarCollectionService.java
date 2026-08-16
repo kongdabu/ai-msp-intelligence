@@ -9,9 +9,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
+import java.net.URI;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -65,8 +67,11 @@ public class RadarCollectionService {
                 .filter(article -> isWatchlistSource(article, watchlist))
                 .forEach(article -> candidatesByUrl.putIfAbsent(article.getUrl(), article));
 
+        Set<String> existingSourceUrls = radarSignalRepository.findBySourceUrlIn(candidatesByUrl.keySet()).stream()
+                .map(RadarSignal::getSourceUrl)
+                .collect(java.util.stream.Collectors.toSet());
         return candidatesByUrl.values().stream()
-                .filter(article -> radarSignalRepository.findBySourceUrl(article.getUrl()).isEmpty())
+                .filter(article -> !existingSourceUrls.contains(article.getUrl()))
                 .limit(MAX_ANALYSIS_PER_RUN)
                 .toList();
     }
@@ -74,10 +79,25 @@ public class RadarCollectionService {
     private boolean isWatchlistSource(Article article, List<RadarPlayer> watchlist) {
         String source = ((article.getSourceName() == null ? "" : article.getSourceName()) + " "
                 + (article.getUrl() == null ? "" : article.getUrl())).toLowerCase(Locale.ROOT);
-        return watchlist.stream()
-                .map(RadarPlayer::getName)
-                .map(name -> name.toLowerCase(Locale.ROOT).split("\\s+")[0])
-                .anyMatch(source::contains);
+        return watchlist.stream().anyMatch(player -> matchesPlayer(source, player));
+    }
+
+    private boolean matchesPlayer(String source, RadarPlayer player) {
+        String normalizedName = player.getName().toLowerCase(Locale.ROOT);
+        if (source.contains(normalizedName)) return true;
+        String domain = domainOf(player.getWebsite());
+        return domain != null && source.contains(domain);
+    }
+
+    private String domainOf(String website) {
+        if (website == null || website.isBlank()) return null;
+        try {
+            String host = URI.create(website).getHost();
+            if (host == null) return null;
+            return host.toLowerCase(Locale.ROOT).replaceFirst("^www\\.", "");
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private String sourceTier(Article article) {

@@ -54,7 +54,7 @@ public class InsightController {
     @SuppressWarnings("null")
     public ResponseEntity<InsightDto.Response> toggleBookmark(
             @PathVariable Long id,
-            @RequestBody InsightDto.BookmarkRequest request) {
+            @jakarta.validation.Valid @RequestBody InsightDto.BookmarkRequest request) {
         return ResponseEntity.ok(insightService.toggleBookmark(id, request.getBookmarked(), request.getNote()));
     }
 

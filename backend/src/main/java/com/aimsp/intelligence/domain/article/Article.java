@@ -18,6 +18,8 @@ import java.time.LocalDateTime;
     @Index(name = "idx_article_competitor_published", columnList = "competitor, published_at"),
     @Index(name = "idx_article_collected_at", columnList = "collected_at"),
     @Index(name = "idx_article_published_at", columnList = "published_at"),
+    @Index(name = "idx_article_category_published_at", columnList = "category, published_at"),
+    @Index(name = "idx_article_source_type_published_at", columnList = "source_type, published_at"),
     @Index(name = "idx_article_is_processed", columnList = "is_processed"),
     @Index(name = "idx_article_bookmarked", columnList = "bookmarked")
 })

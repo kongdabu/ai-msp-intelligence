@@ -82,6 +82,13 @@ export interface RadarPlayer {
   country: string
   website: string | null
   watchPriority: number
+  active: boolean
+}
+
+export interface RadarPlayerUpdate {
+  website: string | null
+  watchPriority: number
+  active: boolean
 }
 
 export interface RadarAssessment {
@@ -135,6 +142,14 @@ export interface RadarOverview {
   players: RadarPlayer[]
   recentSignals: RadarSignal[]
   weeklyBriefs: RadarWeeklyBrief[]
+}
+
+export interface PageResponse<T> {
+  content: T[]
+  totalElements: number
+  totalPages: number
+  size: number
+  number: number
 }
 
 export interface RadarCollectionStatus {

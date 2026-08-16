@@ -33,7 +33,7 @@ public class ArticleController {
             @RequestParam(defaultValue = "50") int limit) {
 
         return ResponseEntity.ok(
-                articleService.getArticlesList(competitor, category, dateFrom, dateTo, Math.min(limit, 100))
+                articleService.getArticlesList(competitor, category, dateFrom, dateTo, Math.min(Math.max(limit, 1), 100))
         );
     }
 
@@ -79,7 +79,7 @@ public class ArticleController {
     @SuppressWarnings("null")
     public ResponseEntity<ArticleDto.Response> toggleBookmark(
             @PathVariable Long id,
-            @RequestBody ArticleDto.BookmarkRequest request) {
+            @jakarta.validation.Valid @RequestBody ArticleDto.BookmarkRequest request) {
         return ResponseEntity.ok(articleService.toggleBookmark(id, request.getBookmarked(), request.getNote()));
     }
 

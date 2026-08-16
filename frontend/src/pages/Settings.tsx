@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSystemConfig, useUpdateSystemConfig } from '../hooks/useSystemConfig'
 import { SystemConfig } from '../types'
 import { Save, CheckCircle, AlertCircle } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 export default function Settings() {
   const { data: config, isLoading } = useSystemConfig()
@@ -41,6 +42,7 @@ export default function Settings() {
       <h1 className="text-xl font-bold text-gray-900 mb-6">시스템 설정</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <Link to="/settings/watch-list" className="flex items-center justify-between rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-800 hover:bg-blue-100"><span><span className="font-semibold">Radar 감시 대상 관리</span><span className="mt-1 block text-xs text-blue-700">사업자별 수집·분석 대상 여부와 우선순위를 관리합니다.</span></span><span aria-hidden="true">→</span></Link>
         {/* 인사이트 생성 설정 */}
         <div className="bg-white border border-gray-200 rounded-lg p-5">
           <h2 className="text-base font-semibold text-gray-800 mb-4">인사이트 생성 설정</h2>

@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 
@@ -91,6 +92,7 @@ public class ArticleDto {
     @NoArgsConstructor
     public static class BookmarkRequest {
         private Boolean bookmarked; // true=저장, false=해제
+        @Size(max = 500, message = "메모는 500자 이하여야 합니다.")
         private String note;        // 리마인드 메모 (선택)
     }
 }

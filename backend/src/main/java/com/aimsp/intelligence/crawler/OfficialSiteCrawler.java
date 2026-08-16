@@ -183,7 +183,13 @@ public class OfficialSiteCrawler implements ContentSourceCrawler {
             }
 
             List<Article> articles = new ArrayList<>();
-            for (String articleUrl : articleUrls) {
+            List<String> boundedArticleUrls = articleUrls.stream()
+                    .limit(appConfig.getOfficialSiteMaxCandidatesPerSource())
+                    .toList();
+            if (articleUrls.size() > boundedArticleUrls.size()) {
+                log.info("[{}] 후보 {}건 중 상한 {}건만 상세 수집", site.sourceName(), articleUrls.size(), boundedArticleUrls.size());
+            }
+            for (String articleUrl : boundedArticleUrls) {
                 fetchDelay();
                 parseArticle(articleUrl, site).ifPresent(articles::add);
             }

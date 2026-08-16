@@ -11,6 +11,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import org.springframework.lang.NonNull;
 import java.io.IOException;
+import java.security.MessageDigest;
 import java.util.Set;
 
 @Slf4j
@@ -28,8 +29,11 @@ public class ApiTokenFilter extends OncePerRequestFilter {
             "/api/battlecards/generate",
             "/api/admin/config",
             "/api/radar/signals",
+            "/api/radar/players",
             "/api/radar/weekly-briefs/generate",
-            "/api/radar/collect"
+            "/api/radar/collect",
+            "/api/articles/",
+            "/api/insights/"
     );
 
     @Override
@@ -44,7 +48,9 @@ public class ApiTokenFilter extends OncePerRequestFilter {
 
         if (needsToken) {
             String provided = request.getHeader("X-API-Token");
-            if (!secretToken.equals(provided)) {
+            if (provided == null || !MessageDigest.isEqual(
+                    secretToken.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                    provided.getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
                 log.warn("API Token 인증 실패: method={} path={} ip={}",
                         method, path, request.getRemoteAddr());
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -61,7 +67,10 @@ public class ApiTokenFilter extends OncePerRequestFilter {
         if ("GET".equalsIgnoreCase(method) || "OPTIONS".equalsIgnoreCase(method)) {
             return false;
         }
-        // 변경 API의 정확 매칭 또는 prefix
-        return PROTECTED_PATHS.stream().anyMatch(path::startsWith);
+        // 변경 API만 보호한다. /api/articles/와 /api/insights/는 북마크 변경 경로다.
+        return PROTECTED_PATHS.contains(path)
+                || (path.startsWith("/api/articles/") && path.endsWith("/bookmark"))
+                || (path.startsWith("/api/insights/") && path.endsWith("/bookmark"))
+                || path.startsWith("/api/radar/players/");
     }
 }

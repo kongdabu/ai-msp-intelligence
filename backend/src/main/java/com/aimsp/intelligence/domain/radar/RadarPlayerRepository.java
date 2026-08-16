@@ -9,4 +9,6 @@ public interface RadarPlayerRepository extends JpaRepository<RadarPlayer, Long> 
     List<RadarPlayer> findByActiveTrueOrderByLayerAscWatchPriorityAscNameAsc();
 
     boolean existsByName(String name);
+
+    long countByActiveTrue();
 }

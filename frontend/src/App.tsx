@@ -11,6 +11,7 @@ import Saved from './pages/Saved'
 import Settings from './pages/Settings'
 import Trends from './pages/Trends'
 import Radar from './pages/Radar'
+import WatchListSettings from './pages/WatchListSettings'
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -37,6 +38,7 @@ export default function App() {
               <Route path="/insights" element={<Insights />} />
               <Route path="/saved" element={<Saved />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/settings/watch-list" element={<WatchListSettings />} />
               <Route path="/trends" element={<Trends />} />
             </Routes>
           </main>

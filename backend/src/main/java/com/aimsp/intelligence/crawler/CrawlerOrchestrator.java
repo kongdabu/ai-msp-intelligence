@@ -6,19 +6,13 @@ import com.aimsp.intelligence.crawler.sources.AiEcosystemCrawler;
 import com.aimsp.intelligence.config.AppConfig;
 import com.aimsp.intelligence.domain.article.Article;
 import com.aimsp.intelligence.domain.article.ArticleService;
-import com.aimsp.intelligence.exception.AiApiUnavailableException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -41,37 +35,21 @@ public class CrawlerOrchestrator {
     private final OfficialSiteCrawler officialSiteCrawler;
     private final AppConfig appConfig;
 
-    private final ExecutorService crawlerPool = Executors.newFixedThreadPool(3);
-
-    @PreDestroy
-    public void shutdown() {
-        crawlerPool.shutdown();
-        try {
-            if (!crawlerPool.awaitTermination(10, TimeUnit.SECONDS)) {
-                crawlerPool.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            crawlerPool.shutdownNow();
-            Thread.currentThread().interrupt();
-        }
-    }
-
     @SuppressWarnings("null")
     public int crawlAll() {
-        if (!geminiApiClient.isAvailable()) {
-            throw new AiApiUnavailableException();
-        }
+        boolean aiAvailable = geminiApiClient.isAvailable();
+        if (!aiAvailable) log.warn("Gemini API를 사용할 수 없어 원문 수집만 수행하고 AI 요약·분류는 보류합니다.");
 
         int totalSaved = 0;
 
-        totalSaved += crawlAndSave(officialSiteCrawler.crawl(), "공식 사이트", true);
-        totalSaved += crawlAndSave(aiEcosystemCrawler.crawl(), "AI 생태계·사업모델 뉴스", false);
+        totalSaved += crawlAndSave(officialSiteCrawler.crawl(), "공식 사이트", true, aiAvailable);
+        totalSaved += crawlAndSave(aiEcosystemCrawler.crawl(), "AI 생태계·사업모델 뉴스", false, aiAvailable);
 
         log.info("=== 크롤링 완료: 총 {}건 저장 ===", totalSaved);
         return totalSaved;
     }
 
-    private int crawlAndSave(List<Article> articles, String sourceName, boolean officialSource) {
+    private int crawlAndSave(List<Article> articles, String sourceName, boolean officialSource, boolean aiAvailable) {
         int saved = 0;
         int skipped = 0;
         int preFiltered = 0;
@@ -86,7 +64,7 @@ public class CrawlerOrchestrator {
                     continue;
                 }
 
-                if (article.getOriginalContent() != null && !article.getOriginalContent().isBlank()) {
+                if (aiAvailable && article.getOriginalContent() != null && !article.getOriginalContent().isBlank()) {
                     SummaryGenerator.SummaryResult result = summaryGenerator.generateSummary(
                             article.getTitle(), article.getOriginalContent()
                     );
@@ -109,15 +87,13 @@ public class CrawlerOrchestrator {
                             article.setCategory(result.detectedCategory());
                         }
                     }
-                } else if (officialSource) {
+                } else if (officialSource && (article.getOriginalContent() == null || article.getOriginalContent().isBlank())) {
                     skipped++;
                     continue;
                 }
 
                 Article savedArticle = articleService.saveIfNotExists(article);
                 if (savedArticle != null) saved++;
-            } catch (AiApiUnavailableException e) {
-                throw e;
             } catch (Exception e) {
                 log.error("기사 저장 실패 [{}]: {}", article.getTitle(), e.getMessage());
             }
@@ -133,12 +109,4 @@ public class CrawlerOrchestrator {
         return TARGET_KEYWORDS.stream().anyMatch(text::contains);
     }
 
-    private List<Article> safeGet(CompletableFuture<List<Article>> future, String name) {
-        try {
-            return future.get();
-        } catch (Exception e) {
-            log.error("[{}] 크롤러 실패: {}", name, e.getMessage());
-            return List.of();
-        }
-    }
 }

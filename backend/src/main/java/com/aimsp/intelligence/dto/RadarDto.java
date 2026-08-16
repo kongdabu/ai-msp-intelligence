@@ -15,6 +15,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import org.hibernate.validator.constraints.URL;
 
 public final class RadarDto {
 
@@ -35,11 +37,19 @@ public final class RadarDto {
     public record LensResponse(String code, String label, String description, long signalCount) {
     }
 
-    public record PlayerResponse(Long id, String name, String layer, String country, String website, int watchPriority) {
+    public record PlayerResponse(Long id, String name, String layer, String country, String website, int watchPriority,
+                                 boolean active) {
         public static PlayerResponse from(RadarPlayer player) {
             return new PlayerResponse(player.getId(), player.getName(), player.getLayer(), player.getCountry(),
-                    player.getWebsite(), player.getWatchPriority());
+                    player.getWebsite(), player.getWatchPriority(), player.isActive());
         }
+    }
+
+    public record PlayerUpdateRequest(
+            @URL(protocol = "https") @Size(max = 500) String website,
+            @Min(1) @Max(10) int watchPriority,
+            boolean active
+    ) {
     }
 
     public record SignalResponse(
@@ -88,11 +98,11 @@ public final class RadarDto {
     }
 
     public record SignalRequest(
-            @NotBlank String title,
-            @NotBlank String fact,
-            @NotBlank String sourceUrl,
-            @NotBlank String sourceTier,
-            @NotBlank String signalType,
+            @NotBlank @Size(max = 500) String title,
+            @NotBlank @Size(max = 5000) String fact,
+            @NotBlank @URL(protocol = "https") @Size(max = 2000) String sourceUrl,
+            @NotBlank @Size(max = 40) String sourceTier,
+            @NotBlank @Size(max = 80) String signalType,
             @NotNull LocalDateTime occurredAt,
             @Min(0) @Max(100) int confidenceScore,
             @Min(0) @Max(100) int impactScore,
@@ -103,14 +113,14 @@ public final class RadarDto {
     }
 
     public record AssessmentRequest(
-            @NotBlank String whatChanged,
-            @NotBlank String industryStructureImpact,
-            String mspOpportunity,
-            String mspThreat,
-            String structuralRisk,
-            @NotBlank String recommendedAction,
-            String deliveryModel,
-            String pricingModel
+            @NotBlank @Size(max = 5000) String whatChanged,
+            @NotBlank @Size(max = 5000) String industryStructureImpact,
+            @Size(max = 5000) String mspOpportunity,
+            @Size(max = 5000) String mspThreat,
+            @Size(max = 5000) String structuralRisk,
+            @NotBlank @Size(max = 5000) String recommendedAction,
+            @Size(max = 500) String deliveryModel,
+            @Size(max = 500) String pricingModel
     ) {
     }
 

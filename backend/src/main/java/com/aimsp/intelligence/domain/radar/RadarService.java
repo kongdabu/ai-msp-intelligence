@@ -1,7 +1,12 @@
 package com.aimsp.intelligence.domain.radar;
 
 import com.aimsp.intelligence.dto.RadarDto;
+import com.aimsp.intelligence.dto.PageResponseDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,6 +16,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import jakarta.persistence.criteria.Predicate;
 
 @Service
 @RequiredArgsConstructor
@@ -23,17 +29,20 @@ public class RadarService {
 
     @Transactional(readOnly = true)
     public RadarDto.OverviewResponse getOverview() {
+        Map<String, Long> signalCountByLens = radarSignalRepository
+                .countByLensExcludingStatus(RadarSourceVerificationService.SOURCE_UNAVAILABLE).stream()
+                .collect(Collectors.toMap(row -> (String) row[0], row -> (Long) row[1]));
         List<RadarSignal> recentSignals = radarSignalRepository
                 .findTop12ByStatusNotOrderByOccurredAtDescCapturedAtDesc(RadarSourceVerificationService.SOURCE_UNAVAILABLE);
         List<RadarDto.LensResponse> lenses = RadarCatalog.LENSES.stream()
                 .map(lens -> new RadarDto.LensResponse(lens.code(), lens.label(), lens.description(),
-                        recentSignals.stream().filter(signal -> signal.getLenses().contains(lens.code())).count()))
+                        signalCountByLens.getOrDefault(lens.code(), 0L)))
                 .toList();
         long highImpactSignalCount = radarSignalRepository
                 .countByStatusNotAndImpactScoreGreaterThanEqual(RadarSourceVerificationService.SOURCE_UNAVAILABLE, 80);
 
         return new RadarDto.OverviewResponse(
-                Math.toIntExact(radarPlayerRepository.count()),
+                Math.toIntExact(radarPlayerRepository.countByActiveTrue()),
                 Math.toIntExact(radarSignalRepository.count()),
                 Math.toIntExact(highImpactSignalCount),
                 lenses,
@@ -46,10 +55,47 @@ public class RadarService {
     }
 
     @Transactional(readOnly = true)
-    public List<RadarDto.SignalResponse> getSignals() {
-        return radarSignalRepository
-                .findTop12ByStatusNotOrderByOccurredAtDescCapturedAtDesc(RadarSourceVerificationService.SOURCE_UNAVAILABLE).stream()
-                .map(RadarDto.SignalResponse::from).toList();
+    public PageResponseDto<RadarDto.SignalResponse> getSignals(String lens, Integer minimumImpactScore, int page, int size) {
+        if (lens != null && !lens.isBlank() && RadarCatalog.LENSES.stream().noneMatch(item -> item.code().equals(lens))) {
+            throw new IllegalArgumentException("지원하지 않는 Radar 관점입니다: " + lens);
+        }
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 50);
+        Specification<RadarSignal> specification = (root, query, cb) -> {
+            List<Predicate> predicates = new java.util.ArrayList<>();
+            predicates.add(cb.notEqual(root.get("status"), RadarSourceVerificationService.SOURCE_UNAVAILABLE));
+            if (lens != null && !lens.isBlank()) {
+                predicates.add(cb.equal(root.join("lenses"), lens));
+                query.distinct(true);
+            }
+            if (minimumImpactScore != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("impactScore"), Math.min(Math.max(minimumImpactScore, 0), 100)));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        Pageable pageable = PageRequest.of(safePage, safeSize,
+                Sort.by(Sort.Order.desc("impactScore"), Sort.Order.desc("occurredAt"), Sort.Order.desc("capturedAt")));
+        return PageResponseDto.from(radarSignalRepository.findAll(specification, pageable).map(RadarDto.SignalResponse::from));
+    }
+
+    @Transactional(readOnly = true)
+    public List<RadarDto.PlayerResponse> getPlayers() {
+        return radarPlayerRepository.findAll().stream()
+                .sorted(java.util.Comparator.comparing(RadarPlayer::getLayer)
+                        .thenComparingInt(RadarPlayer::getWatchPriority)
+                        .thenComparing(RadarPlayer::getName))
+                .map(RadarDto.PlayerResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public RadarDto.PlayerResponse updatePlayer(Long id, RadarDto.PlayerUpdateRequest request) {
+        RadarPlayer player = radarPlayerRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Watch List 항목을 찾을 수 없습니다: " + id));
+        player.setWebsite(request.website());
+        player.setWatchPriority(request.watchPriority());
+        player.setActive(request.active());
+        return RadarDto.PlayerResponse.from(radarPlayerRepository.save(player));
     }
 
     @Transactional
@@ -59,6 +105,9 @@ public class RadarService {
         }
         validateLenses(request.lenses());
         RadarSourceVerifier.SourceCheckResult sourceCheck = radarSourceVerifier.check(request.sourceUrl());
+        if (sourceCheck.status() == RadarSourceVerifier.CheckStatus.REJECTED) {
+            throw new IllegalArgumentException("공개 HTTP/HTTPS 원문 URL만 등록할 수 있습니다.");
+        }
         if (sourceCheck.status() == RadarSourceVerifier.CheckStatus.UNAVAILABLE) {
             throw new IllegalArgumentException("원문 URL을 확인할 수 없어 Radar Signal로 등록하지 않았습니다.");
         }

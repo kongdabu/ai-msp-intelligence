@@ -1,8 +1,8 @@
 package com.aimsp.intelligence.config;
 
-import com.aimsp.intelligence.crawler.CrawlerOrchestrator;
 import com.aimsp.intelligence.domain.battlecard.BattleCardService;
 import com.aimsp.intelligence.domain.insight.InsightService;
+import com.aimsp.intelligence.domain.radar.RadarCollectionService;
 import com.aimsp.intelligence.exception.AiApiUnavailableException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,18 +16,19 @@ import org.springframework.scheduling.annotation.Scheduled;
 @RequiredArgsConstructor
 public class SchedulerConfig {
 
-    private final CrawlerOrchestrator crawlerOrchestrator;
+    private final RadarCollectionService radarCollectionService;
     private final InsightService insightService;
     private final BattleCardService battleCardService;
     /**
-     * 기사 수집 - 매일 KST 01:00 (UTC 16:00)
+     * 기사·Radar Signal 수집 - 매일 KST 01:00 (UTC 16:00)
      */
     @Scheduled(cron = "0 0 1 * * *", zone = "Asia/Seoul")
     public void scheduledCrawl() {
-        TaskExecutionLogger.logStart(log, "정기 배치: 기사 수집");
+        TaskExecutionLogger.logStart(log, "정기 배치: 기사 및 Radar 수집");
         try {
-            int count = crawlerOrchestrator.crawlAll();
-            log.info("[배치: 기사 수집] 완료: 신규 {}건", count);
+            RadarCollectionService.CollectionResult result = radarCollectionService.collect();
+            log.info("[배치: 기사·Radar 수집] 완료: 신규 기사 {}건, 분석 {}건, Signal {}건",
+                    result.collectedArticleCount(), result.analyzedArticleCount(), result.savedSignalCount());
         } catch (AiApiUnavailableException e) {
             log.error("[배치: 기사 수집] 중단 - Gemini API 비정상: {}", e.getMessage());
         } catch (Exception e) {
