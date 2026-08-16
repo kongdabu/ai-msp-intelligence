@@ -77,6 +77,10 @@ public class RadarCollectionService {
         return new CollectionResult(0, candidates.size(), savedSignalCount);
     }
 
+    private static final List<String> PRICING_KEYWORDS = List.of(
+            "pricing", "price", "monetization", "요금", "가격", "과금", "토큰 단가", "토큰 비용", "비용 절감", "할인", "캐싱"
+    );
+
     private List<Article> buildCandidates(List<RadarPlayer> watchlist) {
         List<Article> pendingArticles = articleRepository.findByAnalysisStatusAndRadarAnalysisStatusOrderByCollectedAtDesc(
                 ArticleAnalysisService.COMPLETED, "PENDING", PageRequest.of(0, 100)).getContent();
@@ -85,7 +89,7 @@ public class RadarCollectionService {
                 .collect(java.util.stream.Collectors.toSet());
         return pendingArticles.stream()
                 .peek(article -> {
-                    if (!isWatchlistSource(article, watchlist)) {
+                    if (!isWatchlistTarget(article, watchlist)) {
                         article.setRadarAnalysisStatus("NOT_TARGET");
                         article.setRadarAnalyzedAt(LocalDateTime.now());
                         articleRepository.save(article);
@@ -96,21 +100,38 @@ public class RadarCollectionService {
                     }
                 })
                 .filter(article -> "PENDING".equals(article.getRadarAnalysisStatus()))
+                .sorted(java.util.Comparator.comparingInt(this::candidatePriority).reversed()
+                        .thenComparing(Article::getCollectedAt, java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder())))
                 .limit(appConfig.getRadarAnalysisPerRun())
                 .toList();
     }
 
-    private boolean isWatchlistSource(Article article, List<RadarPlayer> watchlist) {
-        String source = ((article.getSourceName() == null ? "" : article.getSourceName()) + " "
-                + (article.getUrl() == null ? "" : article.getUrl())).toLowerCase(Locale.ROOT);
-        return watchlist.stream().anyMatch(player -> matchesPlayer(source, player));
+    private int candidatePriority(Article article) {
+        int score = 0;
+        String text = ((article.getTitle() == null ? "" : article.getTitle()) + " "
+                + (article.getSummary() == null ? "" : article.getSummary())).toLowerCase(Locale.ROOT);
+        if (PRICING_KEYWORDS.stream().anyMatch(text::contains)) {
+            score += 100;
+        }
+        if ("HOMEPAGE".equals(article.getSourceType())) {
+            score += 50;
+        }
+        return score;
     }
 
-    private boolean matchesPlayer(String source, RadarPlayer player) {
+    private boolean isWatchlistTarget(Article article, List<RadarPlayer> watchlist) {
+        String text = ((article.getSourceName() == null ? "" : article.getSourceName()) + " "
+                + (article.getUrl() == null ? "" : article.getUrl()) + " "
+                + (article.getTitle() == null ? "" : article.getTitle()) + " "
+                + (article.getSummary() == null ? "" : article.getSummary())).toLowerCase(Locale.ROOT);
+        return watchlist.stream().anyMatch(player -> matchesPlayer(text, player));
+    }
+
+    private boolean matchesPlayer(String text, RadarPlayer player) {
         String normalizedName = player.getName().toLowerCase(Locale.ROOT);
-        if (source.contains(normalizedName)) return true;
+        if (text.contains(normalizedName)) return true;
         String domain = domainOf(player.getWebsite());
-        return domain != null && source.contains(domain);
+        return domain != null && text.contains(domain);
     }
 
     private String domainOf(String website) {

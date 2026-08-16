@@ -22,6 +22,7 @@ public class CrawlerOrchestrator {
             "accenture", "딜로이트", "deloitte", "pwc", "fde", "rde", "ode", "partnership", "파트너십",
             "agentic ai", "agentic", "aiops", "ai ops", "forward deployed", "resident deployed",
             "ai pricing model", "ai pricing", "usage-based pricing", "outcome-based pricing", "value-based pricing", "ai monetization",
+            "ai 요금", "ai 가격", "ai 과금", "api 가격", "토큰 단가",
             "ai 인력 양성", "ai 인재", "ai 교육", "ai 리스킬링", "ai workforce", "ai talent", "ai training", "ai upskilling", "ai reskilling",
             "ai 価格モデル", "ai 人材育成", "ai リスキリング", "生成ai 人材育成"
     );

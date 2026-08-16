@@ -19,7 +19,8 @@ public class AiEcosystemCrawler {
     private static final List<String> QUERIES = List.of(
             "Frontier AI Labs", "OpenAI", "Anthropic", "Gemini AI", "AWS AI", "Microsoft AI", "엔비디아 AI",
             "Accenture AI", "딜로이트 AI", "PwC AI", "AI FDE", "AI RDE", "AI ODE", "AI Partnership", "Agentic AI", "AIOps",
-            "AI Pricing Model", "AI monetization", "AI 인력 양성", "AI 人材育成", "AI リスキリング"
+            "AI Pricing Model", "AI monetization", "AI 요금제", "AI 가격 인하", "AI API 가격", "AI 과금",
+            "AI 인력 양성", "AI 人材育成", "AI リスキリング"
     );
     private final NaverNewsClient naverNewsClient;
 

@@ -27,7 +27,7 @@ public class RadarSignalAnalyzer {
             FRONTIER_LABS: 모델 경쟁력·생태계 지배력
             PARTNERSHIP: 모델사·클라우드·SI의 결합 및 판매 구조
             DEPLOYMENT_MODEL: FDE·RDE·ODE 등 현장 투입형 AI 딜리버리
-            AI_PRICING: 사용량·성과형 등 AI 과금 모델
+            AI_PRICING: 사용량·성과형 등 AI 과금 모델, API 토큰 단가 인하·할인 정책, 프롬프트 캐싱·배치 과금 등 비용 체계 변화
             AGENTIC_OPERATIONS: AIOps·운영 자동화·Agentic ITO
 
             [Watch List]
@@ -36,7 +36,7 @@ public class RadarSignalAnalyzer {
             [출력 규칙]
             - JSON만 응답한다.
             - playerNames는 Watch List에 있는 이름만 쓴다.
-            - lenses는 위 코드 중 1~3개만 쓴다.
+            - lenses는 위 코드 중 1~3개만 쓴다. API 가격, 요금제, 토큰 단가, 과금 방식 변경이 포함되면 반드시 AI_PRICING을 lenses에 포함한다.
             - fact는 원문에 근거한 한국어 300자 이내 사실 요약이다.
             - 점수는 0~100 정수다.
             - 사업 구조 영향과 권고 행동은 한국 AI MSP 관점에서, 사실과 해석을 구분해 간결하게 쓴다.
