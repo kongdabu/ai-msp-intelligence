@@ -36,7 +36,7 @@ frontend/src/
 - 기사 수집: OpenAI·Anthropic·Gemini·AWS·Microsoft·엔비디아, Accenture·딜로이트·PwC, FDE·RDE·ODE·파트너십, Agentic AI·AIOps 관련 신규 기사를 수집하고 Gemini로 관심 주제를 분류한다. 수동 수집은 백그라운드 작업으로 실행하며 상태 API로 진행 상황을 조회한다.
 - 인사이트: 미처리 기사를 기반으로 전략 인사이트와 근거 기사를 연결한다.
 - 트렌드 뉴스: 시장 트렌드 기사와 AI 분석 결과를 제공한다.
-- 자동 스케줄(Asia/Seoul): 기사 수집 매일 01:00, 인사이트 생성 매일 02:00, 배틀카드 생성 매주 월요일 03:00.
+- 자동 스케줄(Asia/Seoul): 기사 수집 매일 01:00, 인사이트 생성 매일 02:00, 기사 AI 분석·Radar Signal 처리 하루 4회.
 
 ## Gemini 설정
 

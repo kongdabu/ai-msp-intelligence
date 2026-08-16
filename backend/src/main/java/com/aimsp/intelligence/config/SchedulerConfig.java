@@ -1,6 +1,5 @@
 package com.aimsp.intelligence.config;
 
-import com.aimsp.intelligence.domain.battlecard.BattleCardService;
 import com.aimsp.intelligence.domain.article.ArticleAnalysisRetryService;
 import com.aimsp.intelligence.crawler.CrawlerOrchestrator;
 import com.aimsp.intelligence.domain.insight.InsightService;
@@ -21,7 +20,6 @@ public class SchedulerConfig {
     private final CrawlerOrchestrator crawlerOrchestrator;
     private final RadarCollectionService radarCollectionService;
     private final InsightService insightService;
-    private final BattleCardService battleCardService;
     private final ArticleAnalysisRetryService articleAnalysisRetryService;
     /**
      * 원문 수집 - 매일 KST 01:00 (UTC 16:00). Gemini 분석은 별도 저빈도 배치가 수행한다.
@@ -64,22 +62,6 @@ public class SchedulerConfig {
                     analyzedArticleCount, result.analyzedArticleCount(), result.savedSignalCount());
         } catch (Exception e) {
             log.error("[배치: AI 분석] 실패: {}", e.getMessage(), e);
-        }
-    }
-
-    /**
-     * 배틀카드 생성 - 매주 월요일 KST 03:00
-     */
-    @Scheduled(cron = "0 0 3 * * MON", zone = "Asia/Seoul")
-    public void scheduledBattleCardGeneration() {
-        TaskExecutionLogger.logStart(log, "정기 배치: 배틀카드 생성");
-        try {
-            int count = battleCardService.generateBattleCards().size();
-            log.info("[스케줄] 배틀카드 생성 완료: {}건", count);
-        } catch (AiApiUnavailableException e) {
-            log.error("[스케줄] 배틀카드 생성 중단 - Gemini API 비정상: {}", e.getMessage());
-        } catch (Exception e) {
-            log.error("[스케줄] 배틀카드 생성 실패: {}", e.getMessage(), e);
         }
     }
 
