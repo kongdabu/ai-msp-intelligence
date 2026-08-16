@@ -65,6 +65,11 @@ public class Article {
     @Column(nullable = false, length = 20)
     private String analysisStatus = "PENDING"; // PENDING|COMPLETED|REJECTED
 
+    @Column(nullable = false, length = 20)
+    private String radarAnalysisStatus = "PENDING"; // PENDING|COMPLETED|IRRELEVANT|NOT_TARGET
+
+    private LocalDateTime radarAnalyzedAt;
+
     @Column(nullable = false)
     private Boolean bookmarked = false; // 저장(북마크) 여부 — 나중에 다시 조회
 

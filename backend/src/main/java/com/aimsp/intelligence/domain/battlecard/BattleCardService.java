@@ -2,6 +2,7 @@ package com.aimsp.intelligence.domain.battlecard;
 
 import com.aimsp.intelligence.ai.BattleCardGenerator;
 import com.aimsp.intelligence.ai.GeminiApiClient;
+import com.aimsp.intelligence.ai.GeminiWorkCoordinator;
 import com.aimsp.intelligence.domain.article.Article;
 import com.aimsp.intelligence.domain.article.ArticleRepository;
 import com.aimsp.intelligence.dto.BattleCardDto;
@@ -31,6 +32,7 @@ public class BattleCardService {
     private final ArticleRepository articleRepository;
     private final BattleCardGenerator battleCardGenerator;
     private final GeminiApiClient geminiApiClient;
+    private final GeminiWorkCoordinator geminiWorkCoordinator;
     private final @NonNull PlatformTransactionManager transactionManager;
 
     // 경쟁사별 최신 배틀카드 1건씩 조회 (JOIN FETCH로 N+1 방지)
@@ -64,6 +66,10 @@ public class BattleCardService {
 
     // 전체 경쟁사 배틀카드 수동 생성
     public List<BattleCardDto.Response> generateBattleCards() {
+        return geminiWorkCoordinator.executeExclusive("배틀카드 생성", this::generateBattleCardsInternal);
+    }
+
+    private List<BattleCardDto.Response> generateBattleCardsInternal() {
         if (!geminiApiClient.isAvailable()) {
             throw new AiApiUnavailableException();
         }

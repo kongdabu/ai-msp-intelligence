@@ -1,6 +1,7 @@
 package com.aimsp.intelligence.domain.insight;
 
 import com.aimsp.intelligence.ai.GeminiApiClient;
+import com.aimsp.intelligence.ai.GeminiWorkCoordinator;
 import com.aimsp.intelligence.ai.InsightGenerator;
 import com.aimsp.intelligence.ai.InsightValidator;
 import com.aimsp.intelligence.domain.article.Article;
@@ -36,6 +37,7 @@ public class InsightService {
     private final InsightGenerator insightGenerator;
     private final InsightValidator insightValidator;
     private final GeminiApiClient geminiApiClient;
+    private final GeminiWorkCoordinator geminiWorkCoordinator;
     private final @NonNull PlatformTransactionManager transactionManager;
 
     // 인사이트 목록 조회
@@ -97,6 +99,10 @@ public class InsightService {
 
     // 수동 인사이트 생성 트리거
     public List<InsightDto.Response> generateInsights() {
+        return geminiWorkCoordinator.executeExclusive("인사이트 생성", this::generateInsightsInternal);
+    }
+
+    private List<InsightDto.Response> generateInsightsInternal() {
         if (!geminiApiClient.isAvailable()) {
             throw new AiApiUnavailableException();
         }

@@ -1,6 +1,7 @@
 package com.aimsp.intelligence.domain.trend;
 
 import com.aimsp.intelligence.ai.GeminiApiClient;
+import com.aimsp.intelligence.ai.GeminiWorkCoordinator;
 import com.aimsp.intelligence.ai.TrendNewsGenerator;
 import com.aimsp.intelligence.domain.article.Article;
 import com.aimsp.intelligence.domain.article.ArticleRepository;
@@ -36,6 +37,7 @@ public class TrendNewsService {
     private final ArticleRepository articleRepository;
     private final TrendNewsGenerator trendNewsGenerator;
     private final GeminiApiClient geminiApiClient;
+    private final GeminiWorkCoordinator geminiWorkCoordinator;
     private final @NonNull PlatformTransactionManager transactionManager;
 
     @Transactional(readOnly = true)
@@ -53,6 +55,10 @@ public class TrendNewsService {
     }
 
     public List<TrendNewsDto.Response> generateTrendNews() {
+        return geminiWorkCoordinator.executeExclusive("Trend News 생성", this::generateTrendNewsInternal);
+    }
+
+    private List<TrendNewsDto.Response> generateTrendNewsInternal() {
         if (!geminiApiClient.isAvailable()) throw new AiApiUnavailableException();
 
         LocalDateTime periodEnd = LocalDateTime.now();

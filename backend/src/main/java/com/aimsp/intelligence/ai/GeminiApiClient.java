@@ -23,7 +23,8 @@ public class GeminiApiClient {
     private final ObjectMapper objectMapper;
 
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
-    private static final int MAX_RETRIES = 3;
+    // 429·503은 즉시 재시도하지 않고 공용 대기열의 다음 실행으로 넘긴다.
+    private static final int MAX_RETRIES = 1;
     private static final long DEFAULT_RETRY_DELAY_MS = 30000; // 30초
     private final AtomicLong lastCallTime = new AtomicLong(0);
     private final AtomicLong cooldownUntil = new AtomicLong(0);

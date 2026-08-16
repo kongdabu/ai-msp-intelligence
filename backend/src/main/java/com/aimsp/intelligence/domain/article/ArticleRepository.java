@@ -34,7 +34,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
     """)
     List<Object[]> countByCategoryAndDate(@Param("since") LocalDateTime since);
 
-    List<Article> findByIsProcessedFalseOrderByCollectedAtDesc();
+    List<Article> findByIsProcessedFalseAndAnalysisStatusOrderByCollectedAtDesc(Boolean isProcessed, String analysisStatus);
 
     // Trend News 생성용: 수집일 기준 기간 내 기사 전체 조회
     List<Article> findByCollectedAtBetweenOrderByCollectedAtDesc(LocalDateTime start, LocalDateTime end);
@@ -45,6 +45,9 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
 
     List<Article> findTop5ByOrderByPublishedAtDesc();
 
-    List<Article> findTop5ByAnalysisStatusOrderByCollectedAtAsc(String analysisStatus);
+    Page<Article> findByAnalysisStatusOrderByCollectedAtDesc(String analysisStatus, Pageable pageable);
+
+    Page<Article> findByAnalysisStatusAndRadarAnalysisStatusOrderByCollectedAtDesc(
+            String analysisStatus, String radarAnalysisStatus, Pageable pageable);
 
 }

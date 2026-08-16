@@ -2,6 +2,7 @@ package com.aimsp.intelligence.domain.radar;
 
 import com.aimsp.intelligence.ai.GeminiApiClient;
 import com.aimsp.intelligence.domain.article.Article;
+import com.aimsp.intelligence.exception.AiApiUnavailableException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -71,25 +72,27 @@ public class RadarSignalAnalyzer {
             String response = geminiApiClient.call(String.format(PROMPT_TEMPLATE, playerNames, article.getTitle(), truncatedContent));
             if (response == null) return null;
             JsonNode node = objectMapper.readTree(response);
-            if (!node.path("isRelevant").asBoolean(false)) return null;
+            if (!node.path("isRelevant").asBoolean(false)) return AnalysisResult.irrelevant();
 
             Set<String> lenses = objectMapper.convertValue(node.path("lenses"), objectMapper.getTypeFactory()
                     .constructCollectionType(Set.class, String.class));
             Set<String> players = objectMapper.convertValue(node.path("playerNames"), objectMapper.getTypeFactory()
                     .constructCollectionType(Set.class, String.class));
-            if (lenses == null || lenses.isEmpty() || players == null || players.isEmpty()) return null;
+            if (lenses == null || lenses.isEmpty() || players == null || players.isEmpty()) return AnalysisResult.irrelevant();
 
             return new AnalysisResult(
-                    node.path("fact").asText(), lenses, players,
+                    true, node.path("fact").asText(), lenses, players,
                     clamp(node.path("confidenceScore").asInt()), clamp(node.path("impactScore").asInt()),
                     node.path("signalType").asText("MARKET_MOVE"), node.path("whatChanged").asText(),
                     node.path("industryStructureImpact").asText(), nullableText(node, "mspOpportunity"),
                     nullableText(node, "mspThreat"), nullableText(node, "structuralRisk"),
                     node.path("recommendedAction").asText()
             );
+        } catch (AiApiUnavailableException e) {
+            throw e;
         } catch (Exception e) {
             log.warn("Radar 신호 분석 실패: {}", article.getTitle());
-            return null;
+            return AnalysisResult.irrelevant();
         }
     }
 
@@ -102,9 +105,12 @@ public class RadarSignalAnalyzer {
         return value == null || value.isBlank() ? null : value;
     }
 
-    public record AnalysisResult(String fact, Set<String> lenses, Set<String> playerNames, int confidenceScore,
+    public record AnalysisResult(boolean relevant, String fact, Set<String> lenses, Set<String> playerNames, int confidenceScore,
                                  int impactScore, String signalType, String whatChanged,
                                  String industryStructureImpact, String mspOpportunity, String mspThreat,
                                  String structuralRisk, String recommendedAction) {
+        private static AnalysisResult irrelevant() {
+            return new AnalysisResult(false, "", Set.of(), Set.of(), 0, 0, "", "", "", null, null, null, "");
+        }
     }
 }

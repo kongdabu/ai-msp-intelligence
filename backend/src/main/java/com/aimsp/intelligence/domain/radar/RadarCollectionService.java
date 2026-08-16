@@ -1,49 +1,57 @@
 package com.aimsp.intelligence.domain.radar;
 
-import com.aimsp.intelligence.crawler.CrawlerOrchestrator;
+import com.aimsp.intelligence.ai.GeminiWorkCoordinator;
+import com.aimsp.intelligence.config.AppConfig;
 import com.aimsp.intelligence.domain.article.Article;
+import com.aimsp.intelligence.domain.article.ArticleAnalysisService;
 import com.aimsp.intelligence.domain.article.ArticleRepository;
 import com.aimsp.intelligence.dto.RadarDto;
+import com.aimsp.intelligence.exception.AiApiUnavailableException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
 import java.net.URI;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class RadarCollectionService {
 
-    private static final int MAX_ANALYSIS_PER_RUN = 12;
-
-    private final CrawlerOrchestrator crawlerOrchestrator;
     private final ArticleRepository articleRepository;
     private final RadarPlayerRepository radarPlayerRepository;
     private final RadarSignalRepository radarSignalRepository;
     private final RadarSignalAnalyzer radarSignalAnalyzer;
     private final RadarService radarService;
+    private final GeminiWorkCoordinator geminiWorkCoordinator;
+    private final AppConfig appConfig;
 
     public CollectionResult collect() {
-        LocalDateTime startedAt = LocalDateTime.now();
-        int collectedArticleCount = crawlerOrchestrator.crawlAll();
+        return geminiWorkCoordinator.executeExclusive("Radar Signal 분석", this::collectInternal);
+    }
+
+    private CollectionResult collectInternal() {
         List<RadarPlayer> watchlist = radarPlayerRepository.findByActiveTrueOrderByLayerAscWatchPriorityAscNameAsc();
-        List<Article> candidates = buildCandidates(startedAt, watchlist);
+        List<Article> candidates = buildCandidates(watchlist);
 
         int savedSignalCount = 0;
         for (Article article : candidates) {
             if (Thread.currentThread().isInterrupted()) throw new CancellationException("Radar 수집 작업이 취소되었습니다.");
-            RadarSignalAnalyzer.AnalysisResult analysis = radarSignalAnalyzer.analyze(article, watchlist);
-            if (analysis == null || analysis.fact().isBlank() || analysis.whatChanged().isBlank()
-                    || analysis.industryStructureImpact().isBlank() || analysis.recommendedAction().isBlank()) {
-                continue;
-            }
             try {
+                RadarSignalAnalyzer.AnalysisResult analysis = radarSignalAnalyzer.analyze(article, watchlist);
+                article.setRadarAnalyzedAt(LocalDateTime.now());
+                if (!analysis.relevant() || analysis.fact().isBlank() || analysis.whatChanged().isBlank()
+                        || analysis.industryStructureImpact().isBlank() || analysis.recommendedAction().isBlank()) {
+                    article.setRadarAnalysisStatus("IRRELEVANT");
+                    articleRepository.save(article);
+                    continue;
+                }
                 radarService.registerSignal(new RadarDto.SignalRequest(
                         article.getTitle(), analysis.fact(), article.getUrl(), sourceTier(article), analysis.signalType(),
                         article.getPublishedAt() == null ? article.getCollectedAt() : article.getPublishedAt(),
@@ -52,29 +60,43 @@ public class RadarCollectionService {
                                 analysis.mspOpportunity(), analysis.mspThreat(), analysis.structuralRisk(),
                                 analysis.recommendedAction(), null, null)
                 ));
+                article.setRadarAnalysisStatus("COMPLETED");
+                articleRepository.save(article);
                 savedSignalCount++;
-            } catch (IllegalArgumentException ignored) {
-                // 중복 URL, 유효하지 않은 Watch List 등은 해당 기사만 건너뛴다.
+            } catch (AiApiUnavailableException e) {
+                article.setRadarAnalysisStatus("PENDING");
+                articleRepository.save(article);
+                log.warn("Gemini 호출 제한으로 Radar 분석을 중단하고 다음 배치로 넘깁니다.");
+                break;
+            } catch (IllegalArgumentException e) {
+                article.setRadarAnalysisStatus("IRRELEVANT");
+                article.setRadarAnalyzedAt(LocalDateTime.now());
+                articleRepository.save(article);
             }
         }
-        return new CollectionResult(collectedArticleCount, candidates.size(), savedSignalCount);
+        return new CollectionResult(0, candidates.size(), savedSignalCount);
     }
 
-    private List<Article> buildCandidates(LocalDateTime startedAt, List<RadarPlayer> watchlist) {
-        Map<String, Article> candidatesByUrl = new LinkedHashMap<>();
-        articleRepository.findByCollectedAtBetweenOrderByCollectedAtDesc(startedAt, LocalDateTime.now())
-                .forEach(article -> candidatesByUrl.put(article.getUrl(), article));
-        // Watch List에 새 사업자가 추가되면 기존에 수집한 해당 사업자의 원문도 재분석한다.
-        articleRepository.findTop200ByOrderByCollectedAtDesc().stream()
-                .filter(article -> isWatchlistSource(article, watchlist))
-                .forEach(article -> candidatesByUrl.putIfAbsent(article.getUrl(), article));
-
-        Set<String> existingSourceUrls = radarSignalRepository.findBySourceUrlIn(candidatesByUrl.keySet()).stream()
+    private List<Article> buildCandidates(List<RadarPlayer> watchlist) {
+        List<Article> pendingArticles = articleRepository.findByAnalysisStatusAndRadarAnalysisStatusOrderByCollectedAtDesc(
+                ArticleAnalysisService.COMPLETED, "PENDING", PageRequest.of(0, 100)).getContent();
+        Set<String> existingSourceUrls = radarSignalRepository.findBySourceUrlIn(pendingArticles.stream().map(Article::getUrl).toList()).stream()
                 .map(RadarSignal::getSourceUrl)
                 .collect(java.util.stream.Collectors.toSet());
-        return candidatesByUrl.values().stream()
-                .filter(article -> !existingSourceUrls.contains(article.getUrl()))
-                .limit(MAX_ANALYSIS_PER_RUN)
+        return pendingArticles.stream()
+                .peek(article -> {
+                    if (!isWatchlistSource(article, watchlist)) {
+                        article.setRadarAnalysisStatus("NOT_TARGET");
+                        article.setRadarAnalyzedAt(LocalDateTime.now());
+                        articleRepository.save(article);
+                    } else if (existingSourceUrls.contains(article.getUrl())) {
+                        article.setRadarAnalysisStatus("COMPLETED");
+                        article.setRadarAnalyzedAt(LocalDateTime.now());
+                        articleRepository.save(article);
+                    }
+                })
+                .filter(article -> "PENDING".equals(article.getRadarAnalysisStatus()))
+                .limit(appConfig.getRadarAnalysisPerRun())
                 .toList();
     }
 

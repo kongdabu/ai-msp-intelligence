@@ -48,6 +48,8 @@ app:
     model: ${GEMINI_MODEL:gemini-3.5-flash-lite}
     max-tokens: 4096
     rate-limit-ms: ${GEMINI_RATE_LIMIT_MS:10000}  # API 요금제 한도에 맞춰 환경변수로 조정
+    article-analysis-per-run: ${GEMINI_ARTICLE_ANALYSIS_PER_RUN:5}
+    radar-analysis-per-run: ${GEMINI_RADAR_ANALYSIS_PER_RUN:3}
   naver:
     client-id: ${NAVER_CLIENT_ID:}
     client-secret: ${NAVER_CLIENT_SECRET:}

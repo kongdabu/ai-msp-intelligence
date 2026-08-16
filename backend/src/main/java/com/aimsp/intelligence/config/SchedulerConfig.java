@@ -2,6 +2,7 @@ package com.aimsp.intelligence.config;
 
 import com.aimsp.intelligence.domain.battlecard.BattleCardService;
 import com.aimsp.intelligence.domain.article.ArticleAnalysisRetryService;
+import com.aimsp.intelligence.crawler.CrawlerOrchestrator;
 import com.aimsp.intelligence.domain.insight.InsightService;
 import com.aimsp.intelligence.domain.radar.RadarCollectionService;
 import com.aimsp.intelligence.exception.AiApiUnavailableException;
@@ -17,22 +18,20 @@ import org.springframework.scheduling.annotation.Scheduled;
 @RequiredArgsConstructor
 public class SchedulerConfig {
 
+    private final CrawlerOrchestrator crawlerOrchestrator;
     private final RadarCollectionService radarCollectionService;
     private final InsightService insightService;
     private final BattleCardService battleCardService;
     private final ArticleAnalysisRetryService articleAnalysisRetryService;
     /**
-     * 기사·Radar Signal 수집 - 매일 KST 01:00 (UTC 16:00)
+     * 원문 수집 - 매일 KST 01:00 (UTC 16:00). Gemini 분석은 별도 저빈도 배치가 수행한다.
      */
     @Scheduled(cron = "0 0 1 * * *", zone = "Asia/Seoul")
     public void scheduledCrawl() {
-        TaskExecutionLogger.logStart(log, "정기 배치: 기사 및 Radar 수집");
+        TaskExecutionLogger.logStart(log, "정기 배치: 원문 기사 수집");
         try {
-            RadarCollectionService.CollectionResult result = radarCollectionService.collect();
-            log.info("[배치: 기사·Radar 수집] 완료: 신규 기사 {}건, 분석 {}건, Signal {}건",
-                    result.collectedArticleCount(), result.analyzedArticleCount(), result.savedSignalCount());
-        } catch (AiApiUnavailableException e) {
-            log.error("[배치: 기사 수집] 중단 - Gemini API 비정상: {}", e.getMessage());
+            int count = crawlerOrchestrator.crawlAll();
+            log.info("[배치: 원문 기사 수집] 완료: 신규 기사 {}건", count);
         } catch (Exception e) {
             log.error("[배치: 기사 수집] 실패: {}", e.getMessage(), e);
         }
@@ -54,15 +53,17 @@ public class SchedulerConfig {
         }
     }
 
-    /** Gemini 호출 제한으로 보류된 원문 재분석 - 하루 8회, 매 3시간 30분 */
-    @Scheduled(cron = "0 30 1,4,7,10,13,16,19,22 * * *", zone = "Asia/Seoul")
-    public void scheduledPendingArticleAnalysis() {
-        TaskExecutionLogger.logStart(log, "정기 배치: 보류 기사 AI 재분석");
+    /** 공용 호출 예산으로 기사 요약과 Radar 분석을 처리 - 하루 4회 */
+    @Scheduled(cron = "0 30 1,7,13,19 * * *", zone = "Asia/Seoul")
+    public void scheduledAiProcessing() {
+        TaskExecutionLogger.logStart(log, "정기 배치: 기사 AI 분석 및 Radar Signal 처리");
         try {
-            int count = articleAnalysisRetryService.retryPendingArticles();
-            log.info("[배치: 보류 기사 재분석] 완료: {}건", count);
+            int analyzedArticleCount = articleAnalysisRetryService.retryPendingArticles();
+            RadarCollectionService.CollectionResult result = radarCollectionService.collect();
+            log.info("[배치: AI 분석] 기사 {}건 완료, Radar 후보 {}건·Signal {}건 등록",
+                    analyzedArticleCount, result.analyzedArticleCount(), result.savedSignalCount());
         } catch (Exception e) {
-            log.error("[배치: 보류 기사 재분석] 실패: {}", e.getMessage(), e);
+            log.error("[배치: AI 분석] 실패: {}", e.getMessage(), e);
         }
     }
 

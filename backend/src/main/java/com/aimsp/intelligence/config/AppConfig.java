@@ -23,6 +23,12 @@ public class AppConfig {
     @Value("${app.gemini.rate-limit-ms:6000}")
     private long rateLimitMs;
 
+    @Value("${app.gemini.article-analysis-per-run:5}")
+    private int articleAnalysisPerRun;
+
+    @Value("${app.gemini.radar-analysis-per-run:3}")
+    private int radarAnalysisPerRun;
+
     @Value("${app.naver.client-id:}")
     private String naverClientId;
 
@@ -55,6 +61,8 @@ public class AppConfig {
     public String getGeminiModel()       { return geminiModel; }
     public int    getMaxTokens()         { return maxTokens; }
     public long   getRateLimitMs()       { return rateLimitMs; }
+    public int getArticleAnalysisPerRun() { return Math.min(30, Math.max(1, articleAnalysisPerRun)); }
+    public int getRadarAnalysisPerRun() { return Math.min(10, Math.max(1, radarAnalysisPerRun)); }
     public String getNaverClientId()     { return naverClientId; }
     public String getNaverClientSecret() { return naverClientSecret; }
     public int getNaverResultLimit()     { return naverResultLimit; }

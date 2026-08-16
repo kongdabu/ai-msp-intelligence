@@ -33,25 +33,25 @@ public class RadarCollectionJobService {
         latestStatus = new JobStatus("RUNNING", startedAt, null, null, null, null, null);
         runningTask = executor.submit(() -> {
             try {
-                TaskExecutionLogger.logStart(log, "백그라운드 작업: AI Services Industry Radar 수집");
+                TaskExecutionLogger.logStart(log, "백그라운드 작업: AI Services Industry Radar 분석");
                 RadarCollectionService.CollectionResult result = radarCollectionService.collect();
                 latestStatus = cancellationRequested.get()
-                        ? new JobStatus("CANCELLED", startedAt, LocalDateTime.now(), null, null, null, "사용자가 Radar 수집 작업을 취소했습니다.")
+                        ? new JobStatus("CANCELLED", startedAt, LocalDateTime.now(), null, null, null, "사용자가 Radar 분석 작업을 취소했습니다.")
                         : new JobStatus("COMPLETED", startedAt, LocalDateTime.now(), result.collectedArticleCount(),
                                 result.analyzedArticleCount(), result.savedSignalCount(), null);
             } catch (CancellationException e) {
                 latestStatus = new JobStatus("CANCELLED", startedAt, LocalDateTime.now(), null, null, null,
-                        "사용자가 Radar 수집 작업을 취소했습니다.");
-                log.info("[Radar 수집] 취소됨");
+                        "사용자가 Radar 분석 작업을 취소했습니다.");
+                log.info("[Radar 분석] 취소됨");
             } catch (Exception e) {
                 if (cancellationRequested.get() || Thread.currentThread().isInterrupted()) {
                     latestStatus = new JobStatus("CANCELLED", startedAt, LocalDateTime.now(), null, null, null,
-                            "사용자가 Radar 수집 작업을 취소했습니다.");
-                    log.info("[Radar 수집] 취소됨");
+                            "사용자가 Radar 분석 작업을 취소했습니다.");
+                    log.info("[Radar 분석] 취소됨");
                 } else {
-                    log.error("[Radar 수집] 실패: {}", e.getMessage(), e);
+                    log.error("[Radar 분석] 실패: {}", e.getMessage(), e);
                     latestStatus = new JobStatus("FAILED", startedAt, LocalDateTime.now(), null, null, null,
-                            "Radar 수집 작업 중 오류가 발생했습니다.");
+                            "Radar 분석 작업 중 오류가 발생했습니다.");
                 }
             } finally {
                 running.set(false);
@@ -69,7 +69,7 @@ public class RadarCollectionJobService {
         if (!running.get() || runningTask == null) return latestStatus;
         cancellationRequested.set(true);
         latestStatus = new JobStatus("CANCELLING", latestStatus.startedAt(), null, null, null, null,
-                "Radar 수집 작업 취소를 요청했습니다.");
+                "Radar 분석 작업 취소를 요청했습니다.");
         runningTask.cancel(true);
         return latestStatus;
     }
