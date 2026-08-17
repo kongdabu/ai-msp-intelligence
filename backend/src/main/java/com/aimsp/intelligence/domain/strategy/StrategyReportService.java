@@ -48,7 +48,7 @@ public class StrategyReportService {
     }
 
     public StrategyReportDto.Response generateReport() {
-        return geminiWorkCoordinator.executeExclusive("AI 서비스 전략 보고서 생성", this::generateReportInternal);
+        return geminiWorkCoordinator.executeExclusive("AI 서비스 데일리 브리핑 생성", this::generateReportInternal);
     }
 
     @Transactional

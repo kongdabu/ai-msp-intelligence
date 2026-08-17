@@ -127,7 +127,7 @@ ai-msp-intelligence/
 | 매일 KST 01:00 | `0 0 1 * * *` | 정기 원문 기사 수집 (`CrawlerOrchestrator.crawlAll()`) |
 | 매일 KST 02:00 | `0 0 2 * * *` | 전략 인사이트 생성 (`InsightService.generateInsights()`) |
 | 매일 KST 01:30, 07:30, 13:30, 19:30 (하루 4회) | `0 30 1,7,13,19 * * *` | 보류 기사 AI 재분석 및 Radar Signal 심층 처리 (`ArticleAnalysisRetryService`, `RadarCollectionService`) |
-| 매주 월·수 KST 07:00 | `0 0 7 * * MON,WED` | 전략 보고서 자동 생성 (`StrategyReportService.generateReport()`) |
+| 매주 월·수 KST 07:00 | `0 0 7 * * MON,WED` | 데일리 브리핑 자동 생성 (`StrategyReportService.generateReport()`) |
 | 매 1시간 주기 | `fixedDelay = 3600000` | 최근 Radar Signal 출처 URL 접근성(404/410) 재검증 (`RadarSourceVerificationService`) |
 
 ---
@@ -163,13 +163,13 @@ ai-msp-intelligence/
 | POST | `/api/radar/collect/cancel` | Radar 수집 작업 취소 요청 🔒 |
 | POST | `/api/radar/weekly-briefs/generate` | 주간 브리핑 수동 생성 🔒 |
 
-### 2. Strategy Reports (`/api/strategy-reports`)
+### 2. Daily Briefings (`/api/strategy-reports`)
 | Method | Path | 설명 |
 |---|---|---|
-| GET | `/api/strategy-reports` | 전략 보고서 목록 페이징 조회 (params: page, size) |
-| GET | `/api/strategy-reports/latest` | 최신 전략 보고서 1건 조회 |
-| GET | `/api/strategy-reports/{id}` | 전략 보고서 단건 상세 조회 |
-| POST | `/api/strategy-reports/generate` | 전략 보고서 수동 AI 생성 실행 🔒 |
+| GET | `/api/strategy-reports` | 데일리 브리핑 목록 페이징 조회 (params: page, size) |
+| GET | `/api/strategy-reports/latest` | 최신 데일리 브리핑 1건 조회 |
+| GET | `/api/strategy-reports/{id}` | 데일리 브리핑 단건 상세 조회 |
+| POST | `/api/strategy-reports/generate` | 데일리 브리핑 수동 AI 생성 실행 🔒 |
 
 ### 3. Articles (`/api/articles`)
 | Method | Path | 설명 |

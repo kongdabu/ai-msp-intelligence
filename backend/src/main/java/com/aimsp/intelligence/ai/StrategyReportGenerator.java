@@ -19,9 +19,9 @@ import java.util.stream.Collectors;
 public class StrategyReportGenerator {
 
     private static final String REPORT_PROMPT_TEMPLATE = """
-            너는 한국 금융·공공·엔터프라이즈 AI 시장을 전문으로 하는 AI 서비스 산업 수석 전략 고문이다.
+            너는 한국 금융·공공·엔터프라이즈 AI 시장을 전문으로 하는 AI 서비스 산업 전략 분석가다.
             아래 제공된 [검증된 산업 신호(Radar Signals)]를 종합 분석하여,
-            "AI로 인한 Consulting–SI–MSP–Application ITO 밸류체인 재편 및 국내 MSP 대응 전략 보고서"를 작성해줘.
+            "AI 서비스 산업 데일리 브리핑 및 국내 MSP 핵심 실행 과제"를 작성해줘.
 
             [분석 가이드라인]
             1. 개별 뉴스를 단순 나열하지 말고, 발견된 신호들을 유기적으로 연결하여 산업 구조의 구조적 변화를 설명한다.
@@ -31,14 +31,14 @@ public class StrategyReportGenerator {
                - AI Pricing 전이: Seat → Consumption → Agent → Task → Outcome 단위 이동 및 FTE M/M에서 Platform Fee + Consumption + Outcome Incentive로의 전환
                - Agentic ITO / Ops: 기존 모니터링 중심 AIOps에서 자율 실행(Observe→Diagnose→Plan→Execute→Verify→Rollback) 루프로의 전환
             3. 최종적으로 '국내 MSP 관점 Top 3 Action'을 즉시 실행 가능한 수준으로 구체화하여 제시한다.
-            4. 모든 텍스트는 전문적이고 설득력 있는 비즈니스 전략 톤(한국어)으로 작성한다.
+            4. 모든 텍스트는 전문적이고 실용적인 비즈니스 브리핑 톤(한국어)으로 작성한다.
 
             [검증된 산업 신호 목록 (최근 7~14일)]
             %s
 
             [출력 형식 - JSON only]
             {
-              "title": "AI 서비스 산업 밸류체인 재편 및 국내 MSP 전략 보고서 (%s)",
+              "title": "AI 서비스 산업 데일리 브리핑 (%s)",
               "executiveSummary": "경영진 핵심 요약 (3~5개 핵심 불릿 또는 구조화된 단락)",
               "valueChainImpact": "Consulting–SI–MSP–Application ITO 밸류체인 재편 및 상호 침투 분석",
               "fdeDeliveryAnalysis": "FDE/RDE/ODE 및 현장 투입형 딜리버리 모델 심층 분석",
@@ -98,7 +98,7 @@ public class StrategyReportGenerator {
 
             JsonNode node = objectMapper.readTree(response);
             return new ReportResult(
-                    node.path("title").asText("AI 서비스 산업 밸류체인 재편 및 국내 MSP 전략 보고서"),
+                    node.path("title").asText("AI 서비스 산업 데일리 브리핑"),
                     node.path("executiveSummary").asText(""),
                     node.path("valueChainImpact").asText(""),
                     node.path("fdeDeliveryAnalysis").asText(""),

@@ -36,11 +36,11 @@ export default function StrategyReports() {
   const handleGenerate = () => {
     generateReport(undefined, {
       onSuccess: (newReport) => {
-        showToast('신규 AI 서비스 전략 보고서가 생성되었습니다.', 'success')
+        showToast('신규 데일리 브리핑이 생성되었습니다.', 'success')
         setSelectedReportId(newReport.id)
       },
       onError: (err) => {
-        showToast(`전략 보고서 생성 실패: ${err.message}`, 'error')
+        showToast(`데일리 브리핑 생성 실패: ${err.message}`, 'error')
       },
     })
   }
@@ -56,11 +56,11 @@ export default function StrategyReports() {
         <div>
           <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-xs font-semibold text-indigo-700 mb-2">
             <Compass size={14} />
-            Strategic Intelligence
+            Daily Intelligence Brief
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">AI 서비스 산업 전략 보고서</h1>
+          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">AI 서비스 산업 데일리 브리핑</h1>
           <p className="mt-1 text-sm text-slate-600">
-            Consulting–SI–MSP–ITO 밸류체인 재편, FDE 딜리버리, AI 과금 체계 전이 및 국내 MSP 대응 전략을 종합 분석합니다.
+            일간 수집된 산업 신호를 바탕으로 밸류체인 재편, FDE 딜리버리, AI 과금 체계 전이 및 국내 MSP 핵심 실행 과제를 요약합니다.
           </p>
         </div>
 
@@ -72,12 +72,12 @@ export default function StrategyReports() {
           {isGenerating ? (
             <>
               <RefreshCw size={16} className="animate-spin" />
-              Gemini 전략 분석 생성 중...
+              Gemini 데일리 브리핑 생성 중...
             </>
           ) : (
             <>
               <Sparkles size={16} />
-              신규 전략 보고서 생성
+              신규 데일리 브리핑 생성
             </>
           )}
         </button>
@@ -86,12 +86,12 @@ export default function StrategyReports() {
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-24 text-slate-400">
           <RefreshCw size={32} className="animate-spin mb-3 text-indigo-500" />
-          <p className="text-sm font-medium">전략 보고서를 불러오는 중입니다...</p>
+          <p className="text-sm font-medium">데일리 브리핑을 불러오는 중입니다...</p>
         </div>
       ) : isError ? (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-red-700">
           <AlertTriangle size={28} className="mx-auto mb-2" />
-          <p className="font-semibold">전략 보고서를 불러오지 못했습니다.</p>
+          <p className="font-semibold">데일리 브리핑을 불러오지 못했습니다.</p>
           <button
             onClick={() => refetch()}
             className="mt-3 text-sm underline hover:text-red-900 cursor-pointer"
@@ -102,9 +102,9 @@ export default function StrategyReports() {
       ) : reports.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-sm">
           <Compass size={48} className="mx-auto mb-3 text-indigo-400" />
-          <h3 className="text-lg font-bold text-slate-800">생성된 전략 보고서가 없습니다</h3>
+          <h3 className="text-lg font-bold text-slate-800">생성된 데일리 브리핑이 없습니다</h3>
           <p className="mt-1 text-sm text-slate-500 max-w-md mx-auto">
-            상단의 '신규 전략 보고서 생성' 버튼을 클릭하면 최근 검증된 Radar Signal 데이터를 바탕으로 종합 전략 분석 보고서를 작성합니다.
+            상단의 '신규 데일리 브리핑 생성' 버튼을 클릭하면 최근 검증된 Radar Signal 데이터를 종합하여 데일리 브리핑을 작성합니다.
           </p>
           <button
             onClick={handleGenerate}
@@ -112,7 +112,7 @@ export default function StrategyReports() {
             className="mt-5 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors cursor-pointer"
           >
             <Sparkles size={16} />
-            첫 번째 전략 보고서 생성하기
+            첫 번째 데일리 브리핑 생성하기
           </button>
         </div>
       ) : (
