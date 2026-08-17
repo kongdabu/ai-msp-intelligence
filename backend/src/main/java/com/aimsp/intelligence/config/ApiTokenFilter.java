@@ -24,14 +24,18 @@ public class ApiTokenFilter extends OncePerRequestFilter {
     // 토큰 검증이 필요한 변조성 엔드포인트
     private static final Set<String> PROTECTED_PATHS = Set.of(
             "/api/articles/crawl",
+            "/api/articles/crawl/cancel",
             "/api/insights/generate",
             "/api/trends/generate",
             "/api/battlecards/generate",
+            "/api/strategy-reports/generate",
             "/api/admin/config",
+            "/api/admin/verify-token",
             "/api/radar/signals",
             "/api/radar/players",
             "/api/radar/weekly-briefs/generate",
             "/api/radar/collect",
+            "/api/radar/collect/cancel",
             "/api/articles/",
             "/api/insights/"
     );

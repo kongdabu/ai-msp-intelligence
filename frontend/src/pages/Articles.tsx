@@ -151,11 +151,17 @@ export function ArticleDetail({ article, onClose }: { article: Article; onClose:
   )
 }
 
+import { useAuthStore } from '../store/authStore'
+import AdminAuthModal from '../components/common/AdminAuthModal'
+
 export default function Articles() {
   const [page, setPage] = useState(0)
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null)
   const [crawlMsg, setCrawlMsg] = useState<string | null>(null)
-  const { articleFilter } = useFilterStore()
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const { isAdmin } = useAuthStore()
+
+  const articleFilter = useFilterStore((state) => state.articleFilter)
 
   useEffect(() => { setPage(0) }, [articleFilter])
 
@@ -167,6 +173,22 @@ export default function Articles() {
   const { mutate: cancelCrawl, isPending: isCancellingCrawl } = useCancelCrawl()
   const isCrawlRunning = isCrawling || crawlStatus?.status === 'RUNNING' || crawlStatus?.status === 'CANCELLING'
 
+  const handleCrawlClick = () => {
+    if (!isAdmin) {
+      setIsAuthModalOpen(true)
+      return
+    }
+    crawl()
+  }
+
+  const handleCancelClick = () => {
+    if (!isAdmin) {
+      setIsAuthModalOpen(true)
+      return
+    }
+    cancelCrawl()
+  }
+
   return (
     <div className="p-4 sm:p-6 space-y-4">
       {/* 헤더 */}
@@ -174,8 +196,33 @@ export default function Articles() {
         <div className="text-sm text-gray-500">
           {data && <>총 <span className="font-semibold text-gray-900">{data.totalElements.toLocaleString()}</span>건</>}
         </div>
-        {isCrawlRunning ? <button onClick={() => cancelCrawl()} disabled={isCancellingCrawl || crawlStatus?.status === 'CANCELLING'} className="flex items-center gap-2 px-4 py-2 bg-rose-600 text-white text-sm font-medium rounded-lg hover:bg-rose-700 disabled:opacity-50 transition-colors"><Square size={13} />{crawlStatus?.status === 'CANCELLING' ? '취소 요청 중...' : '작업 취소'}</button> : <button onClick={() => crawl()} disabled={isCrawling} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"><RefreshCw size={14} className={isCrawling ? 'animate-spin' : ''} />지금 수집</button>}
+        {isCrawlRunning ? (
+          <button
+            onClick={handleCancelClick}
+            disabled={isCancellingCrawl || crawlStatus?.status === 'CANCELLING'}
+            className="flex items-center gap-2 px-4 py-2 bg-rose-600 text-white text-sm font-medium rounded-lg hover:bg-rose-700 disabled:opacity-50 transition-colors cursor-pointer"
+          >
+            <Square size={13} />
+            {crawlStatus?.status === 'CANCELLING' ? '취소 요청 중...' : '작업 취소'}
+          </button>
+        ) : (
+          <button
+            onClick={handleCrawlClick}
+            disabled={isCrawling}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+              isAdmin
+                ? 'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50'
+                : 'bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200'
+            }`}
+            title={isAdmin ? '기사 수집 시작' : '관리자 인증 필요'}
+          >
+            <RefreshCw size={14} className={isCrawling ? 'animate-spin' : ''} />
+            {isAdmin ? '지금 수집' : '🔒 지금 수집 (관리자)'}
+          </button>
+        )}
       </div>
+
+      <AdminAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
 
       {crawlMsg && (
         <div className="bg-green-50 border border-green-200 text-green-800 text-sm rounded-lg px-4 py-3 flex justify-between">

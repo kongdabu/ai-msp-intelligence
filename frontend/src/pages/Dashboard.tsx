@@ -8,6 +8,9 @@ import InsightPanel from '../components/insight/InsightPanel'
 import InsightNewsCard from '../components/dashboard/InsightNewsCard'
 import TrendChart from '../components/dashboard/TrendChart'
 
+import { useAuthStore } from '../store/authStore'
+import AdminAuthModal from '../components/common/AdminAuthModal'
+
 const BRIEFING_DATE_FORMATTER = new Intl.DateTimeFormat('ko-KR', {
   month: 'long',
   day: 'numeric',
@@ -30,10 +33,21 @@ export default function Dashboard() {
   const { data, isLoading } = useDashboard()
   const [selectedInsightId, setSelectedInsightId] = useState<number | null>(null)
   const [generateResult, setGenerateResult] = useState<{ count: number } | null>(null)
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const { isAdmin } = useAuthStore()
+
   const { data: insightDetail } = useInsight(selectedInsightId)
   const { mutate: generate, isPending } = useGenerateInsights({
     onSuccess: (insights: Insight[]) => setGenerateResult({ count: insights.length }),
   })
+
+  const handleGenerateClick = () => {
+    if (!isAdmin) {
+      setIsAuthModalOpen(true)
+      return
+    }
+    generate()
+  }
 
   const sortedInsights = useMemo(
     () => [...(data?.latestInsights ?? [])].sort((a, b) => b.impactScore - a.impactScore),
@@ -67,14 +81,21 @@ export default function Dashboard() {
         </div>
         <button
           type="button"
-          onClick={() => generate()}
+          onClick={handleGenerateClick}
           disabled={isPending}
-          className="inline-flex w-fit items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className={`inline-flex w-fit items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition cursor-pointer ${
+            isAdmin
+              ? 'bg-slate-950 text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60'
+              : 'bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200'
+          }`}
+          title={isAdmin ? '인사이트 분석 실행' : '관리자 인증 필요'}
         >
           <Sparkles size={16} />
-          {isPending ? '인사이트 생성 중...' : '새 인사이트 분석'}
+          {isPending ? '인사이트 생성 중...' : isAdmin ? '새 인사이트 분석' : '🔒 새 인사이트 분석 (관리자)'}
         </button>
       </section>
+
+      <AdminAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
 
       {generateResult && (
         <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">

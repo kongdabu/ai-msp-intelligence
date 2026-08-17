@@ -3,14 +3,27 @@ import { CalendarDays, Sparkles } from 'lucide-react'
 import TrendNewsCard from '../components/trend/TrendNewsCard'
 import TrendNewsPanel from '../components/trend/TrendNewsPanel'
 import { useGenerateTrends, useTrend, useTrends } from '../hooks/useTrends'
+import { useAuthStore } from '../store/authStore'
+import AdminAuthModal from '../components/common/AdminAuthModal'
 
 const MONTHLY_PERIOD_TEXT = '최근 30일 수집 기사 기준'
 
 export default function Trends() {
   const [selectedTrendId, setSelectedTrendId] = useState<number | null>(null)
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const { isAdmin } = useAuthStore()
+
   const { data: trends, isLoading } = useTrends()
   const { data: trendDetail } = useTrend(selectedTrendId)
   const { mutate: generate, isPending } = useGenerateTrends()
+
+  const handleGenerateClick = () => {
+    if (!isAdmin) {
+      setIsAuthModalOpen(true)
+      return
+    }
+    generate()
+  }
 
   return (
     <div className="mx-auto max-w-7xl space-y-7 p-4 sm:p-6 lg:p-8">
@@ -20,10 +33,23 @@ export default function Trends() {
           <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">반복되는 시장 신호를 읽는 3가지 흐름</h2>
           <p className="mt-2 flex items-center gap-1.5 text-sm text-slate-500"><CalendarDays size={15} /> {MONTHLY_PERIOD_TEXT}</p>
         </div>
-        <button type="button" onClick={() => generate()} disabled={isPending} className="inline-flex w-fit items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60">
-          <Sparkles size={16} /> {isPending ? 'Trend News 생성 중...' : 'Top 3 초안 생성'}
+        <button
+          type="button"
+          onClick={handleGenerateClick}
+          disabled={isPending}
+          className={`inline-flex w-fit items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition cursor-pointer ${
+            isAdmin
+              ? 'bg-slate-950 text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60'
+              : 'bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200'
+          }`}
+          title={isAdmin ? '트렌드 초안 생성' : '관리자 인증 필요'}
+        >
+          <Sparkles size={16} />
+          {isPending ? 'Trend News 생성 중...' : isAdmin ? 'Top 3 초안 생성' : '🔒 Top 3 초안 생성 (관리자)'}
         </button>
       </section>
+
+      <AdminAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
 
       <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
         최소 3개 근거 기사에서 확인된 공통 흐름만 초안으로 저장합니다. 게시 전에는 근거 기사와 전략 해석을 검토하세요.

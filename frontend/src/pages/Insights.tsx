@@ -4,6 +4,8 @@ import InsightCard from '../components/insight/InsightCard'
 import InsightPanel from '../components/insight/InsightPanel'
 import { Insight, InsightType } from '../types'
 import { Sparkles } from 'lucide-react'
+import { useAuthStore } from '../store/authStore'
+import AdminAuthModal from '../components/common/AdminAuthModal'
 
 const TABS: { value: InsightType | ''; label: string }[] = [
   { value: '', label: '전체' },
@@ -17,10 +19,20 @@ export default function Insights() {
   const [activeTab, setActiveTab] = useState<InsightType | ''>('')
   const [page, setPage] = useState(0)
   const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const { isAdmin } = useAuthStore()
 
   const { data, isLoading } = useInsights({ type: activeTab || undefined, page, size: 20 })
   const { data: detail } = useInsight(selectedId)
   const { mutate: generate, isPending } = useGenerateInsights()
+
+  const handleGenerateClick = () => {
+    if (!isAdmin) {
+      setIsAuthModalOpen(true)
+      return
+    }
+    generate()
+  }
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
@@ -32,7 +44,7 @@ export default function Insights() {
               <button
                 key={value}
                 onClick={() => { setActiveTab(value); setPage(0) }}
-                className={`px-3 sm:px-4 py-1.5 rounded-md text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${
+                className={`px-3 sm:px-4 py-1.5 rounded-md text-xs sm:text-sm font-medium whitespace-nowrap transition-colors cursor-pointer ${
                   activeTab === value
                     ? 'bg-white text-gray-900 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
@@ -44,15 +56,28 @@ export default function Insights() {
           </div>
         </div>
         <button
-          onClick={() => generate()}
+          onClick={handleGenerateClick}
           disabled={isPending}
-          className="flex items-center gap-1.5 btn-primary text-xs sm:text-sm shrink-0"
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors shrink-0 cursor-pointer ${
+            isAdmin
+              ? 'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50'
+              : 'bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200'
+          }`}
+          title={isAdmin ? '인사이트 AI 생성' : '관리자 인증 필요'}
         >
           <Sparkles size={14} />
-          <span className="hidden sm:inline">{isPending ? '생성 중...' : '인사이트 생성'}</span>
-          <span className="sm:hidden">{isPending ? '...' : '생성'}</span>
+          {isAdmin ? (
+            <>
+              <span className="hidden sm:inline">{isPending ? '생성 중...' : '인사이트 생성'}</span>
+              <span className="sm:hidden">{isPending ? '...' : '생성'}</span>
+            </>
+          ) : (
+            <span>🔒 인사이트 생성 (관리자)</span>
+          )}
         </button>
       </div>
+
+      <AdminAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
 
       {data && (
         <div className="text-sm text-gray-500">

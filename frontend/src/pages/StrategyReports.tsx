@@ -19,14 +19,18 @@ import {
 } from 'lucide-react'
 import { useGenerateStrategyReport, useStrategyReports } from '../hooks/useStrategyReports'
 import { useToastStore } from '../store/toastStore'
+import { useAuthStore } from '../store/authStore'
+import AdminAuthModal from '../components/common/AdminAuthModal'
 import { StrategyReport } from '../types'
 
 export default function StrategyReports() {
   const [page, setPage] = useState(0)
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null)
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const { data: reportsData, isLoading, isError, refetch } = useStrategyReports(page, 10)
   const { mutate: generateReport, isPending: isGenerating } = useGenerateStrategyReport()
   const { showToast } = useToastStore()
+  const { isAdmin } = useAuthStore()
 
   const reports = reportsData?.content ?? []
   const selectedReport: StrategyReport | undefined = selectedReportId
@@ -34,6 +38,11 @@ export default function StrategyReports() {
     : reports[0]
 
   const handleGenerate = () => {
+    if (!isAdmin) {
+      setIsAuthModalOpen(true)
+      return
+    }
+
     generateReport(undefined, {
       onSuccess: (newReport) => {
         showToast('신규 데일리 브리핑이 생성되었습니다.', 'success')
@@ -67,21 +76,33 @@ export default function StrategyReports() {
         <button
           onClick={handleGenerate}
           disabled={isGenerating}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-indigo-700 hover:to-blue-700 disabled:opacity-50 transition-all shrink-0 cursor-pointer"
+          className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition-all shrink-0 cursor-pointer ${
+            isAdmin
+              ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white hover:from-indigo-700 hover:to-blue-700'
+              : 'bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200'
+          }`}
+          title={isAdmin ? 'AI 데일리 브리핑 생성' : '관리자 인증 필요'}
         >
           {isGenerating ? (
             <>
               <RefreshCw size={16} className="animate-spin" />
               Gemini 데일리 브리핑 생성 중...
             </>
-          ) : (
+          ) : isAdmin ? (
             <>
               <Sparkles size={16} />
               신규 데일리 브리핑 생성
             </>
+          ) : (
+            <>
+              <Sparkles size={16} className="text-slate-400" />
+              🔒 데일리 브리핑 생성 (관리자 전용)
+            </>
           )}
         </button>
       </div>
+
+      <AdminAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
 
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-24 text-slate-400">
