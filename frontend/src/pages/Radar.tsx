@@ -334,7 +334,7 @@ export default function Radar() {
 
           {/* 피드 목록 영역 (독립 스크롤) */}
           <div className="flex-1 overflow-y-auto p-2.5 space-y-2 custom-scrollbar bg-slate-50/30">
-            {isSignalsLoading ? (
+            {isSignalsLoading && !signalPage ? (
               <div className="p-8 text-center text-xs text-slate-400">Signal을 불러오는 중...</div>
             ) : filteredSignals.length === 0 ? (
               <div className="p-8 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl">

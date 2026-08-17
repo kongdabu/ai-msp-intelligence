@@ -9,6 +9,7 @@ export function useRadarOverview() {
       const { data } = await axios.get('/api/radar/overview')
       return data
     },
+    staleTime: 1000 * 60 * 5,
     refetchInterval: 1000 * 60 * 5,
   })
 }
@@ -34,6 +35,9 @@ export function useRadarSignals(filters: RadarSignalFilters) {
       })
       return data
     },
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
+    placeholderData: (previousData) => previousData,
   })
 }
 
