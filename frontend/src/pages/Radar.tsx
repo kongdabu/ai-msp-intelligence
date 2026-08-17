@@ -1,13 +1,45 @@
-import { Activity, ChevronLeft, ChevronRight, CircleAlert, ExternalLink, Radar as RadarIcon, RefreshCw, Square, Users } from 'lucide-react'
+import {
+  Activity,
+  ChevronLeft,
+  ChevronRight,
+  CircleAlert,
+  ExternalLink,
+  Radar as RadarIcon,
+  RefreshCw,
+  Square,
+  Users,
+  Building2,
+  Sparkles,
+  TrendingUp,
+  ShieldAlert,
+  CheckCircle2,
+  Calendar,
+  Search,
+} from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useCancelRadarCollection, useRadarCollectionStatus, useRadarOverview, useRadarSignals, useStartRadarCollection } from '../hooks/useRadar'
+import {
+  useCancelRadarCollection,
+  useRadarCollectionStatus,
+  useRadarOverview,
+  useRadarSignals,
+  useStartRadarCollection,
+} from '../hooks/useRadar'
 import { RadarLensCode, RadarSignal } from '../types'
 import { useAuthStore } from '../store/authStore'
 import AdminAuthModal from '../components/common/AdminAuthModal'
 
 function RadarSkeleton() {
-  return <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8 animate-pulse"><div className="h-36 rounded-3xl bg-slate-200" /><div className="grid gap-4 lg:grid-cols-[280px_1fr]"><div className="h-96 rounded-2xl bg-slate-200" /><div className="h-[32rem] rounded-2xl bg-slate-200" /></div></div>
+  return (
+    <div className="mx-auto max-w-7xl space-y-4 p-4 sm:p-6 lg:p-8 animate-pulse">
+      <div className="h-16 rounded-2xl bg-slate-200" />
+      <div className="grid gap-4 lg:grid-cols-12 h-[calc(100vh-180px)]">
+        <div className="lg:col-span-3 rounded-2xl bg-slate-200" />
+        <div className="lg:col-span-4 rounded-2xl bg-slate-200" />
+        <div className="lg:col-span-5 rounded-2xl bg-slate-200" />
+      </div>
+    </div>
+  )
 }
 
 function signalLabel(signal: RadarSignal) {
@@ -21,48 +53,70 @@ export default function Radar() {
   const { mutate: cancelCollection, isPending: isCancellingCollection } = useCancelRadarCollection()
   const [searchParams, setSearchParams] = useSearchParams()
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
   const { isAdmin } = useAuthStore()
 
   const selectedLensParam = searchParams.get('lens')
   const selectedLens = overview?.lenses.some((lens) => lens.code === selectedLensParam)
-    ? selectedLensParam as RadarLensCode : null
+    ? (selectedLensParam as RadarLensCode)
+    : null
   const highImpactOnly = searchParams.get('impact') === 'high'
   const page = Math.max(Number(searchParams.get('page') ?? '0'), 0)
-  const { data: signalPage, isLoading: isSignalsLoading } = useRadarSignals({ lens: selectedLens, minimumImpactScore: highImpactOnly ? 80 : null, page })
+  const { data: signalPage, isLoading: isSignalsLoading } = useRadarSignals({
+    lens: selectedLens,
+    minimumImpactScore: highImpactOnly ? 80 : null,
+    page,
+    size: 30,
+  })
+
   const [selectedSignalId, setSelectedSignalId] = useState<number | null>(null)
-  const selectedSignal = useMemo(() => {
+
+  const filteredSignals = useMemo(() => {
     const signals = signalPage?.content ?? []
-    return signals.find((signal) => signal.id === selectedSignalId) ?? signals[0] ?? null
-  }, [selectedSignalId, signalPage?.content])
+    if (!searchTerm.trim()) return signals
+    const term = searchTerm.toLowerCase()
+    return signals.filter(
+      (s) =>
+        s.title.toLowerCase().includes(term) ||
+        s.fact.toLowerCase().includes(term) ||
+        s.players.some((p) => p.toLowerCase().includes(term))
+    )
+  }, [searchTerm, signalPage?.content])
+
+  const selectedSignal = useMemo(() => {
+    return filteredSignals.find((signal) => signal.id === selectedSignalId) ?? filteredSignals[0] ?? null
+  }, [selectedSignalId, filteredSignals])
 
   useEffect(() => {
     if (collectionStatus?.status === 'COMPLETED') void refetch()
   }, [collectionStatus?.completedAt, collectionStatus?.status, refetch])
 
   if (isLoading) return <RadarSkeleton />
-  if (isError || !overview) return <div className="p-6 text-sm text-slate-600">Radar 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</div>
+  if (isError || !overview)
+    return (
+      <div className="p-6 text-sm text-slate-600">
+        Radar 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+      </div>
+    )
 
   const selectedLensInfo = overview.lenses.find((lens) => lens.code === selectedLens)
-  const isCollecting = isStartingCollection || collectionStatus?.status === 'RUNNING' || collectionStatus?.status === 'CANCELLING'
+  const isCollecting =
+    isStartingCollection || collectionStatus?.status === 'RUNNING' || collectionStatus?.status === 'CANCELLING'
+
   const updateFilters = (updates: Record<string, string | null>) => {
     const next = new URLSearchParams(searchParams)
-    Object.entries(updates).forEach(([key, value]) => value ? next.set(key, value) : next.delete(key))
+    Object.entries(updates).forEach(([key, value]) => (value ? next.set(key, value) : next.delete(key)))
     next.delete('page')
     setSearchParams(next)
     setSelectedSignalId(null)
   }
+
   const movePage = (nextPage: number) => {
     const next = new URLSearchParams(searchParams)
     next.set('page', String(nextPage))
     setSearchParams(next)
     setSelectedSignalId(null)
   }
-  const collectionDescription = collectionStatus?.status === 'COMPLETED'
-    ? `최근 실행: 후보 ${collectionStatus.analyzedArticleCount ?? 0}건 · Signal ${collectionStatus.savedSignalCount ?? 0}건 등록`
-    : collectionStatus?.status === 'RUNNING' ? 'AI 요약 완료 기사를 대상으로 Signal 분석을 진행 중입니다.'
-      : collectionStatus?.status === 'CANCELLING' ? '현재 작업을 안전하게 중지하고 있습니다.'
-        : collectionStatus?.status === 'CANCELLED' ? '최근 Radar 수집 작업이 취소되었습니다.'
-          : 'AI 요약 완료 기사를 검증해 사업 구조 Signal로 등록합니다.'
 
   const handleStartCollection = () => {
     if (!isAdmin) {
@@ -81,80 +135,389 @@ export default function Radar() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
-      <section className="overflow-hidden rounded-3xl bg-slate-950 px-6 py-7 text-white sm:px-8">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <div className="inline-flex items-center gap-2 text-sm font-semibold text-blue-300">
-              <RadarIcon size={17} /> AI Services Industry Radar
-            </div>
-            <h2 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">신호를 사업 구조와 실행 과제로 전환합니다</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">좌측에서 산업 관점을 선택하면 우측에서 검증된 Signal과 한국 AI MSP 관점의 영향을 바로 확인할 수 있습니다.</p>
+    <div className="mx-auto max-w-7xl p-3 sm:p-5 lg:p-6 space-y-3">
+      {/* 1. 상단 슬림 컨트롤 바 */}
+      <section className="rounded-2xl bg-slate-950 px-5 py-3 text-white shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="rounded-xl bg-blue-600/30 border border-blue-500/30 p-2 text-blue-400 shrink-0">
+            <RadarIcon size={18} />
           </div>
-          <div className="shrink-0 rounded-2xl border border-slate-700 bg-slate-900/70 p-3 text-sm text-slate-300 sm:max-w-xs">
-            <div className="font-semibold text-white">Signal → Structure → Impact</div>
-            <p className="mt-1 text-xs leading-5">{collectionDescription}</p>
-            {isCollecting ? (
-              <button
-                type="button"
-                onClick={handleCancelCollection}
-                disabled={isCancellingCollection || collectionStatus?.status === 'CANCELLING'}
-                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
-              >
-                <Square size={14} />
-                {collectionStatus?.status === 'CANCELLING' ? '취소 요청 중...' : '작업 취소'}
-              </button>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-base font-bold text-white tracking-tight">AI Services Industry Radar</h1>
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-900/60 border border-blue-700/50 px-2 py-0.5 text-[11px] font-semibold text-blue-300">
+                Live Feed
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 truncate">
+              35개 Watch List 사업자 대상 6대 산업 재편 관점 검증 신호
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          {isCollecting ? (
+            <button
+              type="button"
+              onClick={handleCancelCollection}
+              disabled={isCancellingCollection || collectionStatus?.status === 'CANCELLING'}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-rose-500 disabled:opacity-50 cursor-pointer"
+            >
+              <Square size={13} />
+              {collectionStatus?.status === 'CANCELLING' ? '취소 요청 중...' : '작업 취소'}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleStartCollection}
+              disabled={isStartingCollection}
+              className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition cursor-pointer ${
+                isAdmin
+                  ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-sm'
+                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
+              }`}
+              title={isAdmin ? 'Radar 분석 실행' : '관리자 인증 필요'}
+            >
+              <RefreshCw size={13} className={isStartingCollection ? 'animate-spin' : ''} />
+              {isAdmin ? 'Radar 분석 실행' : '🔒 Radar 분석 (관리자)'}
+            </button>
+          )}
+        </div>
+      </section>
+
+      {/* 2. 메인 3-Pane 독립 스크롤 컨테이너 (고정 뷰포트 높이) */}
+      <div className="grid gap-3 lg:grid-cols-12 h-[calc(100vh-140px)] min-h-[600px] overflow-hidden">
+        {/* Pane 1. 좌측 관점 필터 네비게이션 (lg:col-span-3) */}
+        <aside className="lg:col-span-3 h-full overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+          <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-xs space-y-1">
+            <div className="px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              필터
+            </div>
+            <button
+              type="button"
+              onClick={() => updateFilters({ lens: null, impact: null })}
+              className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-semibold transition-all cursor-pointer ${
+                !selectedLens && !highImpactOnly
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <Activity size={14} /> 전체 Signal
+              </span>
+              <span className="text-[11px] opacity-80">{overview.signalCount}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => updateFilters({ lens: null, impact: highImpactOnly ? null : 'high' })}
+              className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-semibold transition-all cursor-pointer ${
+                highImpactOnly
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : 'text-slate-700 hover:bg-rose-50 hover:text-rose-700'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <CircleAlert size={14} /> 고영향 Signal
+              </span>
+              <span className="text-[11px] opacity-80">{overview.highImpactSignalCount}</span>
+            </button>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-xs space-y-1">
+            <div className="px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              산업 재편 6대 관점
+            </div>
+            {overview.lenses.map((lens) => {
+              const isSelected = selectedLens === lens.code
+              return (
+                <button
+                  key={lens.code}
+                  type="button"
+                  onClick={() =>
+                    updateFilters({ lens: selectedLens === lens.code ? null : lens.code, impact: null })
+                  }
+                  className={`w-full rounded-xl px-3 py-2 text-left transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-1 text-xs font-semibold">
+                    <span>{lens.label}</span>
+                    <span
+                      className={`rounded-md px-1.5 py-0.2 text-[10px] font-bold ${
+                        isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {lens.signalCount}
+                    </span>
+                  </div>
+                  <span
+                    className={`mt-0.5 block text-[11px] line-clamp-1 ${
+                      isSelected ? 'text-blue-100' : 'text-slate-400'
+                    }`}
+                  >
+                    {lens.description}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          <Link
+            to="/settings/watch-list"
+            className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-3 text-xs font-semibold text-slate-700 shadow-xs hover:bg-blue-50 hover:text-blue-700 transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              <Users size={14} className="text-blue-600" /> Watch List 관리
+            </span>
+            <span className="text-[11px] text-slate-400 font-medium">{overview.playerCount}개 기업</span>
+          </Link>
+        </aside>
+
+        {/* Pane 2. 가운데 신호 목록 피드 (lg:col-span-4 / xl:col-span-4.5) - 독립 스크롤 */}
+        <section className="lg:col-span-4 xl:col-span-4.5 h-full flex flex-col min-w-0 rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+          {/* 피드 헤더 */}
+          <div className="p-3.5 border-b border-slate-100 bg-slate-50/50 space-y-2 shrink-0">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="font-bold text-xs text-slate-900 truncate">
+                  {selectedLensInfo
+                    ? `${selectedLensInfo.label}`
+                    : highImpactOnly
+                    ? '고영향 Signal'
+                    : '전체 신호'}
+                </span>
+                <span className="rounded-md bg-blue-100 text-blue-800 text-[10px] font-extrabold px-1.5 py-0.5 shrink-0">
+                  {filteredSignals.length}건
+                </span>
+              </div>
+
+              {/* 페이지 이동 버튼 */}
+              {signalPage && signalPage.totalPages > 1 && (
+                <div className="flex items-center gap-1 text-xs text-slate-500 shrink-0">
+                  <button
+                    type="button"
+                    disabled={signalPage.number === 0}
+                    onClick={() => movePage(signalPage.number - 1)}
+                    className="p-1 rounded hover:bg-slate-200 disabled:opacity-30 cursor-pointer"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  <span className="text-[11px] font-medium">
+                    {signalPage.number + 1}/{signalPage.totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={signalPage.number + 1 >= signalPage.totalPages}
+                    onClick={() => movePage(signalPage.number + 1)}
+                    className="p-1 rounded hover:bg-slate-200 disabled:opacity-30 cursor-pointer"
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 검색창 */}
+            <div className="relative">
+              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="기업명, 키워드 검색..."
+                className="w-full rounded-xl border border-slate-200 bg-white pl-8 pr-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-100"
+              />
+            </div>
+          </div>
+
+          {/* 피드 목록 영역 (독립 스크롤) */}
+          <div className="flex-1 overflow-y-auto p-2.5 space-y-2 custom-scrollbar bg-slate-50/30">
+            {isSignalsLoading ? (
+              <div className="p-8 text-center text-xs text-slate-400">Signal을 불러오는 중...</div>
+            ) : filteredSignals.length === 0 ? (
+              <div className="p-8 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl">
+                일치하는 Signal이 없습니다.
+              </div>
             ) : (
-              <button
-                type="button"
-                onClick={handleStartCollection}
-                disabled={isStartingCollection}
-                className={`mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer ${
-                  isAdmin
-                    ? 'bg-blue-500 text-white hover:bg-blue-400'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-600'
-                }`}
-                title={isAdmin ? 'Radar 분석 실행' : '관리자 인증 필요'}
-              >
-                <RefreshCw size={15} className={isStartingCollection ? 'animate-spin' : ''} />
-                {isAdmin ? 'Radar 분석 실행' : '🔒 Radar 분석 실행 (관리자)'}
-              </button>
+              filteredSignals.map((signal) => {
+                const isSelected = selectedSignal?.id === signal.id
+                return (
+                  <button
+                    key={signal.id}
+                    type="button"
+                    onClick={() => setSelectedSignalId(signal.id)}
+                    className={`w-full rounded-xl border p-3 text-left transition-all cursor-pointer ${
+                      isSelected
+                        ? 'border-blue-600 bg-blue-50/70 shadow-xs ring-1 ring-blue-600'
+                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <p className="text-[11px] font-bold text-blue-700 truncate">
+                        {signalLabel(signal)}
+                      </p>
+                      <span
+                        className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-extrabold ${
+                          signal.impactScore >= 80
+                            ? 'bg-rose-100 text-rose-800'
+                            : 'bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        영향 {signal.impactScore}
+                      </span>
+                    </div>
+
+                    <h3
+                      className={`text-xs font-bold line-clamp-2 leading-snug ${
+                        isSelected ? 'text-blue-950' : 'text-slate-900'
+                      }`}
+                    >
+                      {signal.title}
+                    </h3>
+
+                    <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-slate-500">
+                      {signal.fact}
+                    </p>
+
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {signal.lenses.map((lens) => (
+                        <span
+                          key={lens}
+                          className="rounded bg-slate-100 px-1.5 py-0.2 text-[10px] font-medium text-slate-600"
+                        >
+                          {lens}
+                        </span>
+                      ))}
+                    </div>
+                  </button>
+                )
+              })
             )}
           </div>
-        </div>
-      </section>
+        </section>
+
+        {/* Pane 3. 우측 신호 상세 분석 뷰어 (lg:col-span-5 / xl:col-span-4.5) - 독립 스크롤 */}
+        <section className="lg:col-span-5 xl:col-span-4.5 h-full overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-xs custom-scrollbar">
+          {selectedSignal ? (
+            <article className="space-y-4">
+              {/* 상단 메타 */}
+              <div className="border-b border-slate-100 pb-3 space-y-2">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {selectedSignal.lenses.map((lens) => (
+                    <span
+                      key={lens}
+                      className="rounded-md bg-blue-50 border border-blue-100 px-2 py-0.5 text-[11px] font-bold text-blue-700"
+                    >
+                      {lens}
+                    </span>
+                  ))}
+                  <span className="rounded-md bg-rose-50 border border-rose-100 px-2 py-0.5 text-[11px] font-bold text-rose-700">
+                    영향도 {selectedSignal.impactScore}점
+                  </span>
+                  <span className="text-[11px] text-slate-400 ml-auto flex items-center gap-1">
+                    <Calendar size={12} />
+                    {new Date(selectedSignal.occurredAt).toLocaleDateString('ko-KR')}
+                  </span>
+                </div>
+
+                <h2 className="text-base sm:text-lg font-bold text-slate-950 leading-snug">
+                  {selectedSignal.title}
+                </h2>
+
+                <div className="rounded-xl bg-slate-50 p-3 border border-slate-100 text-xs text-slate-700 leading-relaxed">
+                  <span className="font-bold text-slate-900 block mb-0.5">📌 사실 요약 (Fact)</span>
+                  {selectedSignal.fact}
+                </div>
+              </div>
+
+              {/* 구조 분석 세부 섹션들 */}
+              <div className="space-y-3">
+                <DetailCard
+                  icon={<TrendingUp size={15} className="text-blue-600" />}
+                  title="무엇이 바뀌었나"
+                  content={selectedSignal.assessment?.whatChanged}
+                />
+                <DetailCard
+                  icon={<Building2 size={15} className="text-indigo-600" />}
+                  title="산업 구조 영향"
+                  content={selectedSignal.assessment?.industryStructureImpact}
+                />
+                <DetailCard
+                  icon={<Sparkles size={15} className="text-emerald-600" />}
+                  title="MSP 기회"
+                  content={selectedSignal.assessment?.mspOpportunity}
+                />
+                <DetailCard
+                  icon={<ShieldAlert size={15} className="text-rose-600" />}
+                  title="MSP 위협 및 구조적 위험"
+                  content={[
+                    selectedSignal.assessment?.mspThreat,
+                    selectedSignal.assessment?.structuralRisk,
+                  ]
+                    .filter(Boolean)
+                    .join('\n')}
+                />
+                <DetailCard
+                  icon={<CheckCircle2 size={15} className="text-amber-600" />}
+                  title="권고 행동"
+                  content={selectedSignal.assessment?.recommendedAction}
+                  highlight
+                />
+              </div>
+
+              {/* 원문 링크 */}
+              <div className="pt-2">
+                <a
+                  href={selectedSignal.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 transition-colors shadow-xs"
+                >
+                  원문 기사 출처 열기 <ExternalLink size={13} />
+                </a>
+              </div>
+            </article>
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-400">
+              <RadarIcon size={36} className="text-slate-300 mb-2" />
+              <p className="text-xs font-medium">좌측 피드에서 신호를 선택하면 상세 분석을 확인하실 수 있습니다.</p>
+            </div>
+          )}
+        </section>
+      </div>
 
       <AdminAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
-
-    <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-      <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-3 shadow-sm lg:sticky lg:top-6" aria-label="Radar 탐색">
-        <p className="px-2 pb-2 pt-1 text-xs font-bold uppercase tracking-wider text-blue-600">Radar navigation</p>
-        <div className="space-y-1">
-          <button type="button" onClick={() => updateFilters({ lens: null, impact: null })} className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-semibold ${!selectedLens && !highImpactOnly ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100'}`}><span className="flex items-center gap-2"><Activity size={16} />전체 Signal</span><span>{overview.signalCount}</span></button>
-          <button type="button" onClick={() => updateFilters({ lens: null, impact: highImpactOnly ? null : 'high' })} className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-semibold ${highImpactOnly ? 'bg-rose-600 text-white' : 'text-slate-700 hover:bg-rose-50'}`}><span className="flex items-center gap-2"><CircleAlert size={16} />고영향 Signal</span><span>{overview.highImpactSignalCount}</span></button>
-        </div>
-        <div className="my-4 border-t border-slate-100" />
-        <p className="px-2 pb-2 text-xs font-bold uppercase tracking-wider text-blue-600">산업 재편 6개 관점</p>
-        <div className="space-y-1">{overview.lenses.map((lens) => <button key={lens.code} type="button" aria-pressed={selectedLens === lens.code} onClick={() => updateFilters({ lens: selectedLens === lens.code ? null : lens.code, impact: null })} className={`w-full rounded-xl px-3 py-2.5 text-left transition ${selectedLens === lens.code ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-700 hover:bg-blue-50'}`}><span className="flex items-center justify-between gap-2 text-sm font-semibold"><span>{lens.label}</span><span className={`rounded-full px-2 py-0.5 text-xs ${selectedLens === lens.code ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>{lens.signalCount}</span></span><span className={`mt-1 block text-xs leading-4 ${selectedLens === lens.code ? 'text-blue-100' : 'text-slate-500'}`}>{lens.description}</span></button>)}</div>
-        <div className="my-4 border-t border-slate-100" />
-        <Link to="/settings/watch-list" className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"><span className="flex items-center gap-2"><Users size={16} />감시 대상 관리</span><span className="text-xs">{overview.playerCount}개</span></Link>
-      </aside>
-
-      <section className="min-w-0">
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wider text-blue-600">Evidence queue</p><h2 className="mt-1 text-2xl font-bold text-slate-950">{selectedLensInfo ? `${selectedLensInfo.label} 구조 변화` : highImpactOnly ? '고영향 구조 변화' : '전체 구조 변화 Signal'}</h2><p className="mt-1 text-sm text-slate-500">근거 Signal을 선택하면 사업 구조 영향과 실행 권고를 상세하게 볼 수 있습니다.</p></div><div className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700">{signalPage?.totalElements ?? 0}건</div></div>
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(320px,0.7fr)]">
-          <div className="space-y-3">{isSignalsLoading ? <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">Signal을 불러오는 중입니다.</div> : signalPage?.content.length ? signalPage.content.map((signal) => <button key={signal.id} type="button" onClick={() => setSelectedSignalId(signal.id)} className={`w-full rounded-2xl border bg-white p-4 text-left transition ${selectedSignal?.id === signal.id ? 'border-blue-500 ring-1 ring-blue-200' : 'border-slate-200 hover:border-blue-300 hover:bg-blue-50/30'}`}><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold text-blue-700">{signalLabel(signal)}</p><h3 className="mt-1 font-bold text-slate-900">{signal.title}</h3></div><span className="shrink-0 rounded-lg bg-rose-50 px-2 py-1 text-xs font-bold text-rose-700">영향 {signal.impactScore}</span></div><p className="mt-2 line-clamp-2 text-sm leading-5 text-slate-600">{signal.fact}</p><div className="mt-3 flex flex-wrap gap-1.5">{signal.lenses.map((lens) => <span key={lens} className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">{lens}</span>)}</div></button>) : <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center text-sm text-slate-500">{selectedLensInfo ? `${selectedLensInfo.label} 관점으로 분류된 Signal이 아직 없습니다.` : '표시할 Signal이 없습니다.'}</div>}
-            {signalPage && signalPage.totalPages > 1 && <div className="flex items-center justify-between pt-2"><button type="button" disabled={signalPage.number === 0} onClick={() => movePage(signalPage.number - 1)} className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-40"><ChevronLeft size={16} />이전</button><span className="text-sm text-slate-500">{signalPage.number + 1} / {signalPage.totalPages}</span><button type="button" disabled={signalPage.number + 1 >= signalPage.totalPages} onClick={() => movePage(signalPage.number + 1)} className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-40">다음<ChevronRight size={16} /></button></div>}
-          </div>
-          <article className="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-6">{selectedSignal ? <><div className="flex flex-wrap gap-1.5">{selectedSignal.lenses.map((lens) => <span key={lens} className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">{lens}</span>)}</div><h3 className="mt-3 text-lg font-bold text-slate-950">{selectedSignal.title}</h3><p className="mt-3 text-sm leading-6 text-slate-700">{selectedSignal.fact}</p><div className="mt-5 space-y-4 border-t border-slate-100 pt-4"><Detail title="무엇이 바뀌었나" content={selectedSignal.assessment?.whatChanged} /><Detail title="산업 구조 영향" content={selectedSignal.assessment?.industryStructureImpact} /><Detail title="MSP 기회" content={selectedSignal.assessment?.mspOpportunity} /><Detail title="MSP 위협·구조적 위험" content={[selectedSignal.assessment?.mspThreat, selectedSignal.assessment?.structuralRisk].filter(Boolean).join('\n')} /><Detail title="권고 행동" content={selectedSignal.assessment?.recommendedAction} /></div><a href={selectedSignal.sourceUrl} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center gap-1 text-sm font-bold text-blue-700 hover:text-blue-900">원문 근거 열기 <ExternalLink size={15} /></a></> : <div className="py-12 text-center text-sm text-slate-500">좌측 목록에서 Signal을 선택하면 상세 분석을 표시합니다.</div>}</article>
-        </div>
-      </section>
     </div>
-  </div>
   )
 }
 
-function Detail({ title, content }: { title: string; content?: string | null }) {
+function DetailCard({
+  icon,
+  title,
+  content,
+  highlight = false,
+}: {
+  icon: React.ReactNode
+  title: string
+  content?: string | null
+  highlight?: boolean
+}) {
   if (!content) return null
-  return <div><h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">{title}</h4><p className="mt-1 whitespace-pre-line text-sm leading-6 text-slate-700">{content}</p></div>
+  return (
+    <div
+      className={`rounded-xl border p-3 text-xs leading-relaxed transition-all ${
+        highlight
+          ? 'border-amber-200 bg-amber-50/60 text-amber-950 font-medium'
+          : 'border-slate-100 bg-slate-50/60 text-slate-700'
+      }`}
+    >
+      <div className="flex items-center gap-1.5 font-bold text-slate-900 mb-1">
+        {icon}
+        <span>{title}</span>
+      </div>
+      <p className="whitespace-pre-line text-[11px] leading-relaxed">{content}</p>
+    </div>
+  )
 }
