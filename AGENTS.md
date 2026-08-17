@@ -34,6 +34,7 @@ frontend/src/
 ## 핵심 도메인 및 동작
 
 - **AI Services Industry Radar**: 35개 글로벌/국내 주요 사업자(Watch List)를 대상으로 6개 핵심 산업 재편 관점(`AI_AGENT`, `FRONTIER_LABS`, `PARTNERSHIP`, `DEPLOYMENT_MODEL`, `AI_PRICING`, `AGENTIC_OPERATIONS`)의 검증된 신호(`RadarSignal`)를 포착·분석하고 주간 브리핑(`RadarWeeklyBrief`)을 제공한다.
+- **전략 보고서 (Strategic Report)**: 축적된 Radar 신호를 종합하여 Consulting–SI–MSP–Application ITO 밸류체인 재편, FDE 딜리버리, AI Pricing 전이, Agentic ITO 심층 분석 및 국내 MSP 관점 Top 3 Action을 자동 도출한다.
 - **기사 수집 및 AI 요약**: 공식 사이트(Frontier Labs, 글로벌 컨설팅 등) 및 Naver 뉴스로부터 신규 기사를 수집하고 Gemini로 핵심 사실 요약, 관련도 점수, 카테고리를 분류한다.
 - **전략 인사이트**: 축적된 원문 기사를 바탕으로 기회/위협/전략 인사이트를 도출하고 근거 기사를 연결한다.
 - **경쟁사 배틀카드**: 주요 경쟁사(LG CNS, SK AX, 베스핀글로벌, 삼일PwC 등)의 최근 동향을 기반으로 SWOT 분석 및 MSP 대응 전략을 도출한다.
@@ -42,10 +43,10 @@ frontend/src/
 
 ## 자동 스케줄 (Asia/Seoul)
 
-- `0 0 1 * * *` (매일 01:00): 정기 기사 크롤링 및 Radar 신호 수집·분석 (`RadarCollectionService.collect()`)
+- `0 0 1 * * *` (매일 01:00): 정기 원문 기사 수집 (`CrawlerOrchestrator.crawlAll()`)
 - `0 0 2 * * *` (매일 02:00): 전략 인사이트 생성 (`InsightService.generateInsights()`)
-- `0 30 1,4,7,10,13,16,19,22 * * *` (하루 8회): Gemini 호출 제한으로 보류된 기사 AI 재분석 (`ArticleAnalysisRetryService.retryPendingArticles()`)
-- `0 0 3 * * MON` (매주 월 03:00): 경쟁사 배틀카드 생성 (`BattleCardService.generateBattleCards()`)
+- `0 30 1,7,13,19 * * *` (하루 4회): 보류 기사 AI 재분석 및 Radar Signal 심층 처리 (`ArticleAnalysisRetryService`, `RadarCollectionService`)
+- `0 0 7 * * MON,WED` (매주 월·수 07:00): 전략 보고서 자동 생성 (`StrategyReportService.generateReport()`)
 - 매 1시간 주기: 최근 Radar Signal 원문 링크 접근성 재확인 (`RadarSourceVerificationService`)
 
 ## Gemini 설정

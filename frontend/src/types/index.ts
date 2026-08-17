@@ -281,3 +281,20 @@ export const INSIGHT_TYPE_COLORS: Record<InsightType, string> = {
   TREND: 'bg-blue-100 text-blue-800',
   STRATEGY: 'bg-purple-100 text-purple-800',
 }
+
+export interface StrategyReport {
+  id: number
+  title: string
+  periodStart: string
+  periodEnd: string
+  executiveSummary: string
+  valueChainImpact: string
+  fdeDeliveryAnalysis: string | null
+  pricingModelAnalysis: string | null
+  agenticOpsAnalysis: string | null
+  mspOpportunitiesThreats: string | null
+  top3Actions: string
+  sourceSignalCount: number
+  generatedAt: string
+}
+

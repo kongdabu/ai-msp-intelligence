@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class RadarSourceVerificationService {
 
-    static final String SOURCE_UNAVAILABLE = "SOURCE_UNAVAILABLE";
+    public static final String SOURCE_UNAVAILABLE = "SOURCE_UNAVAILABLE";
 
     private final RadarSignalRepository radarSignalRepository;
     private final RadarSourceVerifier radarSourceVerifier;

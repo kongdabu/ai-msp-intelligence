@@ -1,8 +1,9 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Newspaper, Lightbulb, Bookmark, BookmarkCheck, Settings, X, Flame, Radar } from 'lucide-react'
+import { LayoutDashboard, Newspaper, Lightbulb, Bookmark, BookmarkCheck, Settings, X, Flame, Radar, Compass } from 'lucide-react'
 
 const navItems = [
   { to: '/', icon: Radar, label: 'Industry Radar' },
+  { to: '/strategy-reports', icon: Compass, label: '전략 보고서' },
   { to: '/legacy/dashboard', icon: LayoutDashboard, label: '기존 대시보드' },
   { to: '/articles', icon: Newspaper, label: '기사 수집' },
   { to: '/saved-articles', icon: BookmarkCheck, label: '저장한 기사' },

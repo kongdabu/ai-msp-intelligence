@@ -21,6 +21,7 @@ public class SchedulerConfig {
     private final RadarCollectionService radarCollectionService;
     private final InsightService insightService;
     private final ArticleAnalysisRetryService articleAnalysisRetryService;
+    private final com.aimsp.intelligence.domain.strategy.StrategyReportService strategyReportService;
     /**
      * 원문 수집 - 매일 KST 01:00 (UTC 16:00). Gemini 분석은 별도 저빈도 배치가 수행한다.
      */
@@ -62,6 +63,22 @@ public class SchedulerConfig {
                     analyzedArticleCount, result.analyzedArticleCount(), result.savedSignalCount());
         } catch (Exception e) {
             log.error("[배치: AI 분석] 실패: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 전략 보고서 정기 생성 - 매주 월요일, 수요일 KST 07:00
+     */
+    @Scheduled(cron = "0 0 7 * * MON,WED", zone = "Asia/Seoul")
+    public void scheduledStrategyReportGeneration() {
+        TaskExecutionLogger.logStart(log, "정기 배치: AI 서비스 전략 보고서 생성");
+        try {
+            var report = strategyReportService.generateReport();
+            log.info("[스케줄] 주간 전략 보고서 생성 완료: id={}, title={}", report.id(), report.title());
+        } catch (AiApiUnavailableException e) {
+            log.error("[스케줄] 전략 보고서 생성 중단 - Gemini API 비정상: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("[스케줄] 전략 보고서 생성 실패: {}", e.getMessage(), e);
         }
     }
 

@@ -25,13 +25,19 @@ public class RadarSignalAnalyzer {
             [Radar Lens]
             AI_AGENT: AI Agent 제품·플랫폼과 자율 업무 실행 구조
             FRONTIER_LABS: 모델 경쟁력·생태계 지배력
-            PARTNERSHIP: 모델사·클라우드·SI의 결합 및 판매 구조
-            DEPLOYMENT_MODEL: FDE·RDE·ODE 등 현장 투입형 AI 딜리버리
-            AI_PRICING: 사용량·성과형 등 AI 과금 모델, API 토큰 단가 인하·할인 정책, 프롬프트 캐싱·배치 과금 등 비용 체계 변화
-            AGENTIC_OPERATIONS: AIOps·운영 자동화·Agentic ITO
+            PARTNERSHIP: 모델사·클라우드·SI의 결합 및 판매 구조 (누가 Value Chain의 어느 영역으로 확장/침투하는가)
+            DEPLOYMENT_MODEL: FDE·RDE·ODE 등 현장 투입형 AI 딜리버리 (고객 상주, R&R, Commercial Model, 기존 SI/ITO와 차이)
+            AI_PRICING: 사용량·성과형 등 AI 과금 모델 (Seat→Consumption→Agent→Task→Outcome 및 FTE M/M에서 Platform Fee + Consumption + Outcome Incentive로의 전환)
+            AGENTIC_OPERATIONS: AIOps·운영 자동화·Agentic ITO (Observe→Diagnose→Plan→Execute→Verify→Rollback 7단계 자율 루프 및 Agentic SRE/SecOps/FinOps)
 
             [Watch List]
             %s
+
+            [심층 분석 기준]
+            - Partnership: Frontier Lab의 SI/Consulting 영역 진입, Consulting의 Build/Managed AI 확장, CSP의 Agent Platform 지배력, SI/MSP의 자체 에이전트 내재화 여부를 분석한다.
+            - FDE/RDE/ODE: 단순 명칭보다 실제 고객 상주 방식, Consulting/Architecture/Engineering R&R, Commercial Model을 분석한다.
+            - AI Pricing: 과금 단위 이동 및 기존 SI/ITO의 M/M 단가 모델 탈피 여부를 분석한다.
+            - Agentic Ops: 기존 모니터링 중심에서 자율 해결(Self-Healing, Autonomous Remediation)로의 진화를 분석한다.
 
             [출력 규칙]
             - JSON만 응답한다.
