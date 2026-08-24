@@ -74,7 +74,7 @@ public class RadarService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
         Pageable pageable = PageRequest.of(safePage, safeSize,
-                Sort.by(Sort.Order.desc("impactScore"), Sort.Order.desc("occurredAt"), Sort.Order.desc("capturedAt")));
+                Sort.by(Sort.Order.desc("occurredAt"), Sort.Order.desc("impactScore"), Sort.Order.desc("capturedAt")));
         return PageResponseDto.from(radarSignalRepository.findAll(specification, pageable).map(RadarDto.SignalResponse::from));
     }
 

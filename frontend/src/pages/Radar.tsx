@@ -280,7 +280,7 @@ export default function Radar() {
           {/* 피드 헤더 */}
           <div className="p-3.5 border-b border-slate-100 bg-slate-50/50 space-y-2 shrink-0">
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 min-w-0">
+              <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                 <span className="font-bold text-xs text-slate-900 truncate">
                   {selectedLensInfo
                     ? `${selectedLensInfo.label}`
@@ -290,6 +290,9 @@ export default function Radar() {
                 </span>
                 <span className="rounded-md bg-blue-100 text-blue-800 text-[10px] font-extrabold px-1.5 py-0.5 shrink-0">
                   {filteredSignals.length}건
+                </span>
+                <span className="rounded-md bg-slate-100 border border-slate-200/60 text-slate-500 text-[10px] font-medium px-1.5 py-0.5 shrink-0">
+                  일자별 · 영향도순
                 </span>
               </div>
 
@@ -355,9 +358,18 @@ export default function Radar() {
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
-                      <p className="text-[11px] font-bold text-blue-700 truncate">
-                        {signalLabel(signal)}
-                      </p>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <p className="text-[11px] font-bold text-blue-700 truncate">
+                          {signalLabel(signal)}
+                        </p>
+                        <span className="text-[10px] text-slate-400 shrink-0 font-medium">
+                          {new Date(signal.occurredAt).toLocaleDateString('ko-KR', {
+                            year: '2-digit',
+                            month: '2-digit',
+                            day: '2-digit',
+                          })}
+                        </span>
+                      </div>
                       <span
                         className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-extrabold ${
                           signal.impactScore >= 80
