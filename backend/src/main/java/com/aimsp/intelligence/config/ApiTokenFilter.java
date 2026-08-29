@@ -36,6 +36,7 @@ public class ApiTokenFilter extends OncePerRequestFilter {
             "/api/radar/weekly-briefs/generate",
             "/api/radar/collect",
             "/api/radar/collect/cancel",
+            "/api/v1/radar/reports",
             "/api/articles/",
             "/api/insights/"
     );
