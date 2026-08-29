@@ -13,6 +13,7 @@ import Trends from './pages/Trends'
 import Radar from './pages/Radar'
 import WatchListSettings from './pages/WatchListSettings'
 import StrategyReports from './pages/StrategyReports'
+import StoredRadarReports from './pages/StoredRadarReports'
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -33,6 +34,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Radar />} />
               <Route path="/strategy-reports" element={<StrategyReports />} />
+              <Route path="/stored-radar-reports" element={<StoredRadarReports />} />
               <Route path="/legacy/dashboard" element={<Dashboard />} />
               <Route path="/radar" element={<Radar />} />
               <Route path="/articles" element={<Articles />} />

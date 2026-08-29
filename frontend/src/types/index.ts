@@ -298,3 +298,45 @@ export interface StrategyReport {
   generatedAt: string
 }
 
+export interface RadarReportSource {
+  id: number
+  publisher: string
+  title: string
+  url: string
+  publishedDate: string | null
+  sourceType: string
+}
+
+export interface StoredRadarSignal {
+  id: number
+  reportId: number
+  reportDate: string
+  reportType: string
+  company: string
+  category: string
+  importance: string
+  signal: string
+  fact: string
+  whatChanged: string
+  industryImpact: string
+  opportunity: string | null
+  threat: string | null
+  structuralRisk: string | null
+  practicalImplication: string | null
+  recommendedAction: string
+  sources: RadarReportSource[]
+}
+
+export interface StoredRadarReport {
+  id: number
+  reportDate: string
+  reportType: string
+  title: string
+  executiveView: string
+  strategicInterpretation: string
+  markdown: string
+  promptVersion: string | null
+  signals: StoredRadarSignal[]
+  createdAt: string
+  updatedAt: string
+}

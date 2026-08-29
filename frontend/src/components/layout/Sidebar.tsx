@@ -11,6 +11,7 @@ import {
   Radar,
   Compass,
   SlidersHorizontal,
+  Database,
 } from 'lucide-react'
 
 interface NavItem {
@@ -31,6 +32,7 @@ const navSections: NavSection[] = [
     items: [
       { to: '/', icon: Radar, label: '인더스트리 레이더', end: true },
       { to: '/strategy-reports', icon: Compass, label: '데일리 브리핑' },
+      { to: '/stored-radar-reports', icon: Database, label: '저장된 Radar' },
       { to: '/insights', icon: Lightbulb, label: '전략 인사이트' },
       { to: '/trends', icon: Flame, label: '트렌드 분석' },
       { to: '/legacy/dashboard', icon: LayoutDashboard, label: '종합 대시보드' },
