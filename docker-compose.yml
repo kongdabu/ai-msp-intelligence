@@ -48,6 +48,21 @@ services:
       - backend
     restart: unless-stopped
 
+  mcp-server:
+    build:
+      context: ./mcp-server
+      dockerfile: Dockerfile
+    container_name: aimsp-radar-mcp
+    ports:
+      - "3001:3001"
+    environment:
+      MCP_API_BASE_URL: http://backend:8080
+      MCP_API_TOKEN: ${API_SECRET_TOKEN}
+      MCP_SERVER_TOKEN: ${MCP_SERVER_TOKEN}
+    depends_on:
+      - backend
+    restart: unless-stopped
+
   nginx:
     image: nginx:alpine
     container_name: aimsp-nginx

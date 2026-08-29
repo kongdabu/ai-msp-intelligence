@@ -25,3 +25,18 @@ services:
       - key: SARAMIN_API_KEY
         sync: false   # oapi.saramin.co.kr 사람인 API 키
     healthCheckPath: /actuator/health
+
+  - type: web
+    name: aimsp-radar-mcp
+    runtime: docker
+    dockerfilePath: ./mcp-server/Dockerfile
+    dockerContext: ./mcp-server
+    plan: free
+    envVars:
+      - key: MCP_API_BASE_URL
+        value: https://aimsp-backend.onrender.com
+      - key: MCP_API_TOKEN
+        sync: false   # 백엔드 API_SECRET_TOKEN과 같은 값
+      - key: MCP_SERVER_TOKEN
+        sync: false   # MCP 클라이언트가 Bearer 토큰으로 제시할 별도 비밀값
+    healthCheckPath: /health
