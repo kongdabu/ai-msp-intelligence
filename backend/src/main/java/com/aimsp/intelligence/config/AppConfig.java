@@ -29,15 +29,6 @@ public class AppConfig {
     @Value("${app.gemini.radar-analysis-per-run:3}")
     private int radarAnalysisPerRun;
 
-    @Value("${app.naver.client-id:}")
-    private String naverClientId;
-
-    @Value("${app.naver.client-secret:}")
-    private String naverClientSecret;
-
-    @Value("${app.crawl.naver-result-limit:10}")
-    private int naverResultLimit;
-
     @Value("${app.crawl.official-site.enabled:true}")
     private boolean officialSiteCrawlEnabled;
 
@@ -63,9 +54,6 @@ public class AppConfig {
     public long   getRateLimitMs()       { return rateLimitMs; }
     public int getArticleAnalysisPerRun() { return Math.min(30, Math.max(1, articleAnalysisPerRun)); }
     public int getRadarAnalysisPerRun() { return Math.min(10, Math.max(1, radarAnalysisPerRun)); }
-    public String getNaverClientId()     { return naverClientId; }
-    public String getNaverClientSecret() { return naverClientSecret; }
-    public int getNaverResultLimit()     { return naverResultLimit; }
     public boolean isOfficialSiteCrawlEnabled() { return officialSiteCrawlEnabled; }
     public int getOfficialSiteMaxAgeDays() { return Math.max(1, officialSiteMaxAgeDays); }
     public int getOfficialSiteMinimumRelevanceScore() {

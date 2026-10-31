@@ -22,14 +22,7 @@ fi
 
 echo "▶ 백엔드 시작 (http://localhost:8080)"
 echo "  GEMINI_API_KEY     : ${GEMINI_API_KEY:0:20}..."
-echo "  NAVER_CLIENT_ID    : ${NAVER_CLIENT_ID:-(미설정)}"
-echo "  PROCUREMENT_API_KEY: ${PROCUREMENT_API_KEY:-(미설정)}"
-echo "  SARAMIN_API_KEY    : ${SARAMIN_API_KEY:-(미설정)}"
 
 cd "$BACKEND_DIR"
 $GRADLE bootRun --no-daemon \
-  -Dapp.gemini.api-key="$GEMINI_API_KEY" \
-  -Dapp.naver.client-id="$NAVER_CLIENT_ID" \
-  -Dapp.naver.client-secret="$NAVER_CLIENT_SECRET" \
-  -Dapp.procurement.api-key="$PROCUREMENT_API_KEY" \
-  -Dapp.saramin.api-key="$SARAMIN_API_KEY"
+  -Dapp.gemini.api-key="$GEMINI_API_KEY"
