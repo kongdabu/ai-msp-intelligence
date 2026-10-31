@@ -75,7 +75,7 @@ interface ToggleArticleBookmarkInput {
   note?: string
 }
 
-// 캐시에 있는 모든 기사 목록/상세에서 해당 기사의 북마크 상태를 즉시 갱신
+// 캐시에 있는 모든 기사 목록에서 해당 기사의 북마크 상태를 즉시 갱신
 function patchArticleInCaches(
   queryClient: ReturnType<typeof useQueryClient>,
   id: number,
@@ -91,8 +91,6 @@ function patchArticleInCaches(
     if (!Array.isArray(old)) return old
     return old.map((a) => (a.id === id ? { ...a, ...patch } : a))
   })
-  // 단건 상세 (['article', id])
-  queryClient.setQueryData<Article>(['article', id], (old) => (old ? { ...old, ...patch } : old))
 }
 
 // 기사 저장/해제 및 메모 갱신 — 낙관적 업데이트로 즉시 반영 + 결과 토스트
@@ -109,12 +107,10 @@ export function useToggleArticleBookmark() {
     onMutate: async ({ id, bookmarked, note }) => {
       await queryClient.cancelQueries({ queryKey: ['articles'] })
       await queryClient.cancelQueries({ queryKey: ['articles-list'] })
-      await queryClient.cancelQueries({ queryKey: ['article', id] })
 
       const previous = {
         articles: queryClient.getQueriesData<PageResponse<Article>>({ queryKey: ['articles'] }),
         list: queryClient.getQueriesData<Article[]>({ queryKey: ['articles-list'] }),
-        detail: queryClient.getQueryData<Article>(['article', id]),
       }
 
       patchArticleInCaches(queryClient, id, {
@@ -125,33 +121,20 @@ export function useToggleArticleBookmark() {
 
       return previous
     },
-    onError: (_err, variables, context) => {
+    onError: (_err, _variables, context) => {
       // 실패 시 이전 상태로 롤백
       context?.articles.forEach(([key, data]) => queryClient.setQueryData(key, data))
       context?.list.forEach(([key, data]) => queryClient.setQueryData(key, data))
-      if (context?.detail) queryClient.setQueryData(['article', variables.id], context.detail)
       showToast('저장에 실패했습니다. 다시 시도해주세요.', 'error')
     },
     onSuccess: (_data, variables) => {
       showToast(variables.bookmarked ? '저장되었습니다.' : '저장을 해제했습니다.', 'success')
     },
     // 성공/실패와 무관하게 서버 기준으로 최종 동기화
-    onSettled: (_data, _err, variables) => {
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['articles'] })
       queryClient.invalidateQueries({ queryKey: ['articles-list'] })
-      queryClient.invalidateQueries({ queryKey: ['article', variables.id] })
     },
-  })
-}
-
-export function useArticle(id: number | null) {
-  return useQuery<Article>({
-    queryKey: ['article', id],
-    queryFn: async () => {
-      const { data } = await axios.get(`/api/articles/${id}`)
-      return data
-    },
-    enabled: id !== null,
   })
 }
 
@@ -178,7 +161,6 @@ export function useTriggerCrawl(options?: TriggerCrawlOptions) {
       queryClient.invalidateQueries({ queryKey: ['articles'] })
       queryClient.invalidateQueries({ queryKey: ['articles-list'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-      queryClient.invalidateQueries({ queryKey: ['sources'] })
       options?.onSuccess?.(data)
     },
   })

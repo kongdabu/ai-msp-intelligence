@@ -144,14 +144,6 @@ export interface RadarOverview {
   weeklyBriefs: RadarWeeklyBrief[]
 }
 
-export interface PageResponse<T> {
-  content: T[]
-  totalElements: number
-  totalPages: number
-  size: number
-  number: number
-}
-
 export interface RadarCollectionStatus {
   status: 'IDLE' | 'RUNNING' | 'CANCELLING' | 'CANCELLED' | 'COMPLETED' | 'FAILED'
   startedAt: string | null
@@ -175,31 +167,6 @@ export const RADAR_LAYER_LABELS: Record<RadarPlayerLayer, string> = {
   CONSULTING: '컨설팅',
   GLOBAL_SI_MSP: '글로벌 SI·MSP',
   KOREA_SI_MSP: '국내 SI·MSP',
-}
-
-export interface BattleCard {
-  id: number
-  competitor: Competitor
-  strengths: string[]
-  weaknesses: string[]
-  opportunities: string[]
-  threats: string[]
-  ourStrategy: string
-  impactScore: number | null
-  sourceArticleCount: number
-  generatedAt: string | null
-}
-
-export interface BattleCardDetail extends Omit<BattleCard, 'sourceArticleCount'> {
-  sourceArticles: BattleCardSourceArticle[]
-}
-
-export interface BattleCardSourceArticle {
-  id: number
-  title: string
-  url: string
-  competitor: Competitor
-  relevanceScore: number | null
 }
 
 export type TrendNewsStatus = 'DRAFT' | 'PUBLISHED'
